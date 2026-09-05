@@ -97,28 +97,6 @@ const carouselCases = [
       "Targeted product listing ad dominance in non-branded categories",
     ],
   },
-  {
-    id: "seo-1",
-    channel: "SEO & Growth",
-    channelColor: "bg-purple-600/20 border-purple-500/40 text-purple-400",
-    tag: "Organic & Search Dominance",
-    title: "86% Organic Share & +25% Search Rankings Lift",
-    image: "/images/cases/seo-analytics-case.png",
-    aspectRatio: "aspect-[16/10]",
-    stats: [
-      { label: "Organic Traffic", value: "86%" },
-      { label: "Rankings Lift", value: "+25%" },
-      { label: "Keywords Ranked", value: "62+" },
-      { label: "MoM Growth", value: "+38%" },
-    ],
-    summary:
-      "Compounded paid traffic with technical organic visibility so the brand continues generating sales even when competitors are squeezed by rising CPMs in Q4.",
-    strategy: [
-      "High-intent commercial keyword optimization for product collection pages",
-      "Structured data & schema markup for rich Google search snippets",
-      "Content hub authority buildout driving continuous zero-CAC traffic",
-    ],
-  },
 ];
 
 const founderTestimonials = [
@@ -197,30 +175,24 @@ const founderTestimonials = [
 ];
 
 const stats = [
-  { value: "$100M+", label: "Ad Spend Managed" },
+  { value: "$15M+", label: "Ad Spend Managed" },
   { value: "3.4x", label: "Average Blended MER" },
-  { value: "400+", label: "Winning Creative Sprints" },
+  { value: "150+", label: "Winning Creative Sprints" },
   { value: "0%", label: "Hidden Spend Percentage" },
 ];
 
 export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionProps) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState("All");
 
-  const filteredCases =
-    activeFilter === "All"
-      ? carouselCases
-      : carouselCases.filter((item) => item.channel.includes(activeFilter));
-
-  const currentCase = filteredCases[activeSlide] || filteredCases[0];
+  const currentCase = carouselCases[activeSlide];
 
   const handleNext = () => {
-    setActiveSlide((prev) => (prev + 1) % filteredCases.length);
+    setActiveSlide((prev) => (prev + 1) % carouselCases.length);
   };
 
   const handlePrev = () => {
-    setActiveSlide((prev) => (prev - 1 + filteredCases.length) % filteredCases.length);
+    setActiveSlide((prev) => (prev - 1 + carouselCases.length) % carouselCases.length);
   };
 
   return (
@@ -258,28 +230,8 @@ export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionPr
           </p>
         </motion.div>
 
-        {/* Channel Filter Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-10">
-          {["All", "Meta Ads", "Google Ads", "SEO"].map((filter) => (
-            <button
-              key={filter}
-              onClick={() => {
-                setActiveFilter(filter);
-                setActiveSlide(0);
-              }}
-              className={`px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                activeFilter === filter
-                  ? "bg-brand-magenta text-white shadow-lg shadow-brand-magenta/30 scale-105"
-                  : "bg-navy-950/70 text-white/70 border border-white/15 hover:text-white hover:border-white/30"
-              }`}
-            >
-              {filter === "All" ? "All Case Studies" : filter}
-            </button>
-          ))}
-        </div>
-
         {/* Interactive Case Studies Carousel */}
-        <div className="w-full mt-8 sm:mt-10">
+        <div className="w-full mt-10 sm:mt-12">
           <motion.div
             key={currentCase.id}
             initial={{ opacity: 0, y: 20 }}
@@ -292,7 +244,7 @@ export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionPr
             <div className="flex flex-wrap items-center justify-between gap-3 pb-6 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${currentCase.channelColor}`}
+                  className={`px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${currentCase.channelColor}`}
                 >
                   {currentCase.tag}
                 </span>
@@ -305,7 +257,7 @@ export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionPr
               {/* Slide Counter & Nav Arrows */}
               <div className="flex items-center gap-2">
                 <span className="text-xs text-white/60 font-semibold mr-2">
-                  {activeSlide + 1} of {filteredCases.length}
+                  {activeSlide + 1} of {carouselCases.length}
                 </span>
                 <button
                   onClick={handlePrev}
@@ -408,7 +360,7 @@ export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionPr
 
             {/* Carousel Dots */}
             <div className="flex items-center justify-center gap-2 mt-8 pt-4 border-t border-white/10">
-              {filteredCases.map((_, idx) => (
+              {carouselCases.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveSlide(idx)}
@@ -536,7 +488,7 @@ export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionPr
             </svg>
           </button>
           <p className="text-white/60 text-xs mt-3 font-medium">
-            Join 400+ DTC founders who scaled against MER and real profit.
+            Join high-growth DTC founders who scaled against MER and real profit.
           </p>
         </motion.div>
       </div>
