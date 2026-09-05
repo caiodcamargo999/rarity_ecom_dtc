@@ -1,13 +1,127 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
 interface CaseStudiesSectionProps {
   onOpenAudit: () => void;
 }
 
-const caseStudies = [
+const carouselCases = [
+  {
+    id: "meta-1",
+    channel: "Meta Ads",
+    channelColor: "bg-blue-600/20 border-blue-500/40 text-blue-400",
+    tag: "Meta Ads • DTC Brand Scaling",
+    title: "8.32x ROAS & R$ 2.95M+ In Verified Revenue",
+    image: "/images/cases/meta-ads-case-1.png",
+    aspectRatio: "aspect-[16/7]",
+    stats: [
+      { label: "Total Revenue", value: "R$ 2.959.895" },
+      { label: "Ad Spend", value: "R$ 355.659" },
+      { label: "Avg ROAS", value: "8.32x" },
+      { label: "Purchases", value: "7.641" },
+    ],
+    summary:
+      "We restructured their campaign architecture from fragmented ad sets into a unified broad-targeting MER model with AI-native creative testing. CAC decreased by 34% while order volume scaled 4x.",
+    strategy: [
+      "Consolidated budget into unified advantage+ and broad scaling campaigns",
+      "Deployed 40+ AI creative variations testing new emotional angles",
+      "Managed ad spend strictly against real contribution margin & MER",
+    ],
+  },
+  {
+    id: "meta-2",
+    channel: "Meta Ads",
+    channelColor: "bg-blue-600/20 border-blue-500/40 text-blue-400",
+    tag: "Meta Ads • High-Velocity Sprints",
+    title: "17.30x ROAS with Rapid Creative Iteration",
+    image: "/images/cases/meta-ads-case-2.png",
+    aspectRatio: "aspect-[16/7]",
+    stats: [
+      { label: "Purchase Value", value: "R$ 431.782" },
+      { label: "Ad Spend", value: "R$ 24.956" },
+      { label: "Avg ROAS", value: "17.30x" },
+      { label: "Cost / Checkout", value: "R$ 16,06" },
+    ],
+    summary:
+      "Using our proprietary AI production pipeline, we launched 35 hook variations in 7 days, isolating 3 breakout winning creatives that delivered a record 17.3x return on ad spend.",
+    strategy: [
+      "Ultra-fast AI video iteration targeting high-intent cold audiences",
+      "Separated testing campaigns from scaling budget to protect margins",
+      "Optimized post-click presell flow to maximize checkout completion",
+    ],
+  },
+  {
+    id: "google-1",
+    channel: "Google Ads",
+    channelColor: "bg-emerald-600/20 border-emerald-500/40 text-emerald-400",
+    tag: "Google Ads • Search & PMax Scale",
+    title: "10.86x ROAS & 10.7M+ in Omnichannel Sales",
+    image: "/images/cases/google-ads-case-1.png",
+    aspectRatio: "aspect-[16/6]",
+    stats: [
+      { label: "Total Sales", value: "10.7M+" },
+      { label: "Total Cost", value: "R$ 983k" },
+      { label: "Conv. Value / Cost", value: "10.86x" },
+      { label: "Impressions", value: "97.1M" },
+    ],
+    summary:
+      "Captured high-intent search traffic and scaled Performance Max alongside Meta. Running both channels as one single budget against blended MER created unstoppable cross-channel momentum.",
+    strategy: [
+      "Search keyword intent clustering with high negative keyword sculpting",
+      "Feed-level Performance Max optimization for best-seller margins",
+      "Full attribution cross-check against Shopify net bank deposits",
+    ],
+  },
+  {
+    id: "google-2",
+    channel: "Google Ads",
+    channelColor: "bg-emerald-600/20 border-emerald-500/40 text-emerald-400",
+    tag: "Google Ads • High-Volume Acquisition",
+    title: "9.52x ROAS & R$ 29,83 Cost Per Acquisition",
+    image: "/images/cases/google-ads-case-2.png",
+    aspectRatio: "aspect-[16/6]",
+    stats: [
+      { label: "Sales Volume", value: "989k+" },
+      { label: "Ad Spend", value: "R$ 104k" },
+      { label: "Cost / Conv", value: "R$ 29,83" },
+      { label: "Value / Cost", value: "9.52x" },
+    ],
+    summary:
+      "Optimized bidding strategy for high contribution margin SKU bundles, driving cost per conversion down while keeping ROAS consistently above 9.5x across all quarters.",
+    strategy: [
+      "Custom Smart Bidding tROAS adjustments aligned with inventory cycle",
+      "Audience signal enrichment using top 5% repeat buyer lists",
+      "Targeted product listing ad dominance in non-branded categories",
+    ],
+  },
+  {
+    id: "seo-1",
+    channel: "SEO & Growth",
+    channelColor: "bg-purple-600/20 border-purple-500/40 text-purple-400",
+    tag: "Organic & Search Dominance",
+    title: "86% Organic Share & +25% Search Rankings Lift",
+    image: "/images/cases/seo-analytics-case.png",
+    aspectRatio: "aspect-[16/10]",
+    stats: [
+      { label: "Organic Traffic", value: "86%" },
+      { label: "Rankings Lift", value: "+25%" },
+      { label: "Keywords Ranked", value: "62+" },
+      { label: "MoM Growth", value: "+38%" },
+    ],
+    summary:
+      "Compounded paid traffic with technical organic visibility so the brand continues generating sales even when competitors are squeezed by rising CPMs in Q4.",
+    strategy: [
+      "High-intent commercial keyword optimization for product collection pages",
+      "Structured data & schema markup for rich Google search snippets",
+      "Content hub authority buildout driving continuous zero-CAC traffic",
+    ],
+  },
+];
+
+const founderTestimonials = [
   {
     quote:
       "We were struggling for two years to reach that $500k month. After three months with Rarity's MER structure, we hit $1.2M, then $1.3M with healthy contribution margin.",
@@ -90,15 +204,34 @@ const stats = [
 ];
 
 export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionProps) {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState("All");
+
+  const filteredCases =
+    activeFilter === "All"
+      ? carouselCases
+      : carouselCases.filter((item) => item.channel.includes(activeFilter));
+
+  const currentCase = filteredCases[activeSlide] || filteredCases[0];
+
+  const handleNext = () => {
+    setActiveSlide((prev) => (prev + 1) % filteredCases.length);
+  };
+
+  const handlePrev = () => {
+    setActiveSlide((prev) => (prev - 1 + filteredCases.length) % filteredCases.length);
+  };
+
   return (
     <section className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 overflow-hidden border-t border-white/10">
       {/* Background Watermark Symbol */}
-      <div className="absolute top-1/3 left-0 -translate-y-1/2 w-[700px] h-[700px] pointer-events-none opacity-15 -z-10 -translate-x-1/3">
+      <div className="absolute top-1/4 left-0 -translate-y-1/2 w-[750px] h-[750px] pointer-events-none opacity-15 -z-10 -translate-x-1/3">
         <Image
           src="/images/symbol-logo.png"
           alt=""
-          width={700}
-          height={700}
+          width={750}
+          height={750}
           className="object-contain"
         />
       </div>
@@ -116,14 +249,178 @@ export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionPr
             Don&apos;t Take Our Word For It.
           </p>
           <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-[1.12] mt-3">
-            Real DTC Brands. <br className="hidden sm:inline" />
+            Real Proof. Real Dashboards. <br className="hidden sm:inline" />
             Real Profit Numbers.
           </h2>
-          <p className="mt-6 text-base sm:text-lg text-white/85 font-medium leading-relaxed">
-            The most useful proof for you isn&apos;t a 9-figure giant with a budget you don&apos;t have —
-            it&apos;s a founder who was stuck where you are and broke through to sustainable, profitable scale.
+          <p className="mt-5 text-base sm:text-lg text-white/85 font-medium leading-relaxed">
+            Here is what happens when you stop managing channels in silos and align Meta, Google, and
+            AI creative against one single number: <strong>Contribution Margin</strong>.
           </p>
         </motion.div>
+
+        {/* Channel Filter Tabs */}
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-10">
+          {["All", "Meta Ads", "Google Ads", "SEO"].map((filter) => (
+            <button
+              key={filter}
+              onClick={() => {
+                setActiveFilter(filter);
+                setActiveSlide(0);
+              }}
+              className={`px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeFilter === filter
+                  ? "bg-brand-magenta text-white shadow-lg shadow-brand-magenta/30 scale-105"
+                  : "bg-navy-950/70 text-white/70 border border-white/15 hover:text-white hover:border-white/30"
+              }`}
+            >
+              {filter === "All" ? "All Case Studies" : filter}
+            </button>
+          ))}
+        </div>
+
+        {/* Interactive Case Studies Carousel */}
+        <div className="w-full mt-8 sm:mt-10">
+          <motion.div
+            key={currentCase.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+            className="w-full rounded-3xl bg-navy-950/80 border border-white/20 backdrop-blur-xl p-6 sm:p-8 lg:p-10 shadow-2xl relative overflow-hidden"
+          >
+            {/* Top Bar of Active Slide */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-6 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${currentCase.channelColor}`}
+                >
+                  {currentCase.tag}
+                </span>
+                <span className="hidden sm:inline-flex items-center text-xs font-semibold text-brand-teal">
+                  <span className="w-2 h-2 rounded-full bg-brand-teal animate-pulse mr-1.5" />
+                  Verified Agency Account Data
+                </span>
+              </div>
+
+              {/* Slide Counter & Nav Arrows */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-white/60 font-semibold mr-2">
+                  {activeSlide + 1} of {filteredCases.length}
+                </span>
+                <button
+                  onClick={handlePrev}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                  aria-label="Previous case study"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                  aria-label="Next case study"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Case Title */}
+            <h3 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mt-6 leading-tight">
+              {currentCase.title}
+            </h3>
+
+            {/* Metrics KPI Cards Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6">
+              {currentCase.stats.map((stat, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm text-center"
+                >
+                  <div className="text-xl sm:text-2xl font-black text-brand-teal tracking-tight">
+                    {stat.value}
+                  </div>
+                  <div className="text-xs text-white/70 font-medium mt-0.5">
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Dashboard Screenshot with Zoom Lightbox */}
+            <div className="mt-8 relative group">
+              <div
+                onClick={() => setSelectedImage(currentCase.image)}
+                className="relative w-full rounded-2xl overflow-hidden border border-white/20 bg-black/50 shadow-xl cursor-zoom-in transition-all duration-300 group-hover:border-brand-teal/60"
+              >
+                <div className="relative w-full aspect-[16/8] sm:aspect-[16/7]">
+                  <Image
+                    src={currentCase.image}
+                    alt={currentCase.title}
+                    fill
+                    className="object-contain object-center group-hover:scale-[1.02] transition-transform duration-500"
+                  />
+                </div>
+
+                {/* Dark gradient overlay & zoom prompt */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-4">
+                  <span className="px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md text-white text-xs font-bold border border-white/20 flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5 text-brand-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      <line x1="11" y1="8" x2="11" y2="14" />
+                      <line x1="8" y1="11" x2="14" y2="11" />
+                    </svg>
+                    Click to Zoom Screenshot
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Breakdown & Explanation */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 pt-6 border-t border-white/10">
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-brand-teal mb-2">
+                  The Case Breakdown
+                </h4>
+                <p className="text-white/90 text-sm sm:text-base leading-relaxed font-medium">
+                  {currentCase.summary}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-brand-magenta mb-2">
+                  Installed Growth System
+                </h4>
+                <ul className="space-y-2">
+                  {currentCase.strategy.map((item, idx) => (
+                    <li key={idx} className="flex items-start text-xs sm:text-sm text-white/85 font-medium">
+                      <span className="text-brand-teal font-bold mr-2 mt-0.5">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Carousel Dots */}
+            <div className="flex items-center justify-center gap-2 mt-8 pt-4 border-t border-white/10">
+              {filteredCases.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveSlide(idx)}
+                  className={`h-2 rounded-full transition-all cursor-pointer ${
+                    activeSlide === idx ? "w-8 bg-brand-teal" : "w-2 bg-white/30 hover:bg-white/60"
+                  }`}
+                  aria-label={`Go to slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+          </motion.div>
+        </div>
 
         {/* Stats Strip */}
         <motion.div
@@ -131,7 +428,7 @@ export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionPr
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.15 }}
-          className="w-full grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mt-12 sm:mt-16 p-6 sm:p-8 rounded-3xl bg-navy-950/70 border border-white/15 backdrop-blur-md"
+          className="w-full grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mt-14 p-6 sm:p-8 rounded-3xl bg-navy-950/70 border border-white/15 backdrop-blur-md"
         >
           {stats.map((stat, idx) => (
             <div key={idx} className="text-center">
@@ -145,9 +442,19 @@ export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionPr
           ))}
         </motion.div>
 
+        {/* Founder Testimonials & Case Quotes Header */}
+        <div className="text-center mt-20 mb-10">
+          <p className="font-serif italic text-brand-teal text-2xl sm:text-3xl font-normal">
+            Founder Word of Mouth
+          </p>
+          <h3 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
+            What Founders Say When They Own The System
+          </h3>
+        </div>
+
         {/* Testimonials & Case Study Grid */}
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-6 mt-10 sm:mt-12">
-          {caseStudies.map((study, idx) => (
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-6">
+          {founderTestimonials.map((study, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, y: 30 }}
@@ -233,6 +540,40 @@ export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionPr
           </p>
         </motion.div>
       </div>
+
+      {/* Lightbox Modal for Zooming Screenshots */}
+      <AnimatePresence>
+        {selectedImage && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 bg-black/90 backdrop-blur-md"
+            onClick={() => setSelectedImage(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative max-w-5xl w-full max-h-[90vh] bg-navy-950 border border-white/20 rounded-2xl overflow-hidden p-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/70 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Close zoom"
+              >
+                ✕
+              </button>
+              <div className="relative w-full h-[60vh] sm:h-[75vh]">
+                <Image
+                  src={selectedImage}
+                  alt="Case Study Dashboard Zoom"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
