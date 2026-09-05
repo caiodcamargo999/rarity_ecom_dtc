@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #001244;
+  --foreground: #ffffff;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--foreground);
+  background: #001244;
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Background image pattern */
+.rarity-bg {
+  background-color: #001244;
+  background-image: url('/images/bg-lp-01.jpg');
+  background-position: top center;
+  background-repeat: repeat-y;
+  background-size: 100% auto;
+}
+
+@media (max-width: 768px) {
+  .rarity-bg {
+    background-size: cover;
+  }
+}
+
+/* Custom selection styling */
+::selection {
+  background: #D80064;
+  color: #ffffff;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000c2e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0a2570;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #D80064;
+}
+
+/* Glow button animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(216, 0, 100, 0.4), 0 0 40px rgba(216, 0, 100, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(216, 0, 100, 0.7), 0 0 60px rgba(216, 0, 100, 0.35);
+  }
+}
+
+.btn-magenta-glow {
+  animation: pulse-glow 3s infinite ease-in-out;
+}
+
+.btn-magenta-glow:hover {
+  animation: none;
+  box-shadow: 0 0 35px rgba(216, 0, 100, 0.8), 0 0 70px rgba(216, 0, 100, 0.4);
+}
