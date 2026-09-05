@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import ProblemSection from "@/components/ProblemSection";
 import ThreeLeversSection from "@/components/ThreeLeversSection";
+import CaseStudiesSection from "@/components/CaseStudiesSection";
 import AuditProcessSection from "@/components/AuditProcessSection";
 import Footer from "@/components/Footer";
 import AuditModal from "@/components/AuditModal";
@@ -36,6 +37,9 @@ export default function Home() {
 
       {/* One Team. One Number. Three Levers. */}
       <ThreeLeversSection />
+
+      {/* Case Studies & Testimonials */}
+      <CaseStudiesSection onOpenAudit={handleOpenAudit} />
 
       {/* The Free Growth Audit (What Actually Happens) */}
       <AuditProcessSection onOpenAudit={handleOpenAudit} />
