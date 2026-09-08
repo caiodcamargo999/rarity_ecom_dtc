@@ -59,7 +59,7 @@ export default function TslLetterSectionV2({ onOpenAudit }: TslLetterSectionV2Pr
           {/* 3 Fatal Traps Breakdown */}
           <div className="space-y-6 my-10">
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-[#FFD100]" />
+              <AlertTriangle className="w-5 h-5 text-brand-magenta" />
               The 3 Fatal Traps Holding E-Commerce Brands Back:
             </h3>
 

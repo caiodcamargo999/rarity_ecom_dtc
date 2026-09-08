@@ -53,7 +53,7 @@ export default function ReviewsSectionV2() {
       <div className="max-w-4xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-12 sm:mb-16">
-          <span className="text-xs sm:text-sm font-bold tracking-widest text-[#FFD100] uppercase block mb-2">
+          <span className="text-xs sm:text-sm font-bold tracking-widest text-brand-teal uppercase block mb-2">
             REVIEWS
           </span>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
@@ -115,7 +115,7 @@ export default function ReviewsSectionV2() {
           <div className="flex items-center justify-between mt-8 max-w-xs mx-auto">
             <button
               onClick={prevReview}
-              className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#FFD100] text-white hover:text-[#121212] flex items-center justify-center transition-colors cursor-pointer"
+              className="w-10 h-10 rounded-full bg-white/10 hover:bg-brand-teal text-white hover:text-[#001244] flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Previous review"
             >
               <ChevronLeft className="w-6 h-6" />
@@ -129,7 +129,7 @@ export default function ReviewsSectionV2() {
                   onClick={() => setCurrentIndex(idx)}
                   className={`h-2.5 rounded-full transition-all cursor-pointer ${
                     currentIndex === idx
-                      ? "w-7 bg-[#FFD100]"
+                      ? "w-7 bg-brand-teal"
                       : "w-2.5 bg-[#c6c6c6] hover:bg-white"
                   }`}
                   aria-label={`Go to review ${idx + 1}`}
@@ -139,7 +139,7 @@ export default function ReviewsSectionV2() {
 
             <button
               onClick={nextReview}
-              className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#FFD100] text-white hover:text-[#121212] flex items-center justify-center transition-colors cursor-pointer"
+              className="w-10 h-10 rounded-full bg-white/10 hover:bg-brand-teal text-white hover:text-[#001244] flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Next review"
             >
               <ChevronRight className="w-6 h-6" />
