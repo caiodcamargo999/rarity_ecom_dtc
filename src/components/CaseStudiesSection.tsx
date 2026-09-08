@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import DashboardPreview from "@/components/common/DashboardPreview";
 
 interface CaseStudiesSectionProps {
   onOpenAudit: () => void;
@@ -14,19 +15,19 @@ const carouselCases = [
     channel: "Meta Ads",
     channelColor: "bg-blue-600/20 border-blue-500/40 text-blue-400",
     tag: "Meta Ads • DTC Brand Scaling",
-    title: "8.32x ROAS & R$ 2.95M+ In Verified Revenue",
+    title: "8.32x ROAS & $2.95M+ In Verified Revenue",
     image: "/images/cases/meta-ads-case-1.png",
     aspectRatio: "aspect-[16/7]",
     stats: [
-      { label: "Total Revenue", value: "R$ 2.959.895" },
-      { label: "Ad Spend", value: "R$ 355.659" },
+      { label: "Total Revenue", value: "$2,959,895" },
+      { label: "Ad Spend", value: "$355,659" },
       { label: "Avg ROAS", value: "8.32x" },
-      { label: "Purchases", value: "7.641" },
+      { label: "Purchases", value: "7,641" },
     ],
     summary:
       "We restructured their campaign architecture from fragmented ad sets into a unified broad-targeting MER model with AI-native creative testing. CAC decreased by 34% while order volume scaled 4x.",
     strategy: [
-      "Consolidated budget into unified advantage+ and broad scaling campaigns",
+      "Consolidated budget into unified Advantage+ and broad scaling campaigns",
       "Deployed 40+ AI creative variations testing new emotional angles",
       "Managed ad spend strictly against real contribution margin & MER",
     ],
@@ -34,16 +35,16 @@ const carouselCases = [
   {
     id: "meta-2",
     channel: "Meta Ads",
-    channelColor: "bg-blue-600/20 border-blue-500/40 text-blue-400",
+    channelColor: "bg-purple-600/20 border-purple-500/40 text-purple-400",
     tag: "Meta Ads • High-Velocity Sprints",
     title: "17.30x ROAS with Rapid Creative Iteration",
     image: "/images/cases/meta-ads-case-2.png",
     aspectRatio: "aspect-[16/7]",
     stats: [
-      { label: "Purchase Value", value: "R$ 431.782" },
-      { label: "Ad Spend", value: "R$ 24.956" },
+      { label: "Purchase Value", value: "$431,782" },
+      { label: "Ad Spend", value: "$24,956" },
       { label: "Avg ROAS", value: "17.30x" },
-      { label: "Cost / Checkout", value: "R$ 16,06" },
+      { label: "Cost / Checkout", value: "$16.06" },
     ],
     summary:
       "Using our proprietary AI production pipeline, we launched 35 hook variations in 7 days, isolating 3 breakout winning creatives that delivered a record 17.3x return on ad spend.",
@@ -58,12 +59,12 @@ const carouselCases = [
     channel: "Google Ads",
     channelColor: "bg-emerald-600/20 border-emerald-500/40 text-emerald-400",
     tag: "Google Ads • Search & PMax Scale",
-    title: "10.86x ROAS & 10.7M+ in Omnichannel Sales",
+    title: "10.86x ROAS & $10.7M+ in Omnichannel Sales",
     image: "/images/cases/google-ads-case-1.png",
     aspectRatio: "aspect-[16/6]",
     stats: [
-      { label: "Total Sales", value: "10.7M+" },
-      { label: "Total Cost", value: "R$ 983k" },
+      { label: "Total Sales", value: "$10.7M+" },
+      { label: "Total Cost", value: "$983k" },
       { label: "Conv. Value / Cost", value: "10.86x" },
       { label: "Impressions", value: "97.1M" },
     ],
@@ -78,15 +79,15 @@ const carouselCases = [
   {
     id: "google-2",
     channel: "Google Ads",
-    channelColor: "bg-emerald-600/20 border-emerald-500/40 text-emerald-400",
+    channelColor: "bg-teal-600/20 border-teal-500/40 text-teal-400",
     tag: "Google Ads • High-Volume Acquisition",
-    title: "9.52x ROAS & R$ 29,83 Cost Per Acquisition",
+    title: "9.52x ROAS & $29.83 Cost Per Acquisition",
     image: "/images/cases/google-ads-case-2.png",
     aspectRatio: "aspect-[16/6]",
     stats: [
-      { label: "Sales Volume", value: "989k+" },
-      { label: "Ad Spend", value: "R$ 104k" },
-      { label: "Cost / Conv", value: "R$ 29,83" },
+      { label: "Sales Volume", value: "$989k+" },
+      { label: "Ad Spend", value: "$104k" },
+      { label: "Cost / Conv", value: "$29.83" },
       { label: "Value / Cost", value: "9.52x" },
     ],
     summary:
@@ -302,23 +303,16 @@ export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionPr
               ))}
             </div>
 
-            {/* Dashboard Screenshot with Zoom Lightbox */}
+            {/* High-Definition Dashboard Preview */}
             <div className="mt-8 relative group">
               <div
-                onClick={() => setSelectedImage(currentCase.image)}
+                onClick={() => setSelectedImage(currentCase.id)}
                 className="relative w-full rounded-2xl overflow-hidden border border-white/20 bg-black/50 shadow-xl cursor-zoom-in transition-all duration-300 group-hover:border-brand-teal/60"
               >
-                <div className="relative w-full aspect-[16/8] sm:aspect-[16/7]">
-                  <Image
-                    src={currentCase.image}
-                    alt={currentCase.title}
-                    fill
-                    className="object-contain object-center group-hover:scale-[1.02] transition-transform duration-500"
-                  />
-                </div>
+                <DashboardPreview caseId={currentCase.id} />
 
-                {/* Dark gradient overlay & zoom prompt */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-4">
+                {/* Dark gradient overlay & zoom prompt on hover */}
+                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                   <span className="px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md text-white text-xs font-bold border border-white/20 flex items-center gap-1.5">
                     <svg className="w-3.5 h-3.5 text-brand-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <circle cx="11" cy="11" r="8" />
@@ -326,7 +320,7 @@ export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionPr
                       <line x1="11" y1="8" x2="11" y2="14" />
                       <line x1="8" y1="11" x2="14" y2="11" />
                     </svg>
-                    Click to Zoom Screenshot
+                    Expand Dashboard View
                   </span>
                 </div>
               </div>
@@ -514,13 +508,8 @@ export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionPr
               >
                 ✕
               </button>
-              <div className="relative w-full h-[60vh] sm:h-[75vh]">
-                <Image
-                  src={selectedImage}
-                  alt="Case Study Dashboard Zoom"
-                  fill
-                  className="object-contain"
-                />
+              <div className="w-full pt-8 pb-4 px-2 sm:px-4 overflow-y-auto max-h-[80vh]">
+                <DashboardPreview caseId={selectedImage} />
               </div>
             </motion.div>
           </div>

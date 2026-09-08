@@ -15,12 +15,8 @@ export default function Footer() {
           />
         </div>
 
-        <p className="text-white/60 text-xs sm:text-sm font-medium">
-          © {new Date().getFullYear()} Rarity Agency. All rights reserved.
-        </p>
-
-        <p className="text-white/40 text-[11px] max-w-md leading-relaxed">
-          Built for high-growth DTC brands doing $1M–$10M/year. Performance Media • AI Creative • UGC Production.
+        <p className="font-mono text-xs sm:text-sm text-white/60 tracking-wider">
+          Rarity 2026 - all rights reserved
         </p>
       </div>
     </footer>
