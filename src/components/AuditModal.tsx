@@ -22,7 +22,77 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
         hideEventTypeDetails: false,
         layout: "month_view",
       });
+
+      // Listen for Cal.com booking successful event
+      cal("on", {
+        action: "bookingSuccessful",
+        callback: (e: any) => {
+          const detail = e?.detail?.data || e?.data || {};
+          const fullName = detail.name || detail.booking?.name || "";
+          const nameParts = fullName.trim().split(" ");
+          const firstName = nameParts[0] || "";
+          const lastName = nameParts.slice(1).join(" ") || "";
+          const email = detail.email || detail.booking?.email || "";
+          const phone = detail.phone || detail.phoneNumber || detail.booking?.phone || "";
+
+          if (typeof window !== "undefined") {
+            (window as any).dataLayer = (window as any).dataLayer || [];
+            (window as any).dataLayer.push({
+              event: "bookingSuccessful",
+              data: detail,
+              name: fullName,
+              first_name: firstName,
+              last_name: lastName,
+              email: email,
+              phone: phone,
+              eventType: detail.eventType || "free-growth-audit",
+              date: detail.date,
+            });
+            console.log("✅ [GTM] Dispatched bookingSuccessful event to dataLayer:", {
+              name: fullName,
+              email,
+              phone,
+            });
+          }
+        },
+      });
     })();
+
+    // Fallback listener for postMessage events from Cal iframe
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const msg = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        if (
+          msg?.action === "bookingSuccessful" ||
+          msg?.type === "cal:bookingSuccessful" ||
+          msg?.event === "bookingSuccessful"
+        ) {
+          const detail = msg?.data || msg?.detail || {};
+          const fullName = detail.name || "";
+          const nameParts = fullName.trim().split(" ");
+          const firstName = nameParts[0] || "";
+          const lastName = nameParts.slice(1).join(" ") || "";
+          const email = detail.email || "";
+          const phone = detail.phone || detail.phoneNumber || "";
+
+          (window as any).dataLayer = (window as any).dataLayer || [];
+          (window as any).dataLayer.push({
+            event: "bookingSuccessful",
+            data: detail,
+            name: fullName,
+            first_name: firstName,
+            last_name: lastName,
+            email: email,
+            phone: phone,
+          });
+        }
+      } catch (err) {
+        // Not a JSON postMessage, ignore
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, []);
 
   // Close on Escape key press

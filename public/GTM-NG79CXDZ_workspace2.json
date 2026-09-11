@@ -1,0 +1,1424 @@
+{
+  "exportFormatVersion": 2,
+  "exportTime": "2026-01-20 19:17:23",
+  "containerVersion": {
+    "path": "accounts/6334935297/containers/241166556/versions/0",
+    "accountId": "6334935297",
+    "containerId": "241166556",
+    "containerVersionId": "0",
+    "container": {
+      "path": "accounts/6334935297/containers/241166556",
+      "accountId": "6334935297",
+      "containerId": "241166556",
+      "name": "Site - dominio.com",
+      "publicId": "GTM-NG79CXDZ",
+      "usageContext": [
+        "WEB"
+      ],
+      "fingerprint": "1768833239872",
+      "tagManagerUrl": "https://tagmanager.google.com/#/container/accounts/6334935297/containers/241166556/workspaces?apiLink=container",
+      "features": {
+        "supportUserPermissions": true,
+        "supportEnvironments": true,
+        "supportWorkspaces": true,
+        "supportGtagConfigs": false,
+        "supportBuiltInVariables": true,
+        "supportClients": false,
+        "supportFolders": true,
+        "supportTags": true,
+        "supportTemplates": true,
+        "supportTriggers": true,
+        "supportVariables": true,
+        "supportVersions": true,
+        "supportZones": true,
+        "supportTransformations": false
+      },
+      "tagIds": [
+        "GTM-NG79CXDZ"
+      ]
+    },
+    "tag": [
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "tagId": "9",
+        "name": "001 - 🔵 Facebook Ads - 01 - Tag - PageView",
+        "type": "cvt_KFNBV",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "disablePushState",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "eventId",
+            "value": "{{2.01 Event ID}}"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "eventNameStandard",
+            "value": "PageView"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "dataLayerEventPush",
+            "value": "false"
+          },
+          {
+            "type": "LIST",
+            "key": "userDataList",
+            "list": [
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "external_id"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{2.04 Cookie _ga}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "fn"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{1.01 cookie_first_name}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "ln"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{1.02 cookie_last_name}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "em"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{1.03 cookie_email}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "ph"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{1.04 cookie_telefone}}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "pixelIds",
+            "value": "{{0.01 Facebook Ads}}"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "objectPropertiesFromVariable",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "consent",
+            "value": "true"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableDataLayerMapping",
+            "value": "true"
+          },
+          {
+            "type": "LIST",
+            "key": "objectPropertiesList",
+            "list": [
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "fbc"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{2.02 Cookie _fbc}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "fbp"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{2.03 Cookie _fbp}}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "inheritEventName",
+            "value": "override"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "disableAutoConfig",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "runInitOnce",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableCurrentDataLayerOnly",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableConsentMode",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableEdvancedMatching",
+            "value": "true"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "dpoLDU",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "eventName",
+            "value": "standard"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "userDataFromVariable",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableEventEnhancement",
+            "value": "false"
+          }
+        ],
+        "fingerprint": "1768936437180",
+        "firingTriggerId": [
+          "2147479553"
+        ],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NOT_SET"
+        }
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "tagId": "12",
+        "name": "001 - 🔵 Facebook Ads - 02 - Evento - Lead",
+        "type": "cvt_KFNBV",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "disablePushState",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "eventId",
+            "value": "{{2.01 Event ID}}"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "eventNameStandard",
+            "value": "Lead"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "dataLayerEventPush",
+            "value": "false"
+          },
+          {
+            "type": "LIST",
+            "key": "userDataList",
+            "list": [
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "external_id"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{2.04 Cookie _ga}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "fn"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{3.01 JS Primeiro Nome}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "ln"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{3.02 JS Sobrenome}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "em"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{3.03 JS Email}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "ph"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{3.04 JS Telefone}}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "pixelIds",
+            "value": "{{0.01 Facebook Ads}}"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "objectPropertiesFromVariable",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "consent",
+            "value": "true"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableDataLayerMapping",
+            "value": "true"
+          },
+          {
+            "type": "LIST",
+            "key": "objectPropertiesList",
+            "list": [
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "fbc"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{2.02 Cookie _fbc}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "fbp"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{2.03 Cookie _fbp}}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "inheritEventName",
+            "value": "override"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "disableAutoConfig",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "runInitOnce",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableCurrentDataLayerOnly",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableConsentMode",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableEdvancedMatching",
+            "value": "true"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "dpoLDU",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "eventName",
+            "value": "standard"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "userDataFromVariable",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableEventEnhancement",
+            "value": "false"
+          }
+        ],
+        "fingerprint": "1768834626697",
+        "firingTriggerId": [
+          "16"
+        ],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NOT_SET"
+        }
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "tagId": "17",
+        "name": "000 - 🍪 Cookies HTML Personalizado - 01 - Evento - Primeiro Nome",
+        "type": "html",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script>\n (function(){\n var cookieName = \"cookie_first_name\"; // Nome do seu Cookie\n var cookieValue = {{3.01 JS Primeiro Nome}}; // Valor do seu Cookie\n var expirationTime = 2592000; // One month in seconds\n expirationTime = expirationTime * 24000; // 2 anos\n var date = new Date(); \n var dateTimeNow = date.getTime(); \n\n  date.setTime(dateTimeNow + expirationTime);\n  var expires = date.toUTCString();\n  var domain = window.location.hostname.replace(/^www\\./, ''); // Defina o domínio aqui\n\n  // Configuração do cookie\n  var cookieString = cookieName + \"=\" + cookieValue + \"; SameSite=None; Secure; expires=\" + expires + \"; path=/; domain=\" + domain;\n\n  // Define o cookie\n  document.cookie = cookieString;\n})();\n</script>"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          }
+        ],
+        "fingerprint": "1768834805595",
+        "firingTriggerId": [
+          "16"
+        ],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NOT_SET"
+        }
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "tagId": "19",
+        "name": "000 - 🍪 Cookies HTML Personalizado - 02 - Evento - Sobrenome",
+        "type": "html",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script>\n (function(){\n var cookieName = \"cookie_last_name\"; // Nome do seu Cookie\n var cookieValue = {{3.02 JS Sobrenome}}; // Valor do seu Cookie\n var expirationTime = 2592000; // One month in seconds\n expirationTime = expirationTime * 24000; // 2 anos\n var date = new Date(); \n var dateTimeNow = date.getTime(); \n\n  date.setTime(dateTimeNow + expirationTime);\n  var expires = date.toUTCString();\n  var domain = window.location.hostname.replace(/^www\\./, ''); // Defina o domínio aqui\n\n  // Configuração do cookie\n  var cookieString = cookieName + \"=\" + cookieValue + \"; SameSite=None; Secure; expires=\" + expires + \"; path=/; domain=\" + domain;\n\n  // Define o cookie\n  document.cookie = cookieString;\n})();\n</script>"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          }
+        ],
+        "fingerprint": "1768936104158",
+        "firingTriggerId": [
+          "16"
+        ],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NOT_SET"
+        }
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "tagId": "20",
+        "name": "000 - 🍪 Cookies HTML Personalizado - 03 - Evento - Email",
+        "type": "html",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script>\n (function(){\n var cookieName = \"cookie_email\"; // Nome do seu Cookie\n var cookieValue = {{3.03 JS Email}}; // Valor do seu Cookie\n var expirationTime = 2592000; // One month in seconds\n expirationTime = expirationTime * 24000; // 2 anos\n var date = new Date(); \n var dateTimeNow = date.getTime(); \n\n  date.setTime(dateTimeNow + expirationTime);\n  var expires = date.toUTCString();\n  var domain = window.location.hostname.replace(/^www\\./, ''); // Defina o domínio aqui\n\n  // Configuração do cookie\n  var cookieString = cookieName + \"=\" + cookieValue + \"; SameSite=None; Secure; expires=\" + expires + \"; path=/; domain=\" + domain;\n\n  // Define o cookie\n  document.cookie = cookieString;\n})();\n</script>"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          }
+        ],
+        "fingerprint": "1768936134119",
+        "firingTriggerId": [
+          "16"
+        ],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NOT_SET"
+        }
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "tagId": "21",
+        "name": "000 - 🍪 Cookies HTML Personalizado - 04 - Evento - Telefone",
+        "type": "html",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script>\n (function(){\n var cookieName = \"cookie_telefone\"; // Nome do seu Cookie\n var cookieValue = {{3.04 JS Telefone}}; // Valor do seu Cookie\n var expirationTime = 2592000; // One month in seconds\n expirationTime = expirationTime * 24000; // 2 anos\n var date = new Date(); \n var dateTimeNow = date.getTime(); \n\n  date.setTime(dateTimeNow + expirationTime);\n  var expires = date.toUTCString();\n  var domain = window.location.hostname.replace(/^www\\./, ''); // Defina o domínio aqui\n\n  // Configuração do cookie\n  var cookieString = cookieName + \"=\" + cookieValue + \"; SameSite=None; Secure; expires=\" + expires + \"; path=/; domain=\" + domain;\n\n  // Define o cookie\n  document.cookie = cookieString;\n})();\n</script>"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          }
+        ],
+        "fingerprint": "1768936156054",
+        "firingTriggerId": [
+          "16"
+        ],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NOT_SET"
+        }
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "tagId": "26",
+        "name": "001 - 🔵 Facebook Ads - 03 - Evento - Reunião Agendada",
+        "type": "cvt_KFNBV",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "disablePushState",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "eventId",
+            "value": "{{2.01 Event ID}}"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "eventNameStandard",
+            "value": "Schedule"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "dataLayerEventPush",
+            "value": "false"
+          },
+          {
+            "type": "LIST",
+            "key": "userDataList",
+            "list": [
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "external_id"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{2.04 Cookie _ga}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "fn"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{1.01 cookie_first_name}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "ln"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{1.02 cookie_last_name}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "em"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{3.03 JS Email}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "ph"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{3.04 JS Telefone}}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "pixelIds",
+            "value": "{{0.01 Facebook Ads}}"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "objectPropertiesFromVariable",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "consent",
+            "value": "true"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableDataLayerMapping",
+            "value": "true"
+          },
+          {
+            "type": "LIST",
+            "key": "objectPropertiesList",
+            "list": [
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "fbc"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{2.02 Cookie _fbc}}"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "name",
+                    "value": "fbp"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "{{2.03 Cookie _fbp}}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "inheritEventName",
+            "value": "override"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "disableAutoConfig",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "runInitOnce",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableCurrentDataLayerOnly",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableConsentMode",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableEdvancedMatching",
+            "value": "true"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "dpoLDU",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "eventName",
+            "value": "standard"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "userDataFromVariable",
+            "value": "false"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "enableEventEnhancement",
+            "value": "false"
+          }
+        ],
+        "fingerprint": "1768936613086",
+        "firingTriggerId": [
+          "25"
+        ],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NOT_SET"
+        }
+      }
+    ],
+    "trigger": [
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "triggerId": "16",
+        "name": "001 - 01 - Lead & Booking",
+        "type": "CUSTOM_EVENT",
+        "waitForTags": {
+          "type": "TEMPLATE"
+        },
+        "checkValidation": {
+          "type": "TEMPLATE"
+        },
+        "waitForTagsTimeout": {
+          "type": "TEMPLATE",
+          "value": "2000"
+        },
+        "uniqueTriggerId": {
+          "type": "TEMPLATE"
+        },
+        "fingerprint": "1768834622527",
+        "customEventFilter": [
+          {
+            "type": "REGEX",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "^(bookingSuccessful|lead|cal_booking_successful|gtm.formSubmit)$"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "triggerId": "25",
+        "name": "001 - 02 - Reunião Agendada",
+        "type": "CUSTOM_EVENT",
+        "customEventFilter": [
+          {
+            "type": "REGEX",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "^(bookingSuccessful|cal_booking_successful|Schedule)$"
+              }
+            ]
+          }
+        ],
+        "fingerprint": "1768936603750"
+      }
+    ],
+    "variable": [
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "4",
+        "name": "0.01 Facebook Ads",
+        "type": "c",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "value",
+            "value": "seu id"
+          }
+        ],
+        "fingerprint": "1768833433502",
+        "formatValue": {}
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "5",
+        "name": "2.04 Cookie _ga",
+        "type": "k",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "decodeCookie",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "_ga"
+          }
+        ],
+        "fingerprint": "1768833546805",
+        "formatValue": {}
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "6",
+        "name": "2.02 Cookie _fbc",
+        "type": "k",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "decodeCookie",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "_fbc"
+          }
+        ],
+        "fingerprint": "1768833630012",
+        "formatValue": {}
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "7",
+        "name": "2.03 Cookie _fbp",
+        "type": "k",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "decodeCookie",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "_fbp"
+          }
+        ],
+        "fingerprint": "1768833715802",
+        "formatValue": {}
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "10",
+        "name": "2.01 Event ID",
+        "type": "cvt_M63B8",
+        "fingerprint": "1768833838204",
+        "formatValue": {}
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "11",
+        "name": "3.01 JS Primeiro Nome",
+        "type": "jsm",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "javascript",
+            "value": "function() {\n  try {\n    // 1. Check DataLayer first (Cal.com / Webhook event)\n    var dlvName = {{dlv - cal name}} || {{dlv - name}};\n    if (dlvName && typeof dlvName === \"string\") {\n      var clean = dlvName.replace(/[^a-zA-Z\\u00C0-\\u00FF ]/g, \"\").trim();\n      var fn = clean.split(/\\s+/)[0];\n      if (fn) return fn.charAt(0).toUpperCase() + fn.slice(1).toLowerCase();\n    }\n    var dlvFn = {{dlv - cal first_name}} || {{dlv - first_name}};\n    if (dlvFn && typeof dlvFn === \"string\") {\n      return dlvFn.trim().charAt(0).toUpperCase() + dlvFn.trim().slice(1).toLowerCase();\n    }\n  } catch(e){}\n\n  // 2. Fallback to DOM input fields\n  var inputs = document.querySelectorAll('input[placeholder*=\"Nome\"], input[name*=\"name\"], input[name*=\"nome\"], input[autocomplete=\"name\"]');\n  for (var i = 0; i < inputs.length; i++) {\n    if (inputs[i].value) {\n      var cleanStr = inputs[i].value.replace(/[^a-zA-Z\\u00C0-\\u00FF ]/g, \"\").trim();\n      var firstName = cleanStr.split(/\\s+/)[0];\n      if (firstName) return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();\n    }\n  }\n  return undefined;\n}"
+          }
+        ],
+        "fingerprint": "1768834432660",
+        "formatValue": {}
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "13",
+        "name": "3.02 JS Sobrenome",
+        "type": "jsm",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "javascript",
+            "value": "function() {\n  try {\n    // 1. Check DataLayer first\n    var dlvName = {{dlv - cal name}} || {{dlv - name}};\n    if (dlvName && typeof dlvName === \"string\") {\n      var clean = dlvName.replace(/[^a-zA-Z\\u00C0-\\u00FF ]/g, \"\").trim();\n      var parts = clean.split(/\\s+/);\n      if (parts.length > 1) {\n        return parts.slice(1).join(\" \").replace(/\\w\\S*/g, function(t){\n          return t.charAt(0).toUpperCase() + t.substr(1).toLowerCase();\n        });\n      }\n    }\n    var dlvLn = {{dlv - cal last_name}} || {{dlv - last_name}};\n    if (dlvLn && typeof dlvLn === \"string\") {\n      return dlvLn.trim().replace(/\\w\\S*/g, function(t){\n        return t.charAt(0).toUpperCase() + t.substr(1).toLowerCase();\n      });\n    }\n  } catch(e){}\n\n  // 2. Fallback to DOM\n  var inputs = document.querySelectorAll('input[placeholder*=\"Nome\"], input[name*=\"name\"], input[name*=\"nome\"]');\n  for (var i = 0; i < inputs.length; i++) {\n    if (inputs[i].value) {\n      var cleanStr = inputs[i].value.replace(/[^a-zA-Z\\u00C0-\\u00FF ]/g, \"\").trim();\n      var firstSpace = cleanStr.indexOf(\" \");\n      if (firstSpace !== -1) {\n        var lastName = cleanStr.substring(firstSpace + 1).trim();\n        return lastName.replace(/\\w\\S*/g, function(t){\n          return t.charAt(0).toUpperCase() + t.substr(1).toLowerCase();\n        });\n      }\n    }\n  }\n  return \"\";\n}"
+          }
+        ],
+        "fingerprint": "1768834465661",
+        "formatValue": {}
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "14",
+        "name": "3.03 JS Email",
+        "type": "jsm",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "javascript",
+            "value": "function() {\n  try {\n    // 1. Check DataLayer first\n    var dlvEmail = {{dlv - cal email}} || {{dlv - email}};\n    if (dlvEmail && typeof dlvEmail === \"string\" && dlvEmail.indexOf(\"@\") !== -1) {\n      return dlvEmail.trim().toLowerCase();\n    }\n  } catch(e){}\n\n  // 2. Fallback to DOM\n  var inputs = document.querySelectorAll('input[type=\"email\"], input[name*=\"email\"]');\n  for (var i = 0; i < inputs.length; i++) {\n    if (inputs[i].value && inputs[i].value.indexOf(\"@\") !== -1) {\n      return inputs[i].value.trim().toLowerCase();\n    }\n  }\n  return \"\";\n}"
+          }
+        ],
+        "fingerprint": "1768834529418",
+        "formatValue": {}
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "15",
+        "name": "3.04 JS Telefone",
+        "type": "jsm",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "javascript",
+            "value": "function() {\n  try {\n    // 1. Check DataLayer first\n    var dlvPhone = {{dlv - cal phone}} || {{dlv - phone}} || {{dlv - cal phoneNumber}};\n    if (dlvPhone) {\n      var nums = String(dlvPhone).replace(/[^0-9]/g, \"\");\n      if (nums.length >= 8) {\n        return nums.startsWith(\"55\") || nums.startsWith(\"1\") ? nums : \"55\" + nums;\n      }\n    }\n  } catch(e){}\n\n  // 2. Fallback to DOM\n  var inputs = document.querySelectorAll('input[type=\"tel\"], input[name*=\"phone\"], input[name*=\"tel\"]');\n  for (var i = 0; i < inputs.length; i++) {\n    if (inputs[i].value) {\n      var cleaned = inputs[i].value.replace(/[^0-9]/g, \"\");\n      return cleaned.startsWith(\"55\") || cleaned.startsWith(\"1\") ? cleaned : \"55\" + cleaned;\n    }\n  }\n  return \"\";\n}"
+          }
+        ],
+        "fingerprint": "1768834558772",
+        "formatValue": {}
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "18",
+        "name": "1.01 cookie_first_name",
+        "type": "k",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "decodeCookie",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "cookie_first_name"
+          }
+        ],
+        "fingerprint": "1768834850089",
+        "formatValue": {}
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "22",
+        "name": "1.02 cookie_last_name",
+        "type": "k",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "decodeCookie",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "cookie_last_name"
+          }
+        ],
+        "fingerprint": "1768936370892",
+        "formatValue": {}
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "23",
+        "name": "1.03 cookie_email",
+        "type": "k",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "decodeCookie",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "cookie_email"
+          }
+        ],
+        "fingerprint": "1768936385264",
+        "formatValue": {}
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "24",
+        "name": "1.04 cookie_telefone",
+        "type": "k",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "decodeCookie",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "cookie_telefone"
+          }
+        ],
+        "fingerprint": "1768936397927",
+        "formatValue": {}
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "101",
+        "name": "dlv - cal name",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "data.name"
+          }
+        ]
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "102",
+        "name": "dlv - name",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "name"
+          }
+        ]
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "103",
+        "name": "dlv - cal email",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "data.email"
+          }
+        ]
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "104",
+        "name": "dlv - email",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "email"
+          }
+        ]
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "105",
+        "name": "dlv - cal phone",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "data.phone"
+          }
+        ]
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "106",
+        "name": "dlv - phone",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "phone"
+          }
+        ]
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "107",
+        "name": "dlv - cal first_name",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "data.first_name"
+          }
+        ]
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "108",
+        "name": "dlv - first_name",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "first_name"
+          }
+        ]
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "109",
+        "name": "dlv - cal last_name",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "data.last_name"
+          }
+        ]
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "110",
+        "name": "dlv - last_name",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "last_name"
+          }
+        ]
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "variableId": "111",
+        "name": "dlv - cal phoneNumber",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "data.phoneNumber"
+          }
+        ]
+      }
+    ],
+    "builtInVariable": [
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "type": "PAGE_URL",
+        "name": "Page URL"
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "type": "PAGE_HOSTNAME",
+        "name": "Page Hostname"
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "type": "PAGE_PATH",
+        "name": "Page Path"
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "type": "REFERRER",
+        "name": "Referrer"
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "type": "EVENT",
+        "name": "Event"
+      }
+    ],
+    "fingerprint": "1768936643017",
+    "tagManagerUrl": "https://tagmanager.google.com/#/versions/accounts/6334935297/containers/241166556/versions/0?apiLink=version",
+    "customTemplate": [
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "templateId": "3",
+        "name": "Facebook Pixel by Stape",
+        "fingerprint": "1768833388734",
+        "templateData": "___TERMS_OF_SERVICE___\n\nBy creating or modifying this file you agree to Google Tag Manager's Community\nTemplate Gallery Developer Terms of Service available at\nhttps://developers.google.com/tag-manager/gallery-tos (or such other URL as\nGoogle may provide), as modified from time to time.\n\n\n___INFO___\n\n{\n  \"type\": \"TAG\",\n  \"id\": \"cvt_KFNBV\",\n  \"version\": 1,\n  \"displayName\": \"Facebook Pixel by Stape\",\n  \"categories\": [\n    \"ADVERTISING\",\n    \"ANALYTICS\",\n    \"CONVERSIONS\",\n    \"MARKETING\",\n    \"REMARKETING\"\n  ],\n  \"brand\": {\n    \"id\": \"github.com_stape-io\",\n    \"displayName\": \"stape-io\",\n    \"thumbnail\": \"data:image/png;base64,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MYEFAJCYwAIASExgAQAkJrAAABITWAAAiQksAIDEBBYAQGICCwAgMYEFAJDYZAAwMucXi/jM/1iOO6/rxB1Hu3HrNd3YPxOxazpiotOJNlteKWJ+OWKu/D145lwRT54p4v8+3Y/zC0VA2wgsgBFaKAPjC7+//MLn+8q4OrqvG0f3Rhwpn4/srT7vxLXl46ZD5eNgd/XjXeW79XT5mJkq37i79QmxomyjXhlOCysRi+V/1mIv4szFIo7NFvHU2X48Vz6fvlDE8fMRJ+b65aOIk+fLH98LaDWBBTBGc4vVox/fO1V91l/3x1RRdXCmEwd3d+LArogDu7txeE/EofLzQ+XzwfLzQ7vLWCu/b890p4y2TuwtJ2Izq1HWid3l81T1mIio0qxbTsomJ9b+2b1+Ef3yX1s+xXL5vPR8JC2uBlOx+uu7uFSsTt4ulh+fK6dNZ+eLODcfcboMqTNlPFVBVU2hqm+bLX9cbyUgewILoOaqydDxMnaOz106SusHUG+W3AEAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBITGABACQmsAAAEhNYAACJCSwAgMQEFgBAYgILACAxgQUAkJjAAgBI7M8AEVZ9YYB+7i0AAAAASUVORK5CYII\\u003d\"\n  },\n  \"description\": \"Integrates the Facebook/Meta Pixel into the page and allows easy event tracking.\",\n  \"containerContexts\": [\n    \"WEB\"\n  ]\n}\n\n\n___TEMPLATE_PARAMETERS___\n\n[\n  {\n    \"type\": \"GROUP\",\n    \"name\": \"baseConfigurationGroup\",\n    \"subParams\": [\n      {\n        \"type\": \"TEXT\",\n        \"name\": \"pixelIds\",\n        \"displayName\": \"Facebook Pixel ID(s)\",\n        \"simpleValueType\": true,\n        \"valueValidators\": [\n          {\n            \"type\": \"NON_EMPTY\"\n          },\n          {\n            \"type\": \"REGEX\",\n            \"args\": [\n              \"^[0-9,]+$\"\n            ]\n          }\n        ],\n        \"help\": \"Set to a valid Facebook Pixel ID.\",\n        \"alwaysInSummary\": true\n      },\n      {\n        \"type\": \"SELECT\",\n        \"name\": \"inheritEventName\",\n        \"displayName\": \"Event Name Setup Method\",\n        \"selectItems\": [\n          {\n            \"value\": \"inherit\",\n            \"displayValue\": \"Inherit from DataLayer\"\n          },\n          {\n            \"value\": \"override\",\n            \"displayValue\": \"Override\"\n          }\n        ],\n        \"simpleValueType\": true,\n        \"subParams\": [\n          {\n            \"type\": \"RADIO\",\n            \"name\": \"eventName\",\n            \"radioItems\": [\n              {\n                \"value\": \"standard\",\n                \"displayValue\": \"Standard\",\n                \"subParams\": [\n                  {\n                    \"type\": \"SELECT\",\n                    \"name\": \"eventNameStandard\",\n                    \"macrosInSelect\": false,\n                    \"selectItems\": [\n                      {\n                        \"value\": \"PageView\",\n                        \"displayValue\": \"PageView\"\n                      },\n                      {\n                        \"value\": \"AddPaymentInfo\",\n                        \"displayValue\": \"AddPaymentInfo\"\n                      },\n                      {\n                        \"value\": \"AddToCart\",\n                        \"displayValue\": \"AddToCart\"\n                      },\n                      {\n                        \"value\": \"AddToWishlist\",\n                        \"displayValue\": \"AddToWishlist\"\n                      },\n                      {\n                        \"value\": \"CompleteRegistration\",\n                        \"displayValue\": \"CompleteRegistration\"\n                      },\n                      {\n                        \"value\": \"Contact\",\n                        \"displayValue\": \"Contact\"\n                      },\n                      {\n                        \"value\": \"CustomizeProduct\",\n                        \"displayValue\": \"CustomizeProduct\"\n                      },\n                      {\n                        \"value\": \"Donate\",\n                        \"displayValue\": \"Donate\"\n                      },\n                      {\n                        \"value\": \"FindLocation\",\n                        \"displayValue\": \"FindLocation\"\n                      },\n                      {\n                        \"value\": \"InitiateCheckout\",\n                        \"displayValue\": \"InitiateCheckout\"\n                      },\n                      {\n                        \"value\": \"Lead\",\n                        \"displayValue\": \"Lead\"\n                      },\n                      {\n                        \"value\": \"Purchase\",\n                        \"displayValue\": \"Purchase\"\n                      },\n                      {\n                        \"value\": \"Schedule\",\n                        \"displayValue\": \"Schedule\"\n                      },\n                      {\n                        \"value\": \"Search\",\n                        \"displayValue\": \"Search\"\n                      },\n                      {\n                        \"value\": \"StartTrial\",\n                        \"displayValue\": \"StartTrial\"\n                      },\n                      {\n                        \"value\": \"SubmitApplication\",\n                        \"displayValue\": \"SubmitApplication\"\n                      },\n                      {\n                        \"value\": \"Subscribe\",\n                        \"displayValue\": \"Subscribe\"\n                      },\n                      {\n                        \"value\": \"ViewContent\",\n                        \"displayValue\": \"ViewContent\"\n                      }\n                    ],\n                    \"simpleValueType\": true,\n                    \"displayName\": \"Event Name\",\n                    \"defaultValue\": \"PageView\"\n                  }\n                ]\n              },\n              {\n                \"value\": \"custom\",\n                \"displayValue\": \"Custom\",\n                \"subParams\": [\n                  {\n                    \"type\": \"TEXT\",\n                    \"name\": \"eventNameCustom\",\n                    \"simpleValueType\": true,\n                    \"displayName\": \"Event Name\",\n                    \"valueValidators\": [\n                      {\n                        \"type\": \"NON_EMPTY\"\n                      }\n                    ]\n                  }\n                ]\n              }\n            ],\n            \"simpleValueType\": true,\n            \"enablingConditions\": [\n              {\n                \"paramName\": \"inheritEventName\",\n                \"paramValue\": \"override\",\n                \"type\": \"EQUALS\"\n              }\n            ],\n            \"displayName\": \"Event Type\"\n          }\n        ],\n        \"defaultValue\": \"override\",\n        \"alwaysInSummary\": true\n      },\n      {\n        \"type\": \"CHECKBOX\",\n        \"name\": \"enableDataLayerMapping\",\n        \"checkboxText\": \"Enable automatic User Data and Event Parameters mapping from the Data Layer\",\n        \"simpleValueType\": true,\n        \"help\": \"If you check this, then the Facebook tag will populate standard Object Properties and User Data automatically from the DataLayer. The tag parses Universal Analytics,  \\u003ca target\\u003d\\\"_blank\\\" href\\u003d\\\"https://developers.google.com/analytics/devguides/collection/ga4/ecommerce\\\"\\u003eGA4\\u003c/a\\u003e and \\u003ca target\\u003d\\\"_blank\\\" href\\u003d\\\"https://developers.google.com/tag-platform/tag-manager/server-side/common-event-data\\\"\\u003eCommon Event Data\\u003c/a\\u003e formats.\",\n        \"defaultValue\": true,\n        \"alwaysInSummary\": true\n      },\n      {\n        \"type\": \"CHECKBOX\",\n        \"name\": \"enableCurrentDataLayerOnly\",\n        \"checkboxText\": \"Use data only from the most recent Data Layer event where the data can be found (ignore recursive merges)\",\n        \"simpleValueType\": true,\n        \"help\": \"If enabled, the tag will take data only from the most recent Data Layer event where the data can be found. \\n\\u003cbr/\\u003e\\u003cbr/\\u003e\\nIn other words, the tag will ignore recursive merges for Data Layer variables and take only the most recent value of the data. \\u003ca href\\u003d\\\"https://www.simoahava.com/gtm-tips/data-layer-variable-versions-explained/\\\"\\u003eLearn more\\u003c/a\\u003e.\\n\\u003cbr/\\u003e\\nThat\\u0027s how it worked in the old Facebook pixel tag.\",\n        \"defaultValue\": false,\n        \"enablingConditions\": [\n          {\n            \"paramName\": \"enableDataLayerMapping\",\n            \"paramValue\": true,\n            \"type\": \"EQUALS\"\n          }\n        ],\n        \"alwaysInSummary\": true\n      },\n      {\n        \"type\": \"CHECKBOX\",\n        \"name\": \"enableEdvancedMatching\",\n        \"checkboxText\": \"Enable Advanced Matching\",\n        \"simpleValueType\": true,\n        \"help\": \"Enable sending of user personal information such as email addresses, names, etc. to Meta.\\n\\u003cbr/\\u003e\\nMore information can be found \\u003ca target\\u003d\\\"_blank\\\" href\\u003d\\\"https://developers.facebook.com/docs/meta-pixel/advanced/advanced-matching/\\\"\\u003ehere\\u003c/a\\u003e.\",\n        \"subParams\": [\n          {\n            \"type\": \"GROUP\",\n            \"name\": \"advancedMatchingGroup\",\n            \"subParams\": [\n              {\n                \"type\": \"CHECKBOX\",\n                \"name\": \"enableEventEnhancement\",\n                \"checkboxText\": \"Enable Event Enhancement\",\n                \"simpleValueType\": true,\n                \"help\": \"Enable the use of \\u003ci\\u003elocalStorage\\u003c/i\\u003e to store data for enhanced event tracking.\\n\\u003cbr/\\u003e\\u003cbr/\\u003e\\nNote: If the \\u003ci\\u003eEnable automatic data population from the Data Layer\\u003c/i\\u003e option is selected, all User Data it finds in the Data Layer will be stored, not just the fields explicitly defined in the User Data section.\",\n                \"subParams\": [\n                  {\n                    \"type\": \"CHECKBOX\",\n                    \"name\": \"storeUserDataHashed\",\n                    \"checkboxText\": \"Store User Data hashed\",\n                    \"simpleValueType\": true,\n                    \"help\": \"The User Data will be stored hashed in \\u003ci\\u003elocalStorage\\u003c/i\\u003e.\",\n                    \"enablingConditions\": [\n                      {\n                        \"paramName\": \"enableEventEnhancement\",\n                        \"paramValue\": true,\n                        \"type\": \"EQUALS\"\n                      }\n                    ]\n                  }\n                ]\n              },\n              {\n                \"type\": \"CHECKBOX\",\n                \"name\": \"runInitOnce\",\n                \"checkboxText\": \"Run the \\u0027init\\u0027 command only once\",\n                \"simpleValueType\": true,\n                \"help\": \"When Advanced Matching is enabled, the tag runs the \\u003ci\\u003einit\\u003c/i\\u003e command with each event to send user information that becomes available after page load.\\n\\u003cbr/\\u003e\\u003cbr/\\u003e\\nThis causes the following message in the Console from the fbevents.js file:\\n\\u003ci\\u003e[Meta Pixel] - Duplicate Pixel ID: {Pixel ID}.\\u003c/i\\u003e\\n\\u003cbr/\\u003e\\u003cbr/\\u003e\\nEnable this option to skip repeated \\u003ci\\u003einit\\u003c/i\\u003e calls and suppress the Console message. Note that Advanced Matching data found after the first call won’t be sent.\"\n              }\n            ],\n            \"enablingConditions\": [\n              {\n                \"paramName\": \"enableEdvancedMatching\",\n                \"paramValue\": true,\n                \"type\": \"EQUALS\"\n              }\n            ]\n          }\n        ],\n        \"defaultValue\": true,\n        \"alwaysInSummary\": true\n      }\n    ]\n  },\n  {\n    \"type\": \"GROUP\",\n    \"name\": \"complianceGroup\",\n    \"displayName\": \"Compliance\",\n    \"groupStyle\": \"ZIPPY_OPEN\",\n    \"subParams\": [\n      {\n        \"type\": \"SELECT\",\n        \"name\": \"consent\",\n        \"displayName\": \"Consent Granted\",\n        \"macrosInSelect\": true,\n        \"selectItems\": [\n          {\n            \"value\": true,\n            \"displayValue\": \"True\"\n          },\n          {\n            \"value\": false,\n            \"displayValue\": \"False\"\n          }\n        ],\n        \"simpleValueType\": true,\n        \"help\": \"Setting Consent Granted to \\u003cstrong\\u003efalse\\u003c/strong\\u003e will prevent the pixel from sending hits until tag fired with Consent Granted \\u003cstrong\\u003etrue\\u003c/strong\\u003e. More info \\u003ca href\\u003d\\\"hhttps://developers.facebook.com/docs/meta-pixel/implementation/gdpr\\\"\\u003eby this link\\u003c/a\\u003e.\",\n        \"enablingConditions\": [\n          {\n            \"paramName\": \"enableConsentMode\",\n            \"paramValue\": false,\n            \"type\": \"EQUALS\"\n          }\n        ]\n      },\n      {\n        \"type\": \"CHECKBOX\",\n        \"name\": \"enableConsentMode\",\n        \"checkboxText\": \"Enable GTM consent mode support\",\n        \"simpleValueType\": true,\n        \"help\": \"If enabled, the tag will check for ad_storage, and if it not granted, it will set the Facebook pixel consent to revoke. After the consent is granted, it will automatically execute fbq(\\u0027consent\\u0027, \\u0027grant\\u0027);\"\n      },\n      {\n        \"type\": \"CHECKBOX\",\n        \"name\": \"dpoLDU\",\n        \"checkboxText\": \"Limited Data Use (LDU)\",\n        \"simpleValueType\": true,\n        \"help\": \"Limited Data Use is a data processing option that gives you more control over how your data is used in Meta’s systems. More info \\u003ca target\\u003d\\\"_blank\\\" href\\u003d\\\"https://developers.facebook.com/docs/meta-pixel/implementation/data-processing-options\\\"\\u003eby this link\\u003c/a\\u003e.\"\n      },\n      {\n        \"type\": \"TEXT\",\n        \"name\": \"dpoCountry\",\n        \"displayName\": \"Country\",\n        \"simpleValueType\": true,\n        \"defaultValue\": 0,\n        \"enablingConditions\": [\n          {\n            \"paramName\": \"dpoLDU\",\n            \"paramValue\": true,\n            \"type\": \"EQUALS\"\n          }\n        ],\n        \"valueValidators\": [\n          {\n            \"type\": \"NUMBER\"\n          }\n        ]\n      },\n      {\n        \"type\": \"TEXT\",\n        \"name\": \"dpoState\",\n        \"displayName\": \"State\",\n        \"simpleValueType\": true,\n        \"defaultValue\": 0,\n        \"enablingConditions\": [\n          {\n            \"paramName\": \"dpoLDU\",\n            \"paramValue\": true,\n            \"type\": \"EQUALS\"\n          }\n        ],\n        \"valueValidators\": [\n          {\n            \"type\": \"NUMBER\"\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"displayName\": \"User Data\",\n    \"name\": \"userDataListGroup\",\n    \"groupStyle\": \"ZIPPY_CLOSED\",\n    \"type\": \"GROUP\",\n    \"subParams\": [\n      {\n        \"type\": \"LABEL\",\n        \"name\": \"userDataLabel\",\n        \"displayName\": \"User Data Properties that you can send to Meta can be found at \\u003ca target\\u003d\\\"_blank\\\" href\\u003d\\\"https://developers.facebook.com/docs/meta-pixel/advanced/advanced-matching\\\"\\u003ethis link\\u003c/a\\u003e.\\u003cbr\\u003e\\u003cbr\\u003e\"\n      },\n      {\n        \"type\": \"SELECT\",\n        \"name\": \"userDataFromVariable\",\n        \"displayName\": \"Load Properties From Variable\",\n        \"macrosInSelect\": true,\n        \"selectItems\": [\n          {\n            \"value\": false,\n            \"displayValue\": \"False\"\n          }\n        ],\n        \"simpleValueType\": true,\n        \"help\": \"You can use a standard User-Provided Data variable or create a variable that returns a JavaScript object with the desired user data properties. This object will merge with additional properties from the table below, with any conflicts resolved in favor of the table entries.\"\n      },\n      {\n        \"name\": \"userDataList\",\n        \"simpleTableColumns\": [\n          {\n            \"valueValidators\": [\n              {\n                \"type\": \"NON_EMPTY\"\n              }\n            ],\n            \"defaultValue\": \"em\",\n            \"displayName\": \"Property Name\",\n            \"name\": \"name\",\n            \"isUnique\": true,\n            \"type\": \"SELECT\",\n            \"selectItems\": [\n              {\n                \"value\": \"em\",\n                \"displayValue\": \"Email\"\n              },\n              {\n                \"value\": \"ph\",\n                \"displayValue\": \"Phone\"\n              },\n              {\n                \"value\": \"ge\",\n                \"displayValue\": \"Gender\"\n              },\n              {\n                \"value\": \"db\",\n                \"displayValue\": \"Date of Birth\"\n              },\n              {\n                \"value\": \"ln\",\n                \"displayValue\": \"Last Name\"\n              },\n              {\n                \"value\": \"fn\",\n                \"displayValue\": \"First Name\"\n              },\n              {\n                \"value\": \"ct\",\n                \"displayValue\": \"City\"\n              },\n              {\n                \"value\": \"st\",\n                \"displayValue\": \"State\"\n              },\n              {\n                \"value\": \"zp\",\n                \"displayValue\": \"Zip\"\n              },\n              {\n                \"value\": \"country\",\n                \"displayValue\": \"Country\"\n              },\n              {\n                \"value\": \"external_id\",\n                \"displayValue\": \"External ID\"\n              }\n            ]\n          },\n          {\n            \"defaultValue\": \"\",\n            \"displayName\": \"Property Value\",\n            \"name\": \"value\",\n            \"type\": \"TEXT\"\n          }\n        ],\n        \"type\": \"SIMPLE_TABLE\",\n        \"newRowButtonText\": \"Add property\"\n      }\n    ],\n    \"enablingConditions\": [\n      {\n        \"paramName\": \"enableEdvancedMatching\",\n        \"paramValue\": true,\n        \"type\": \"EQUALS\"\n      }\n    ]\n  },\n  {\n    \"displayName\": \"Object Properties\",\n    \"name\": \"objectPropertiesGroup\",\n    \"groupStyle\": \"ZIPPY_CLOSED\",\n    \"type\": \"GROUP\",\n    \"subParams\": [\n      {\n        \"type\": \"LABEL\",\n        \"name\": \"objectPropertiesLabel\",\n        \"displayName\": \"Standard Object Properties that you can send to Meta can be found at \\u003ca target\\u003d\\\"_blank\\\" href\\u003d\\\"https://developers.facebook.com/docs/meta-pixel/reference#object-properties\\\"\\u003ethis link\\u003c/a\\u003e.\\u003cbr\\u003e\\u003cbr\\u003e\"\n      },\n      {\n        \"type\": \"SELECT\",\n        \"name\": \"objectPropertiesFromVariable\",\n        \"displayName\": \"Load Properties From Variable\",\n        \"macrosInSelect\": true,\n        \"selectItems\": [\n          {\n            \"value\": false,\n            \"displayValue\": \"False\"\n          }\n        ],\n        \"simpleValueType\": true,\n        \"help\": \"You can create a variable that returns a JavaScript object with the desired properties. This object will merge with additional properties from the table below, with any conflicts resolved in favor of the table entries.\"\n      },\n      {\n        \"name\": \"objectPropertiesList\",\n        \"simpleTableColumns\": [\n          {\n            \"valueValidators\": [],\n            \"defaultValue\": \"\",\n            \"displayName\": \"Property Name\",\n            \"name\": \"name\",\n            \"isUnique\": true,\n            \"type\": \"TEXT\"\n          },\n          {\n            \"defaultValue\": \"\",\n            \"displayName\": \"Property Value\",\n            \"name\": \"value\",\n            \"type\": \"TEXT\"\n          }\n        ],\n        \"type\": \"SIMPLE_TABLE\",\n        \"newRowButtonText\": \"Add property\"\n      }\n    ]\n  },\n  {\n    \"type\": \"GROUP\",\n    \"name\": \"serverGroup\",\n    \"displayName\": \"Server Side Tracking\",\n    \"groupStyle\": \"ZIPPY_CLOSED\",\n    \"subParams\": [\n      {\n        \"type\": \"TEXT\",\n        \"name\": \"eventId\",\n        \"displayName\": \"Event ID\",\n        \"simpleValueType\": true,\n        \"help\": \"Set the Event ID parameter in case you are tracking the same event server-side as well. The Event ID can be used to deduplicate the same event if sent from multiple sources. See more \\u003ca href\\u003d\\\"https://developers.facebook.com/docs/marketing-api/conversions-api/deduplicate-pixel-and-server-events/\\\"\\u003ehere\\u003c/a\\u003e.\"\n      },\n      {\n        \"type\": \"GROUP\",\n        \"name\": \"advancedSettingsGroup\",\n        \"displayName\": \"Advanced Settings\",\n        \"groupStyle\": \"ZIPPY_OPEN_ON_PARAM\",\n        \"subParams\": [\n          {\n            \"type\": \"CHECKBOX\",\n            \"name\": \"dataLayerEventPush\",\n            \"checkboxText\": \"Push event to DataLayer with this eventId\",\n            \"simpleValueType\": true,\n            \"help\": \"Helpful for easier events deduplication.\",\n            \"defaultValue\": false\n          },\n          {\n            \"type\": \"TEXT\",\n            \"name\": \"dataLayerEventName\",\n            \"displayName\": \"DataLayer Event Name\",\n            \"simpleValueType\": true,\n            \"enablingConditions\": [\n              {\n                \"paramName\": \"dataLayerEventPush\",\n                \"paramValue\": true,\n                \"type\": \"EQUALS\"\n              }\n            ],\n            \"valueValidators\": [\n              {\n                \"type\": \"NON_EMPTY\"\n              }\n            ],\n            \"valueHint\": \"page_view_unique\"\n          },\n          {\n            \"type\": \"TEXT\",\n            \"name\": \"dataLayerVariableName\",\n            \"displayName\": \"DataLayer Object Name\",\n            \"simpleValueType\": true,\n            \"enablingConditions\": [\n              {\n                \"paramName\": \"dataLayerEventPush\",\n                \"paramValue\": true,\n                \"type\": \"EQUALS\"\n              }\n            ],\n            \"valueValidators\": [\n              {\n                \"type\": \"NON_EMPTY\"\n              }\n            ],\n            \"defaultValue\": \"dataLayer\",\n            \"help\": \"Use dataLayer by default. Modify only if you renamed dataLayer object name.\"\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"type\": \"GROUP\",\n    \"name\": \"otherSettingsGroup\",\n    \"displayName\": \"Other Settings\",\n    \"groupStyle\": \"ZIPPY_CLOSED\",\n    \"subParams\": [\n      {\n        \"help\": \"Facebook automatically collects metadata and user interactions (e.g., clicks). Check this box to disable this functionality.\",\n        \"simpleValueType\": true,\n        \"name\": \"disableAutoConfig\",\n        \"checkboxText\": \"Disable Automatic Configuration\",\n        \"type\": \"CHECKBOX\"\n      },\n      {\n        \"type\": \"CHECKBOX\",\n        \"name\": \"disablePushState\",\n        \"checkboxText\": \"Disable History Event Tracking\",\n        \"simpleValueType\": true,\n        \"help\": \"The Facebook Pixel automatically tracks history events (pushState and replaceState) as PageViews. Check this box to disable this automatic tracking.\"\n      }\n    ]\n  }\n]\n\n\n___SANDBOXED_JS_FOR_WEB_TEMPLATE___\n\nconst addConsentListener = require('addConsentListener');\nconst aliasInWindow = require('aliasInWindow');\nconst callInWindow = require('callInWindow');\nconst copyFromDataLayer = require('copyFromDataLayer');\nconst copyFromWindow = require('copyFromWindow');\nconst createQueue = require('createQueue');\nconst getType = require('getType');\nconst injectScript = require('injectScript');\nconst isConsentGranted = require('isConsentGranted');\nconst JSON = require('JSON');\nconst localStorage = require('localStorage');\nconst makeNumber = require('makeNumber');\nconst makeString = require('makeString');\nconst makeTableMap = require('makeTableMap');\nconst math = require('Math');\nconst Object = require('Object');\nconst setInWindow = require('setInWindow');\nconst sha256 = require('sha256');\n\n/*==============================================================================\n==============================================================================*/\n\nconst partnerName = 'stape-gtm-1.1.0';\nconst queueName = 'fbq';\nconst queue = getQueue(queueName);\nconst initIds = copyFromWindow('_meta_gtm_ids') || [];\nconst ecommerceDataLayer = copyFromDataLayer('ecommerce', 1);\nconst dataLayerVersion = data.enableCurrentDataLayerOnly ? 1 : 2;\n\nsetConsent();\nsendEvent();\nsendDataLayerPush();\n\ninjectScript('https://connect.facebook.net/en_US/fbevents.js', data.gtmOnSuccess, data.gtmOnFailure, 'metaPixel');\n\n/*==============================================================================\n  Vendor related functions\n==============================================================================*/\n\nfunction getQueue(queueName) {\n  const q = copyFromWindow(queueName);\n  if (q) {\n    return q;\n  }\n\n  setInWindow(queueName, function () {\n    const callMethod = copyFromWindow(queueName + '.callMethod.apply');\n    if (callMethod) {\n      callInWindow(queueName + '.callMethod.apply', null, arguments);\n    } else {\n      callInWindow(queueName + '.queue.push', arguments);\n    }\n  });\n\n  aliasInWindow('_' + queueName, queueName);\n  createQueue(queueName + '.queue');\n\n  return copyFromWindow(queueName);\n}\n\nfunction setConsent() {\n  if (data.dpoLDU) {\n    queue('dataProcessingOptions', ['LDU'], makeNumber(data.dpoCountry), makeNumber(data.dpoState));\n  }\n\n  if (data.enableConsentMode) {\n    if (!isConsentGranted('ad_storage')) {\n      queue('consent', 'revoke');\n\n      let wasCalled = false;\n\n      addConsentListener('ad_storage', (consentType, granted) => {\n        if (wasCalled || consentType !== 'ad_storage' || !granted) return;\n        wasCalled = true;\n\n        queue('consent', 'grant');\n      });\n\n      return;\n    }\n\n    queue('consent', 'grant');\n\n    return;\n  }\n\n  queue('consent', data.consent === false ? 'revoke' : 'grant');\n}\n\nfunction setSettings(pixelId) {\n  if (data.disableAutoConfig) {\n    queue('set', 'autoConfig', false, pixelId);\n  }\n\n  if (data.disablePushState) {\n    setInWindow(queueName + '.disablePushState', true);\n  }\n}\n\nfunction sendEvent() {\n  const pixelIds = data.pixelIds;\n  const eventName = getEventName();\n  const command = getCommand(eventName);\n  const eventData = getEventData(eventName);\n  const userData = getUserData();\n\n  pixelIds.split(',').forEach((pixelId) => {\n    const isNotInitialized = initIds.indexOf(pixelId) === -1;\n\n    if (isNotInitialized) {\n      initIds.push(pixelId);\n      setInWindow('_meta_gtm_ids', initIds, true);\n      setSettings();\n    }\n\n    if (isNotInitialized || (data.enableEdvancedMatching && !data.runInitOnce)) queue('init', pixelId, userData);\n    queue('set', 'agent', partnerName, pixelId);\n    queue(command, pixelId, eventName, eventData, data.eventId ? { eventID: data.eventId } : undefined);\n  });\n}\n\nfunction getEventName() {\n  if (data.inheritEventName === 'inherit') {\n    let eventName = copyFromDataLayer('event');\n\n    if (!eventName) {\n      if (ecommerceDataLayer.detail) eventName = 'ViewContent';\n      else if (ecommerceDataLayer.add) eventName = 'AddToCart';\n      else if (ecommerceDataLayer.checkout) eventName = 'InitiateCheckout';\n      else if (ecommerceDataLayer.purchase) eventName = 'Purchase';\n    }\n\n    const mapFacebookEventName = {\n      page_view: 'PageView',\n      'gtm.dom': 'PageView',\n      add_payment_info: 'AddPaymentInfo',\n      add_to_cart: 'AddToCart',\n      add_to_wishlist: 'AddToWishlist',\n      sign_up: 'CompleteRegistration',\n      begin_checkout: 'InitiateCheckout',\n      generate_lead: 'Lead',\n      purchase: 'Purchase',\n      search: 'Search',\n      view_item: 'ViewContent',\n\n      contact: 'Contact',\n      customize_product: 'CustomizeProduct',\n      donate: 'Donate',\n      find_location: 'FindLocation',\n      schedule: 'Schedule',\n      start_trial: 'StartTrial',\n      submit_application: 'SubmitApplication',\n      subscribe: 'Subscribe',\n\n      page_view_stape: 'PageView',\n      add_payment_info_stape: 'AddPaymentInfo',\n      add_to_cart_stape: 'AddToCart',\n      sign_up_stape: 'CompleteRegistration',\n      begin_checkout_stape: 'InitiateCheckout',\n      purchase_stape: 'Purchase',\n      view_item_stape: 'ViewContent',\n\n      'gtm4wp.addProductToCartEEC': 'AddToCart',\n      'gtm4wp.productClickEEC': 'ViewContent',\n      'gtm4wp.checkoutOptionEEC': 'InitiateCheckout',\n      'gtm4wp.checkoutStepEEC': 'AddPaymentInfo',\n      'gtm4wp.orderCompletedEEC': 'Purchase'\n    };\n\n    if (!mapFacebookEventName[eventName]) {\n      return eventName;\n    }\n\n    return mapFacebookEventName[eventName];\n  }\n\n  return data.eventName === 'standard' ? data.eventNameStandard : data.eventNameCustom;\n}\n\nfunction getCommand(eventName) {\n  return [\n    'AddPaymentInfo',\n    'AddToCart',\n    'AddToWishlist',\n    'CompleteRegistration',\n    'Contact',\n    'CustomizeProduct',\n    'Donate',\n    'FindLocation',\n    'InitiateCheckout',\n    'Lead',\n    'PageView',\n    'Purchase',\n    'Schedule',\n    'Search',\n    'StartTrial',\n    'SubmitApplication',\n    'Subscribe',\n    'ViewContent'\n  ].indexOf(eventName) === -1\n    ? 'trackSingleCustom'\n    : 'trackSingle';\n}\n\nfunction getUserData() {\n  if (!data.enableEdvancedMatching) {\n    return;\n  }\n\n  let userData = {};\n\n  if (data.enableEventEnhancement) {\n    userData = getEventEnhancement(userData);\n  }\n\n  if (data.enableDataLayerMapping) {\n    let userDataFromDataLayer = getDL('user_data');\n\n    if (getType(userDataFromDataLayer) === 'object') {\n      parseUserData(userData, userDataFromDataLayer, true);\n    }\n  }\n\n  if (getType(data.userDataFromVariable) === 'object') {\n    parseUserData(userData, data.userDataFromVariable, false);\n  }\n\n  if (data.userDataList && data.userDataList.length) {\n    userData = mergeObjects(userData, makeTableMap(data.userDataList, 'name', 'value'));\n  }\n\n  if (objIsEmptyOrContainsOnlyFalsyValues(userData)) {\n    return;\n  }\n\n  if (data.enableEventEnhancement) {\n    storeEventEnhancement(userData);\n  }\n\n  return userData;\n}\n\nfunction getEventData(eventName) {\n  let objectProperties = {};\n\n  if (data.enableDataLayerMapping) {\n    const ecommerce = getDL('ecommerce');\n\n    if (ecommerce) {\n      objectProperties = getUAEventData(eventName, objectProperties, ecommerce);\n    }\n    if (!objectProperties.content_type) {\n      objectProperties = getGA4EventData(eventName, objectProperties, ecommerce);\n    }\n  }\n\n  if (getType(data.objectPropertiesFromVariable) === 'object') {\n    mergeObjects(objectProperties, data.objectPropertiesFromVariable);\n  }\n\n  if (data.objectPropertiesList && data.objectPropertiesList.length) {\n    objectProperties = mergeObjects(objectProperties, makeTableMap(data.objectPropertiesList, 'name', 'value'));\n  }\n\n  return objectProperties;\n}\n\nfunction getEventEnhancement() {\n  if (localStorage) {\n    const gtmeec = localStorage.getItem('gtmeec');\n\n    if (gtmeec) {\n      const gtmeecParsed = JSON.parse(gtmeec);\n\n      if (getType(gtmeecParsed) === 'object') {\n        return gtmeecParsed;\n      }\n    }\n  }\n\n  return {};\n}\n\nfunction normalizeBasedOnSchemaKey(schemaKey, identifier) {\n  if (schemaKey === 'ph') return normalizePhoneNumber(identifier);\n  else if (schemaKey === 'ct' || schemaKey === 'st' || schemaKey === 'zp') {\n    return removeWhiteSpace(identifier);\n  } else return identifier;\n}\n\nfunction hashUserDataFields(userData, storeUserDataInLocalStorage) {\n  const canUseHashSync = getType(copyFromWindow('dataTag256')) === 'function';\n  const hashAsyncHelpers = {\n    pendingHashs: 0,\n    maybeFinish: (userDataHashed) => {\n      if (hashAsyncHelpers.pendingHashs === 0) storeUserDataInLocalStorage(userDataHashed);\n    }\n  };\n\n  const userDataHashed = {};\n\n  const fieldNames = Object.keys(userData);\n  fieldNames.forEach((fieldName) => {\n    const value = userData[fieldName];\n\n    if (value === undefined || value === null || value === '') return;\n    if (isHashed(value)) {\n      userDataHashed[fieldName] = value;\n      return;\n    }\n\n    const normalizedValue = makeString(normalizeBasedOnSchemaKey(fieldName, value)).toLowerCase().trim();\n    if (canUseHashSync) userDataHashed[fieldName] = callInWindow('dataTag256', normalizedValue, 'HEX');\n    else {\n      hashAsyncHelpers.pendingHashs++;\n      sha256(\n        normalizedValue,\n        (digest) => {\n          userDataHashed[fieldName] = digest;\n          hashAsyncHelpers.pendingHashs--;\n          hashAsyncHelpers.maybeFinish(userDataHashed);\n        },\n        () => {\n          hashAsyncHelpers.pendingHashs--;\n        },\n        { outputEncoding: 'hex' }\n      );\n    }\n  });\n\n  if (canUseHashSync) {\n    storeUserDataInLocalStorage(userDataHashed);\n    return userDataHashed;\n  } else {\n    hashAsyncHelpers.maybeFinish(userDataHashed);\n    return;\n  }\n}\n\nfunction storeUserDataInLocalStorage(userData) {\n  if (!objHasProps(userData)) return;\n  const gtmeec = JSON.stringify(userData);\n  localStorage.setItem('gtmeec', gtmeec);\n}\n\nfunction storeEventEnhancement(userData) {\n  if (localStorage && objHasProps(userData)) {\n    if (!data.storeUserDataHashed) storeUserDataInLocalStorage(userData);\n    else hashUserDataFields(userData, storeUserDataInLocalStorage);\n  }\n}\n\nfunction sendDataLayerPush() {\n  if (data.dataLayerEventPush) {\n    const dataLayerQueueName = data.dataLayerVariableName || 'dataLayer';\n    const dataLayerPush = createQueue(dataLayerQueueName);\n\n    dataLayerPush({ eventId: data.eventId, event: data.dataLayerEventName || 'DefaultTagEvent' });\n  }\n}\n\nfunction parseUserData(userData, userDataFrom, useDL) {\n  let email = userDataFrom.email || userDataFrom.sha256_email_address || userDataFrom.email_address || userDataFrom.em;\n  const emailType = getType(email);\n  if (emailType === 'array' || emailType === 'object') email = email[0];\n  if (email) userData.em = email;\n\n  let phone = userDataFrom.phone || userDataFrom.sha256_phone_number || userDataFrom.phone_number || userDataFrom.ph;\n  const phoneType = getType(phone);\n  if (phoneType === 'array' || phoneType === 'object') phone = phone[0];\n  if (phone) userData.ph = phone;\n\n  if (userDataFrom.firstName) userData.fn = userDataFrom.firstName;\n  else if (userDataFrom.nameFirst) userData.fn = userDataFrom.nameFirst;\n  else if (userDataFrom.first_name) userData.fn = userDataFrom.first_name;\n  else if (userDataFrom.fn) userData.fn = userDataFrom.fn;\n  else if (userDataFrom.address && userDataFrom.address.sha256_first_name) userData.fn = userDataFrom.address.sha256_first_name;\n  else if (userDataFrom.address && userDataFrom.address[0] && userDataFrom.address[0].sha256_first_name) userData.fn = userDataFrom.address[0].sha256_first_name;\n  else if (userDataFrom.address && userDataFrom.address.first_name) userData.fn = userDataFrom.address.first_name;\n  else if (userDataFrom.address && userDataFrom.address[0] && userDataFrom.address[0].first_name) userData.fn = userDataFrom.address[0].first_name;\n\n  if (userDataFrom.lastName) userData.ln = userDataFrom.lastName;\n  else if (userDataFrom.nameLast) userData.ln = userDataFrom.nameLast;\n  else if (userDataFrom.last_name) userData.ln = userDataFrom.last_name;\n  else if (userDataFrom.ln) userData.ln = userDataFrom.ln;\n  else if (userDataFrom.address && userDataFrom.address.sha256_last_name) userData.ln = userDataFrom.address.sha256_last_name;\n  else if (userDataFrom.address && userDataFrom.address[0] && userDataFrom.address[0].sha256_last_name) userData.ln = userDataFrom.address[0].sha256_last_name;\n  else if (userDataFrom.address && userDataFrom.address.last_name) userData.ln = userDataFrom.address.last_name;\n  else if (userDataFrom.address && userDataFrom.address[0] && userDataFrom.address[0].last_name) userData.ln = userDataFrom.address[0].last_name;\n\n  if (userDataFrom.ge) userData.ge = userDataFrom.ge;\n  if (userDataFrom.db) userData.db = userDataFrom.db;\n\n  if (userDataFrom.city) userData.ct = userDataFrom.city;\n  else if (userDataFrom.ct) userData.ct = userDataFrom.ct;\n  else if (userDataFrom.address && userDataFrom.address.city) userData.ct = userDataFrom.address.city;\n  else if (userDataFrom.address && userDataFrom.address[0] && userDataFrom.address[0].city) userData.ct = userDataFrom.address[0].city;\n\n  if (userDataFrom.state) userData.st = userDataFrom.state;\n  else if (userDataFrom.region) userData.st = userDataFrom.region;\n  else if (userDataFrom.st) userData.st = userDataFrom.st;\n  else if (userDataFrom.address && userDataFrom.address.state) userData.st = userDataFrom.address.state;\n  else if (userDataFrom.address && userDataFrom.address[0] && userDataFrom.address[0].state) userData.st = userDataFrom.address[0].state;\n  else if (userDataFrom.address && userDataFrom.address.region) userData.st = userDataFrom.address.region;\n  else if (userDataFrom.address && userDataFrom.address[0] && userDataFrom.address[0].region) userData.st = userDataFrom.address[0].region;\n\n  if (userDataFrom.zip) userData.zp = userDataFrom.zip;\n  else if (userDataFrom.postal_code) userData.zp = userDataFrom.postal_code;\n  else if (userDataFrom.zp) userData.zp = userDataFrom.zp;\n  else if (userDataFrom.address && userDataFrom.address.postal_code) userData.zp = userDataFrom.address.postal_code;\n  else if (userDataFrom.address && userDataFrom.address[0] && userDataFrom.address[0].postal_code) userData.zp = userDataFrom.address[0].postal_code;\n  else if (userDataFrom.address && userDataFrom.address.zip) userData.zp = userDataFrom.address.zip;\n  else if (userDataFrom.address && userDataFrom.address[0] && userDataFrom.address[0].zip) userData.zp = userDataFrom.address[0].zip;\n\n  if (userDataFrom.country) userData.country = userDataFrom.country;\n  else if (userDataFrom.address && userDataFrom.address.country) userData.country = userDataFrom.address.country;\n  else if (userDataFrom.address && userDataFrom.address[0] && userDataFrom.address[0].country) userData.country = userDataFrom.address[0].country;\n\n  if (userDataFrom.external_id) userData.external_id = userDataFrom.external_id;\n  else if (userDataFrom.user_id) userData.external_id = userDataFrom.user_id;\n  else if (userDataFrom.userId) userData.external_id = userDataFrom.userId;\n  else if (useDL && getDL('external_id')) userData.external_id = getDL('external_id');\n  else if (useDL && getDL('user_id')) userData.external_id = getDL('user_id');\n  else if (useDL && getDL('userId')) userData.external_id = getDL('userId');\n\n  return userData;\n}\n\nfunction getUAEventData(eventName, objectProperties, ecommerce) {\n  const eventActionMap = {\n    ViewContent: 'detail',\n    AddToCart: 'add',\n    InitiateCheckout: 'checkout',\n    Purchase: 'purchase'\n  };\n\n  if (eventActionMap[eventName]) {\n    const action = eventActionMap[eventName];\n\n    if (ecommerce[action] && ecommerce[action].products && getType(ecommerce[action].products) === 'array') {\n      objectProperties = {\n        content_type: 'product',\n        contents: ecommerce[action].products.map((prod) => ({\n          id: prod.id,\n          quantity: makeNumber(prod.quantity) || 1,\n          item_price: makeNumber(prod.price)\n        })),\n        content_ids: ecommerce[action].products.map((prod) => prod.id),\n        value: ecommerce[action].products.reduce((acc, cur) => {\n          const curVal = math.round(makeNumber(cur.price || 0) * (cur.quantity || 1) * 100) / 100;\n          return acc + curVal;\n        }, 0.0),\n        currency: ecommerce.currencyCode || 'USD'\n      };\n\n      if (['InitiateCheckout', 'Purchase'].indexOf(eventName) > -1)\n        objectProperties.num_items = ecommerce[action].products.reduce((acc, cur) => {\n          return acc + makeNumber(cur.quantity || 1);\n        }, 0);\n    }\n  }\n\n  return objectProperties;\n}\n\nfunction getGA4EventData(eventName, objectProperties, ecommerce) {\n  let items = getDL('items');\n  if (!items && ecommerce && ecommerce.items) {\n    items = ecommerce.items;\n  }\n  let currencyFromItems = '';\n  let valueFromItems = 0;\n\n  if (items && items[0]) {\n    objectProperties.contents = [];\n    objectProperties.content_ids = [];\n    objectProperties.content_type = 'product';\n    if (['InitiateCheckout', 'Purchase'].indexOf(eventName) > -1) {\n      objectProperties.num_items = 0;\n    }\n    currencyFromItems = items[0].currency;\n\n    if (!items[1]) {\n      if (items[0].item_name) objectProperties.content_name = items[0].item_name;\n      if (items[0].item_category) objectProperties.content_category = items[0].item_category;\n      if (items[0].price) objectProperties.value = items[0].quantity ? items[0].quantity * items[0].price : items[0].price;\n    }\n\n    items.forEach((d, i) => {\n      const content = {};\n      if (d.item_id) content.id = d.item_id;\n      content.quantity = makeNumber(d.quantity) || 1;\n\n      if (d.price) {\n        let item_price = makeNumber(d.price);\n        valueFromItems += d.quantity ? d.quantity * item_price : item_price;\n        content.item_price = item_price;\n      }\n\n      objectProperties.contents.push(content);\n      objectProperties.content_ids.push(content.id);\n      if (['InitiateCheckout', 'Purchase'].indexOf(eventName) > -1) {\n        objectProperties.num_items = objectProperties.num_items + content.quantity || 1;\n      }\n    });\n  }\n\n  if (getDL('value')) objectProperties.value = getDL('value');\n\n  if (getDL('currency')) objectProperties.currency = getDL('currency');\n  else if (currencyFromItems) objectProperties.currency = currencyFromItems;\n\n  if (getDL('search_term')) objectProperties.search_string = getDL('search_term');\n\n  if (eventName === 'Purchase') {\n    if (!objectProperties.currency) objectProperties.currency = 'USD';\n    if (!objectProperties.value) objectProperties.value = valueFromItems ? valueFromItems : 0;\n  }\n\n  return objectProperties;\n}\n\nfunction getDL(name) {\n  return copyFromDataLayer(name, dataLayerVersion);\n}\n\n/*==============================================================================\n  Helpers\n==============================================================================*/\n\nfunction mergeObjects(obj1, obj2) {\n  Object.keys(obj2).forEach((key) => {\n    obj1[key] = obj2[key];\n  });\n\n  return obj1;\n}\n\nfunction objHasProps(obj) {\n  return getType(obj) === 'object' && Object.keys(obj).length > 0;\n}\n\nfunction objIsEmptyOrContainsOnlyFalsyValues(obj) {\n  if (getType(obj) !== 'object') return;\n  const objValues = Object.values(obj);\n  if (objValues.length === 0 || objValues.every((v) => !v)) return true;\n}\n\nfunction isHashed(value) {\n  if (!value) return false;\n  return makeString(value).match('^[A-Fa-f0-9]{64}$') !== null;\n}\n\nfunction normalizePhoneNumber(phoneNumber) {\n  if (!phoneNumber) return phoneNumber;\n  return phoneNumber.split('+').join('').split(' ').join('').split('-').join('').split('(').join('').split(')').join('');\n}\n\nfunction removeWhiteSpace(input) {\n  if (!input) return input;\n  return input.split(' ').join('');\n}\n\n\n___WEB_PERMISSIONS___\n\n[\n  {\n    \"instance\": {\n      \"key\": {\n        \"publicId\": \"access_globals\",\n        \"versionId\": \"1\"\n      },\n      \"param\": [\n        {\n          \"key\": \"keys\",\n          \"value\": {\n            \"type\": 2,\n            \"listItem\": [\n              {\n                \"type\": 3,\n                \"mapKey\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"key\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"read\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"write\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"execute\"\n                  }\n                ],\n                \"mapValue\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"fbq\"\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": false\n                  }\n                ]\n              },\n              {\n                \"type\": 3,\n                \"mapKey\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"key\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"read\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"write\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"execute\"\n                  }\n                ],\n                \"mapValue\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"_meta_gtm_ids\"\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": false\n                  }\n                ]\n              },\n              {\n                \"type\": 3,\n                \"mapKey\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"key\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"read\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"write\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"execute\"\n                  }\n                ],\n                \"mapValue\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"_fbq\"\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": false\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": false\n                  }\n                ]\n              },\n              {\n                \"type\": 3,\n                \"mapKey\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"key\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"read\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"write\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"execute\"\n                  }\n                ],\n                \"mapValue\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"fbq.callMethod.apply\"\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": false\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  }\n                ]\n              },\n              {\n                \"type\": 3,\n                \"mapKey\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"key\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"read\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"write\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"execute\"\n                  }\n                ],\n                \"mapValue\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"fbq.queue.push\"\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": false\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": false\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  }\n                ]\n              },\n              {\n                \"type\": 3,\n                \"mapKey\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"key\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"read\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"write\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"execute\"\n                  }\n                ],\n                \"mapValue\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"fbq.queue\"\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": false\n                  }\n                ]\n              },\n              {\n                \"type\": 3,\n                \"mapKey\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"key\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"read\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"write\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"execute\"\n                  }\n                ],\n                \"mapValue\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"fbq.disablePushState\"\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": false\n                  }\n                ]\n              },\n              {\n                \"type\": 3,\n                \"mapKey\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"key\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"read\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"write\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"execute\"\n                  }\n                ],\n                \"mapValue\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"dataLayer\"\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  }\n                ]\n              },\n              {\n                \"type\": 3,\n                \"mapKey\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"key\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"read\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"write\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"execute\"\n                  }\n                ],\n                \"mapValue\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"dataTag256\"\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": false\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  }\n                ]\n              }\n            ]\n          }\n        }\n      ]\n    },\n    \"clientAnnotations\": {\n      \"isEditedByUser\": true\n    },\n    \"isRequired\": true\n  },\n  {\n    \"instance\": {\n      \"key\": {\n        \"publicId\": \"read_data_layer\",\n        \"versionId\": \"1\"\n      },\n      \"param\": [\n        {\n          \"key\": \"allowedKeys\",\n          \"value\": {\n            \"type\": 1,\n            \"string\": \"any\"\n          }\n        }\n      ]\n    },\n    \"clientAnnotations\": {\n      \"isEditedByUser\": true\n    },\n    \"isRequired\": true\n  },\n  {\n    \"instance\": {\n      \"key\": {\n        \"publicId\": \"inject_script\",\n        \"versionId\": \"1\"\n      },\n      \"param\": [\n        {\n          \"key\": \"urls\",\n          \"value\": {\n            \"type\": 2,\n            \"listItem\": [\n              {\n                \"type\": 1,\n                \"string\": \"https://connect.facebook.net/en_US/fbevents.js\"\n              }\n            ]\n          }\n        }\n      ]\n    },\n    \"clientAnnotations\": {\n      \"isEditedByUser\": true\n    },\n    \"isRequired\": true\n  },\n  {\n    \"instance\": {\n      \"key\": {\n        \"publicId\": \"access_local_storage\",\n        \"versionId\": \"1\"\n      },\n      \"param\": [\n        {\n          \"key\": \"keys\",\n          \"value\": {\n            \"type\": 2,\n            \"listItem\": [\n              {\n                \"type\": 3,\n                \"mapKey\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"key\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"read\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"write\"\n                  }\n                ],\n                \"mapValue\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"gtmeec\"\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  }\n                ]\n              }\n            ]\n          }\n        }\n      ]\n    },\n    \"clientAnnotations\": {\n      \"isEditedByUser\": true\n    },\n    \"isRequired\": true\n  },\n  {\n    \"instance\": {\n      \"key\": {\n        \"publicId\": \"access_consent\",\n        \"versionId\": \"1\"\n      },\n      \"param\": [\n        {\n          \"key\": \"consentTypes\",\n          \"value\": {\n            \"type\": 2,\n            \"listItem\": [\n              {\n                \"type\": 3,\n                \"mapKey\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"consentType\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"read\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"write\"\n                  }\n                ],\n                \"mapValue\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"ad_storage\"\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": false\n                  }\n                ]\n              }\n            ]\n          }\n        }\n      ]\n    },\n    \"clientAnnotations\": {\n      \"isEditedByUser\": true\n    },\n    \"isRequired\": true\n  }\n]\n\n\n___TESTS___\n\nscenarios:\n- name: Event ID\n  code: \"mockData.eventId = 'eventId';\\n\\nmock('copyFromWindow', key => {\\n  if (key\\\n    \\ === 'fbq') return function() {\\n    if (arguments[0] === 'trackSingle') {\\n\\\n    \\      assertThat(arguments[4], 'eventId not set').isEqualTo({eventID: mockData.eventId});\\n\\\n    \\    }\\n  };\\n});\\n     \\nrunCode(mockData);\\nassertApi('gtmOnSuccess').wasCalled();\"\nsetup: |-\n  const mockData = {\n    pixelIds: '123456789,987654321',\n    consent: true,\n    eventId: 'test'\n  };\n\n\n  let success, failure;\n  mock('injectScript', (url, onsuccess, onfailure) => {\n    success = onsuccess;\n    failure = onfailure;\n    onsuccess();\n  });\n\n  mock('copyFromWindow', key => {\n    if (key === 'fbq') return () => {};\n    if (key === 'dataLayer') return () => {};\n  });\n\n\n___NOTES___\n\nCreated on 08/15/2025, 08:58:45 AM\n\n\n",
+        "galleryReference": {
+          "host": "github.com",
+          "owner": "stape-io",
+          "repository": "fb-tag",
+          "version": "ce6118a25adf6e17a94e29b2038238b1c499c907",
+          "signature": "cef887e65c0f820df4969a75182a55b909955bfdc35da8628c4f39b3e2f02fec",
+          "galleryTemplateId": "KFNBV"
+        }
+      },
+      {
+        "accountId": "6334935297",
+        "containerId": "241166556",
+        "templateId": "8",
+        "name": "Unique Event ID",
+        "fingerprint": "1768833761126",
+        "templateData": "___TERMS_OF_SERVICE___\n\nBy creating or modifying this file you agree to Google Tag Manager's Community\nTemplate Gallery Developer Terms of Service available at\nhttps://developers.google.com/tag-manager/gallery-tos (or such other URL as\nGoogle may provide), as modified from time to time.\n\n\n___INFO___\n\n{\n  \"type\": \"MACRO\",\n  \"id\": \"cvt_M63B8\",\n  \"version\": 1,\n  \"displayName\": \"Unique Event ID\",\n  \"description\": \"Generates unique event id\",\n  \"categories\": [\n    \"UTILITY\"\n  ],\n  \"containerContexts\": [\n    \"WEB\"\n  ],\n  \"brand\": {\n    \"displayName\": \"stape-io\",\n    \"id\": \"github.com_stape-io\"\n  }\n}\n\n\n___TEMPLATE_PARAMETERS___\n\n[]\n\n\n___SANDBOXED_JS_FOR_WEB_TEMPLATE___\n\nconst copyFromDataLayer = require('copyFromDataLayer');\nconst setInWindow = require('setInWindow');\nconst copyFromWindow = require('copyFromWindow');\nconst getTimestampMillis = require('getTimestampMillis');\nconst generateRandom = require('generateRandom');\n\n\nreturn getBrowserId() + '_' + getPageLoadId() + getGtmUniqueEventId();\n\nfunction getGtmUniqueEventId() {\n    let gtmId = copyFromDataLayer('gtm.uniqueEventId')  || 0;\n    return gtmId >= 0 ? gtmId : '00';\n}\n\nfunction getBrowserId() {\n    let gtmBrowserId =  copyFromWindow('gtmBrowserId');\n\n    if (!gtmBrowserId) {\n        gtmBrowserId = getTimestampMillis() + generateRandom(100000, 999999);\n        setInWindow('gtmBrowserId', gtmBrowserId, false);\n    }\n\n    return gtmBrowserId;\n}\n\nfunction getPageLoadId() {\n  let eventId = copyFromWindow('gtmPageLoadId');\n\n  if (!eventId) {\n    eventId = getTimestampMillis() + generateRandom(100000, 999999);\n    setInWindow('gtmPageLoadId', eventId, false);\n  }\n\n  return eventId;\n}\n\n\n___WEB_PERMISSIONS___\n\n[\n  {\n    \"instance\": {\n      \"key\": {\n        \"publicId\": \"read_data_layer\",\n        \"versionId\": \"1\"\n      },\n      \"param\": [\n        {\n          \"key\": \"allowedKeys\",\n          \"value\": {\n            \"type\": 1,\n            \"string\": \"specific\"\n          }\n        },\n        {\n          \"key\": \"keyPatterns\",\n          \"value\": {\n            \"type\": 2,\n            \"listItem\": [\n              {\n                \"type\": 1,\n                \"string\": \"gtm.uniqueEventId\"\n              }\n            ]\n          }\n        }\n      ]\n    },\n    \"clientAnnotations\": {\n      \"isEditedByUser\": true\n    },\n    \"isRequired\": true\n  },\n  {\n    \"instance\": {\n      \"key\": {\n        \"publicId\": \"access_globals\",\n        \"versionId\": \"1\"\n      },\n      \"param\": [\n        {\n          \"key\": \"keys\",\n          \"value\": {\n            \"type\": 2,\n            \"listItem\": [\n              {\n                \"type\": 3,\n                \"mapKey\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"key\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"read\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"write\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"execute\"\n                  }\n                ],\n                \"mapValue\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"gtmPageLoadId\"\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": false\n                  }\n                ]\n              },\n              {\n                \"type\": 3,\n                \"mapKey\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"key\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"read\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"write\"\n                  },\n                  {\n                    \"type\": 1,\n                    \"string\": \"execute\"\n                  }\n                ],\n                \"mapValue\": [\n                  {\n                    \"type\": 1,\n                    \"string\": \"gtmBrowserId\"\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": true\n                  },\n                  {\n                    \"type\": 8,\n                    \"boolean\": false\n                  }\n                ]\n              }\n            ]\n          }\n        }\n      ]\n    },\n    \"clientAnnotations\": {\n      \"isEditedByUser\": true\n    },\n    \"isRequired\": true\n  }\n]\n\n\n___TESTS___\n\nscenarios: []\n\n\n___NOTES___\n\nCreated on 11/03/2021, 11:05:32\n\n\n",
+        "galleryReference": {
+          "host": "github.com",
+          "owner": "stape-io",
+          "repository": "unique-event-id-variable",
+          "version": "76498f16f1954b0286640d19eb6a1ddf2909e183",
+          "signature": "fe53a57c443dd898aa8ad7095fc9a32114fafa6af0eb66b1671338f69d9530be",
+          "galleryTemplateId": "M63B8"
+        }
+      }
+    ]
+  }
+}
