@@ -1,13 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 
 const QUO_API_KEY =
   process.env.QUO_API_KEY ||
   "518659b06aa369d73f592a77aa0e50cac29a5900119d69561b07bac762d6a066";
 
+const META_PIXEL_ID = process.env.META_PIXEL_ID || "4027141757421207";
+const META_CAPI_ACCESS_TOKEN =
+  process.env.META_CAPI_ACCESS_TOKEN ||
+  "EAAWhuxhVMfQBSWSWSsAN94jzy6g0CiU424ogoqA8wgzwrv476G0woZCaHw4m6w1KKkVnu830XRFtZAycywb5TZBLgW64wPTMJaVRp4vgZBQYMlMrwyPwJVb9llegifGhXt0DvUcckauZA6Od5KZBDaLqI33OgZAtNsDfsUpWUWU91UwVCFieUjYaTm1IRQsdBJmEQZDZD";
+
+function hashSha256(value: string): string {
+  if (!value) return "";
+  return crypto
+    .createHash("sha256")
+    .update(value.trim().toLowerCase())
+    .digest("hex");
+}
+
 export async function GET() {
   return NextResponse.json({
     status: "active",
-    message: "Cal.com to Quo CRM webhook endpoint is live and ready.",
+    message: "Cal.com to Quo CRM & Meta CAPI webhook endpoint is live and ready.",
   });
 }
 
@@ -41,7 +55,6 @@ export async function POST(req: NextRequest) {
     let extractedRevenue = "";
     const otherAnswers: string[] = [];
 
-    // Scan all keys/values inside responses
     for (const [key, item] of Object.entries(responses)) {
       const val =
         typeof item === "object" && item !== null && "value" in item
@@ -51,7 +64,6 @@ export async function POST(req: NextRequest) {
       if (!val || (typeof val === "object" && Object.keys(val).length === 0)) continue;
 
       const lowerKey = key.toLowerCase();
-      // Handle nested values if object
       const stringVal =
         typeof val === "object"
           ? JSON.stringify(val)
@@ -88,7 +100,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Also check description / additional notes fields
     if (payload.description && !otherAnswers.some((a) => a.includes(payload.description))) {
       otherAnswers.push(`Note: ${payload.description}`);
     }
@@ -96,7 +107,6 @@ export async function POST(req: NextRequest) {
       otherAnswers.push(`Notes: ${payload.additionalNotes}`);
     }
 
-    // Fallbacks from attendee objects if not extracted from responses
     const rawName = extractedName || primaryAttendee.name || payload.name || "Growth Audit Lead";
     const email = extractedEmail || primaryAttendee.email || payload.email || "";
     const phone =
@@ -105,17 +115,14 @@ export async function POST(req: NextRequest) {
       primaryAttendee.phone ||
       "";
 
-    // Split First Name & Last Name
     const nameParts = rawName.trim().split(" ");
     const firstName = nameParts[0] || "Growth";
     const lastName = nameParts.slice(1).join(" ") || "";
 
-    // Company / Store name formatting
     const company = extractedStore
       ? extractedStore.replace(/^https?:\/\//, "").replace(/\/$/, "")
       : "Ecom Brand";
 
-    // Format Meeting Date/Time for quick view
     const meetingDateStr = payload.startTime
       ? new Date(payload.startTime).toLocaleString("pt-BR", {
           timeZone: primaryAttendee.timeZone || "America/Sao_Paulo",
@@ -126,7 +133,6 @@ export async function POST(req: NextRequest) {
         })
       : "";
 
-    // Build Role field in Quo (summarizes key qualifiers, Revenue, Call Time AND all Long Text answers)
     const roleParts: string[] = [];
     if (extractedRevenue) roleParts.push(`Rev: ${extractedRevenue}`);
     if (meetingDateStr) roleParts.push(`Call: ${meetingDateStr}`);
@@ -135,7 +141,6 @@ export async function POST(req: NextRequest) {
     }
     const role = roleParts.join(" • ") || "Free Growth Audit Lead";
 
-    // Prepare Quo Contact structure
     const emailsList = email ? [{ name: "work", value: email }] : [];
     const phonesList = phone ? [{ name: "work", value: phone }] : [];
 
@@ -145,39 +150,7 @@ export async function POST(req: NextRequest) {
       ? `https://${extractedStore}`
       : "https://ecom.rarityagency.io";
 
-    // Check if Quo workspace has any custom fields configured
-    let customFieldsPayload: Array<{ key: string; value: string }> = [];
-    try {
-      const customFieldsRes = await fetch("https://api.openphone.com/v1/contact-custom-fields", {
-        headers: { Authorization: QUO_API_KEY },
-      });
-      if (customFieldsRes.ok) {
-        const customFieldsData = await customFieldsRes.json();
-        const availableFields = customFieldsData.data || [];
-        for (const field of availableFields) {
-          const fieldKey = field.key;
-          const fieldName = (field.name || "").toLowerCase();
-          // Match if custom field matches notes, answers or long text
-          const matchingAnswer = otherAnswers.find((a) =>
-            a.toLowerCase().includes(fieldName)
-          );
-          if (matchingAnswer) {
-            customFieldsPayload.push({
-              key: fieldKey,
-              value: matchingAnswer.split(": ").slice(1).join(": "),
-            });
-          } else if (fieldName.includes("note") || fieldName.includes("resposta") || fieldName.includes("obs")) {
-            customFieldsPayload.push({
-              key: fieldKey,
-              value: otherAnswers.join("\n"),
-            });
-          }
-        }
-      }
-    } catch (err) {
-      console.warn("Could not fetch custom fields from Quo:", err);
-    }
-
+    // 3. Post to Quo (OpenPhone) API
     const quoPayload: Record<string, any> = {
       source: "Cal.com Growth Audit",
       sourceUrl: sourceUrl,
@@ -191,38 +164,84 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    if (customFieldsPayload.length > 0) {
-      quoPayload.customFields = customFieldsPayload;
+    let quoResult: any = null;
+    try {
+      const quoResponse = await fetch("https://api.openphone.com/v1/contacts", {
+        method: "POST",
+        headers: {
+          Authorization: QUO_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(quoPayload),
+      });
+      quoResult = await quoResponse.json();
+    } catch (err) {
+      console.error("Error creating contact in Quo:", err);
     }
 
-    // 3. Post to Quo (OpenPhone) API
-    const quoResponse = await fetch("https://api.openphone.com/v1/contacts", {
-      method: "POST",
-      headers: {
-        Authorization: QUO_API_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(quoPayload),
-    });
+    // 4. Server-Side Meta Conversions API (CAPI) Dispatch
+    let capiResult: any = null;
+    if (META_PIXEL_ID && META_CAPI_ACCESS_TOKEN) {
+      try {
+        const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0] || "";
+        const clientUserAgent = req.headers.get("user-agent") || "";
+        const currentTimestamp = Math.floor(Date.now() / 1000);
 
-    const quoResult = await quoResponse.json();
+        const userDataPayload: Record<string, any> = {};
+        if (email) userDataPayload.em = [hashSha256(email)];
+        if (phone) userDataPayload.ph = [hashSha256(phone.replace(/[^0-9]/g, ""))];
+        if (firstName) userDataPayload.fn = [hashSha256(firstName)];
+        if (lastName) userDataPayload.ln = [hashSha256(lastName)];
+        if (clientIp) userDataPayload.client_ip_address = clientIp;
+        if (clientUserAgent) userDataPayload.client_user_agent = clientUserAgent;
 
-    if (!quoResponse.ok) {
-      console.error("Error creating contact in Quo:", quoResult);
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Failed to create contact in Quo",
-          details: quoResult,
-        },
-        { status: 500 }
-      );
+        const capiEvents = [
+          {
+            event_name: "Schedule",
+            event_time: currentTimestamp,
+            action_source: "website",
+            event_source_url: "https://ecom.rarityagency.io",
+            user_data: userDataPayload,
+            custom_data: {
+              content_name: "Free Growth Audit",
+              currency: "USD",
+              value: 0,
+            },
+          },
+          {
+            event_name: "Lead",
+            event_time: currentTimestamp,
+            action_source: "website",
+            event_source_url: "https://ecom.rarityagency.io",
+            user_data: userDataPayload,
+            custom_data: {
+              content_name: "Free Growth Audit",
+              currency: "USD",
+              value: 0,
+            },
+          },
+        ];
+
+        const capiRes = await fetch(
+          `https://graph.facebook.com/v19.0/${META_PIXEL_ID}/events?access_token=${META_CAPI_ACCESS_TOKEN}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data: capiEvents }),
+          }
+        );
+        capiResult = await capiRes.json();
+        console.log("✅ [Meta CAPI] Server-side event sent:", capiResult);
+      } catch (capiErr) {
+        console.error("Meta CAPI dispatch error:", capiErr);
+      }
     }
 
     return NextResponse.json({
       success: true,
-      message: "Contact successfully created in Quo CRM",
-      contactId: quoResult.data?.id,
+      message: "Lead successfully synced to Quo CRM and Meta Conversions API",
+      contactId: quoResult?.data?.id,
+      metaCapi: capiResult,
       leadSummary: {
         name: `${firstName} ${lastName}`.trim(),
         email,
