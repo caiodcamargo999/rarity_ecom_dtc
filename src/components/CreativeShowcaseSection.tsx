@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Eye, Sparkles, Maximize2, X, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, Maximize2, X } from "lucide-react";
 import Image from "next/image";
 
 interface CreativeShowcaseSectionProps {
@@ -287,8 +287,6 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
     }
   };
 
-  const activeCreative = creatives[currentIndex];
-
   return (
     <section className="py-20 sm:py-28 bg-[#000820] relative overflow-hidden border-t border-b border-white/10">
       {/* Dynamic Background Glow Elements */}
@@ -512,40 +510,6 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
             />
           ))}
         </div>
-
-        {/* Active Creative Details Strip & CTA */}
-        {activeCreative && (
-          <motion.div
-            key={activeCreative.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="mt-10 max-w-3xl mx-auto rounded-2xl bg-white/5 border border-white/10 p-4 sm:p-6 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl"
-          >
-            <div className="text-center sm:text-left">
-              <div className="flex items-center justify-center sm:justify-start gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#D80064]/20 border border-[#D80064]/40 text-[#D80064] text-[10px] font-bold uppercase tracking-wider">
-                  Client Case Highlight
-                </span>
-                <span className="text-white/60 text-xs font-mono">{activeCreative.brand}</span>
-              </div>
-              <h4 className="text-white font-black text-base sm:text-lg mt-1">
-                {activeCreative.title}
-              </h4>
-              <p className="text-white/70 text-xs sm:text-sm mt-0.5">
-                <span className="text-[#0FE3B3] font-semibold">Strategic Angle:</span> {activeCreative.angle}
-              </p>
-            </div>
-
-            <button
-              onClick={onOpenAudit}
-              className="shrink-0 px-6 py-3 rounded-full bg-gradient-to-r from-[#D80064] to-[#b30052] text-white font-extrabold text-xs tracking-wider uppercase transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-[#D80064]/30 flex items-center gap-2 cursor-pointer"
-            >
-              <span>Get Similar Creatives</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </motion.div>
-        )}
       </div>
 
       {/* Lightbox Modal */}
