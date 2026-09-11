@@ -4,6 +4,7 @@ import { useState } from "react";
 import HeaderV2 from "@/components/lp2/HeaderV2";
 import HeroSectionV2 from "@/components/lp2/HeroSectionV2";
 import RarityAdCarouselV2 from "@/components/lp2/RarityAdCarouselV2";
+import CreativeShowcaseSection from "@/components/CreativeShowcaseSection";
 import GrowthProtocolSectionV2 from "@/components/lp2/GrowthProtocolSectionV2";
 import ServicesGridV2 from "@/components/lp2/ServicesGridV2";
 import ScaleCtaSectionV2 from "@/components/lp2/ScaleCtaSectionV2";
@@ -25,6 +26,9 @@ export default function RarityLandingPage02() {
 
       {/* 3. Rarity Ad Creative & Campaign Cases Carousel */}
       <RarityAdCarouselV2 onOpenAudit={handleOpenAudit} />
+
+      {/* 3.1 Proprietary Creative Studio 3D Showcase */}
+      <CreativeShowcaseSection onOpenAudit={handleOpenAudit} />
 
       {/* 4. The Rarity 4-Step Growth Protocol & Agency Comparison */}
       <GrowthProtocolSectionV2 onOpenAudit={handleOpenAudit} />

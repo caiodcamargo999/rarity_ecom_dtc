@@ -6,6 +6,7 @@ import HeroSection from "@/components/HeroSection";
 import ProblemSection from "@/components/ProblemSection";
 import ThreeLeversSection from "@/components/ThreeLeversSection";
 import CaseStudiesSection from "@/components/CaseStudiesSection";
+import CreativeShowcaseSection from "@/components/CreativeShowcaseSection";
 import AuditProcessSection from "@/components/AuditProcessSection";
 import Footer from "@/components/Footer";
 import AuditModal from "@/components/AuditModal";
@@ -40,6 +41,9 @@ export default function Home() {
 
       {/* Case Studies & Testimonials */}
       <CaseStudiesSection onOpenAudit={handleOpenAudit} />
+
+      {/* Real Client Ad Creatives 3D Showcase */}
+      <CreativeShowcaseSection onOpenAudit={handleOpenAudit} />
 
       {/* The Free Growth Audit (What Actually Happens) */}
       <AuditProcessSection onOpenAudit={handleOpenAudit} />
