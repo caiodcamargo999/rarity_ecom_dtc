@@ -243,7 +243,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const gtmId = process.env.NEXT_PUBLIC_GTM_ID || "GTM-NG79CXDZ";
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID || "GTM-MB3TJW69";
 
   return (
     <html lang="en" className={`${plusJakartaSans.variable} ${playfairDisplay.variable}`}>

@@ -847,23 +847,10 @@
         "triggerId": "16",
         "name": "001 - 01 - Lead & Booking",
         "type": "CUSTOM_EVENT",
-        "waitForTags": {
-          "type": "TEMPLATE"
-        },
-        "checkValidation": {
-          "type": "TEMPLATE"
-        },
-        "waitForTagsTimeout": {
-          "type": "TEMPLATE",
-          "value": "2000"
-        },
-        "uniqueTriggerId": {
-          "type": "TEMPLATE"
-        },
         "fingerprint": "1768834622527",
         "customEventFilter": [
           {
-            "type": "REGEX",
+            "type": "MATCH_REGEX",
             "parameter": [
               {
                 "type": "TEMPLATE",
@@ -887,7 +874,7 @@
         "type": "CUSTOM_EVENT",
         "customEventFilter": [
           {
-            "type": "REGEX",
+            "type": "MATCH_REGEX",
             "parameter": [
               {
                 "type": "TEMPLATE",
