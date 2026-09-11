@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       rawBody.triggerEvent === "PING" ||
       rawBody.ping === true ||
       rawBody.type === "PING" ||
-      !rawBody.payload
+      (!rawBody.payload && !rawBody.attendees && !rawBody.data)
     ) {
       return NextResponse.json({
         success: true,
@@ -28,10 +28,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const payload = rawBody.payload || {};
+    const payload = rawBody.payload || rawBody.data || rawBody || {};
     const attendees = Array.isArray(payload.attendees) ? payload.attendees : [];
     const primaryAttendee = attendees[0] || {};
-    const responses = payload.responses || {};
+    const responses = payload.responses || payload.userFieldsResponses || {};
 
     // 2. Comprehensive Field Extraction from Cal.com Responses
     let extractedName = "";
@@ -48,10 +48,16 @@ export async function POST(req: NextRequest) {
           ? (item as any).value
           : item;
 
-      if (!val) continue;
+      if (!val || (typeof val === "object" && Object.keys(val).length === 0)) continue;
 
       const lowerKey = key.toLowerCase();
-      const stringVal = String(val).trim();
+      // Handle nested values if object
+      const stringVal =
+        typeof val === "object"
+          ? JSON.stringify(val)
+          : String(val).trim();
+
+      if (!stringVal) continue;
 
       if (lowerKey.includes("name") && !extractedName) {
         extractedName = stringVal;
@@ -63,7 +69,7 @@ export async function POST(req: NextRequest) {
       ) {
         extractedPhone = stringVal;
       } else if (
-        (lowerKey.includes("store") || lowerKey.includes("site") || lowerKey.includes("url") || lowerKey.includes("website") || lowerKey.includes("brand")) &&
+        (lowerKey.includes("store") || lowerKey.includes("site") || lowerKey.includes("url") || lowerKey.includes("website") || lowerKey.includes("brand") || lowerKey.includes("loja")) &&
         !extractedStore
       ) {
         extractedStore = stringVal;
@@ -73,12 +79,21 @@ export async function POST(req: NextRequest) {
       ) {
         extractedRevenue = stringVal;
       } else {
-        const label =
+        const rawLabel =
           typeof item === "object" && item !== null && "label" in item
             ? (item as any).label
             : key;
-        otherAnswers.push(`${label}: ${stringVal}`);
+        const cleanLabel = String(rawLabel).replace(/[*:]/g, "").trim();
+        otherAnswers.push(`${cleanLabel}: ${stringVal}`);
       }
+    }
+
+    // Also check description / additional notes fields
+    if (payload.description && !otherAnswers.some((a) => a.includes(payload.description))) {
+      otherAnswers.push(`Note: ${payload.description}`);
+    }
+    if (payload.additionalNotes && !otherAnswers.some((a) => a.includes(payload.additionalNotes))) {
+      otherAnswers.push(`Notes: ${payload.additionalNotes}`);
     }
 
     // Fallbacks from attendee objects if not extracted from responses
@@ -111,10 +126,13 @@ export async function POST(req: NextRequest) {
         })
       : "";
 
-    // Build Role field in Quo (summarizes key qualifiers like Revenue & Call Time)
+    // Build Role field in Quo (summarizes key qualifiers, Revenue, Call Time AND all Long Text answers)
     const roleParts: string[] = [];
     if (extractedRevenue) roleParts.push(`Rev: ${extractedRevenue}`);
     if (meetingDateStr) roleParts.push(`Call: ${meetingDateStr}`);
+    if (otherAnswers.length > 0) {
+      roleParts.push(...otherAnswers);
+    }
     const role = roleParts.join(" • ") || "Free Growth Audit Lead";
 
     // Prepare Quo Contact structure
@@ -127,7 +145,40 @@ export async function POST(req: NextRequest) {
       ? `https://${extractedStore}`
       : "https://ecom.rarityagency.io";
 
-    const quoPayload = {
+    // Check if Quo workspace has any custom fields configured
+    let customFieldsPayload: Array<{ key: string; value: string }> = [];
+    try {
+      const customFieldsRes = await fetch("https://api.openphone.com/v1/contact-custom-fields", {
+        headers: { Authorization: QUO_API_KEY },
+      });
+      if (customFieldsRes.ok) {
+        const customFieldsData = await customFieldsRes.json();
+        const availableFields = customFieldsData.data || [];
+        for (const field of availableFields) {
+          const fieldKey = field.key;
+          const fieldName = (field.name || "").toLowerCase();
+          // Match if custom field matches notes, answers or long text
+          const matchingAnswer = otherAnswers.find((a) =>
+            a.toLowerCase().includes(fieldName)
+          );
+          if (matchingAnswer) {
+            customFieldsPayload.push({
+              key: fieldKey,
+              value: matchingAnswer.split(": ").slice(1).join(": "),
+            });
+          } else if (fieldName.includes("note") || fieldName.includes("resposta") || fieldName.includes("obs")) {
+            customFieldsPayload.push({
+              key: fieldKey,
+              value: otherAnswers.join("\n"),
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Could not fetch custom fields from Quo:", err);
+    }
+
+    const quoPayload: Record<string, any> = {
       source: "Cal.com Growth Audit",
       sourceUrl: sourceUrl,
       defaultFields: {
@@ -139,6 +190,10 @@ export async function POST(req: NextRequest) {
         phoneNumbers: phonesList,
       },
     };
+
+    if (customFieldsPayload.length > 0) {
+      quoPayload.customFields = customFieldsPayload;
+    }
 
     // 3. Post to Quo (OpenPhone) API
     const quoResponse = await fetch("https://api.openphone.com/v1/contacts", {
