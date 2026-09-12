@@ -200,7 +200,66 @@ export async function POST(req: NextRequest) {
       ? `https://${extractedStore}`
       : "https://ecom.rarityagency.io";
 
-    // 3. Post to Quo (OpenPhone) API
+    // 3. Map to Quo Custom Fields (Dynamic and Fallback)
+    const customPropertyKeyMap: Record<string, string> = {
+      revenue: "6aa567aea21ae4b5e1663735", // Monthly Revenue
+      spend: "6aa568faa21ae4b5e166373b", // Monthly Ad Spend
+      bottleneck: "6aa56931a21ae4b5e1663741", // Scalling Bottleneck
+      decision: "6aa56946a21ae4b5e1663747", // Decision Maker
+      start: "6aa56a24a21ae4b5e166374d", // Ready to Start
+      call: "6aa56a5aa21ae4b5e1663753", // Call Date and Time
+    };
+
+    // Try to fetch existing custom fields dynamically from Quo to ensure accurate key mapping
+    try {
+      const cfResponse = await fetch("https://api.openphone.com/v1/contact-custom-fields", {
+        headers: { Authorization: QUO_API_KEY },
+      });
+      if (cfResponse.ok) {
+        const cfData = await cfResponse.json();
+        const fields = cfData?.data || [];
+        for (const f of fields) {
+          const nameLower = (f.name || "").toLowerCase();
+          if (nameLower.includes("revenue") || nameLower.includes("faturamento")) {
+            customPropertyKeyMap.revenue = f.key;
+          } else if (nameLower.includes("spend") || nameLower.includes("ad spend")) {
+            customPropertyKeyMap.spend = f.key;
+          } else if (nameLower.includes("bottleneck") || nameLower.includes("scalling") || nameLower.includes("scaling")) {
+            customPropertyKeyMap.bottleneck = f.key;
+          } else if (nameLower.includes("decision") || nameLower.includes("founder")) {
+            customPropertyKeyMap.decision = f.key;
+          } else if (nameLower.includes("ready") || nameLower.includes("start")) {
+            customPropertyKeyMap.start = f.key;
+          } else if (nameLower.includes("call") || nameLower.includes("date") || nameLower.includes("time")) {
+            customPropertyKeyMap.call = f.key;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch custom fields schema dynamically, using fallback keys", e);
+    }
+
+    const customFieldsPayload: { key: string; value: string }[] = [];
+    if (extractedRevenue && customPropertyKeyMap.revenue) {
+      customFieldsPayload.push({ key: customPropertyKeyMap.revenue, value: extractedRevenue });
+    }
+    if (extractedAdSpend && customPropertyKeyMap.spend) {
+      customFieldsPayload.push({ key: customPropertyKeyMap.spend, value: extractedAdSpend });
+    }
+    if (extractedBottleneck && customPropertyKeyMap.bottleneck) {
+      customFieldsPayload.push({ key: customPropertyKeyMap.bottleneck, value: extractedBottleneck });
+    }
+    if (extractedDecisionMaker && customPropertyKeyMap.decision) {
+      customFieldsPayload.push({ key: customPropertyKeyMap.decision, value: extractedDecisionMaker });
+    }
+    if (extractedTimeline && customPropertyKeyMap.start) {
+      customFieldsPayload.push({ key: customPropertyKeyMap.start, value: extractedTimeline });
+    }
+    if (payload.startTime && customPropertyKeyMap.call) {
+      customFieldsPayload.push({ key: customPropertyKeyMap.call, value: new Date(payload.startTime).toISOString() });
+    }
+
+    // 4. Post to Quo (OpenPhone) API
     const quoPayload: Record<string, any> = {
       source: "Cal.com Growth Audit",
       sourceUrl: sourceUrl,
@@ -212,6 +271,7 @@ export async function POST(req: NextRequest) {
         emails: emailsList,
         phoneNumbers: phonesList,
       },
+      customFields: customFieldsPayload,
     };
 
     let quoResult: any = null;
