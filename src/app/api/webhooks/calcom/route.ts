@@ -47,64 +47,109 @@ export async function POST(req: NextRequest) {
     const primaryAttendee = attendees[0] || {};
     const responses = payload.responses || payload.userFieldsResponses || {};
 
+    // Helper to extract clean human-readable text from Cal.com responses
+    const extractCleanText = (item: any): string => {
+      if (item === null || item === undefined) return "";
+      let val = typeof item === "object" && "value" in item ? item.value : item;
+      if (val === null || val === undefined) return "";
+      if (Array.isArray(val)) {
+        return val.map((v) => (typeof v === "object" ? JSON.stringify(v) : String(v))).join(", ").trim();
+      }
+      if (typeof val === "object") {
+        if (item.label && !item.isHidden && Object.keys(val).length > 0) {
+          return JSON.stringify(val);
+        }
+        return "";
+      }
+      return String(val).trim();
+    };
+
     // 2. Comprehensive Field Extraction from Cal.com Responses
     let extractedName = "";
     let extractedEmail = "";
     let extractedPhone = "";
     let extractedStore = "";
     let extractedRevenue = "";
-    const otherAnswers: string[] = [];
+    let extractedAdSpend = "";
+    let extractedBottleneck = "";
+    let extractedDecisionMaker = "";
+    let extractedTimeline = "";
+    const otherAnswers: { label: string; value: string }[] = [];
+
+    // Ignored Cal.com internal / hidden fields
+    const ignoredKeys = [
+      "location",
+      "what_is_this_meeting_about",
+      "additional_notes",
+      "reason_for_reschedule",
+      "reschedulereason",
+      "guests",
+      "system",
+    ];
 
     for (const [key, item] of Object.entries(responses)) {
-      const val =
-        typeof item === "object" && item !== null && "value" in item
-          ? (item as any).value
-          : item;
-
-      if (!val || (typeof val === "object" && Object.keys(val).length === 0)) continue;
-
       const lowerKey = key.toLowerCase();
-      const stringVal =
-        typeof val === "object"
-          ? JSON.stringify(val)
-          : String(val).trim();
+      if (ignoredKeys.includes(lowerKey)) continue;
+      if (typeof item === "object" && item !== null && (item as any).isHidden) continue;
 
+      const stringVal = extractCleanText(item);
       if (!stringVal) continue;
 
-      if (lowerKey.includes("name") && !extractedName) {
+      const rawLabel =
+        typeof item === "object" && item !== null && "label" in item
+          ? String((item as any).label).replace(/[*:]/g, "").trim()
+          : key;
+      const lowerLabel = rawLabel.toLowerCase();
+
+      if ((lowerKey.includes("name") || lowerLabel.includes("name")) && !extractedName) {
         extractedName = stringVal;
-      } else if (lowerKey.includes("email") && !extractedEmail) {
+      } else if ((lowerKey.includes("email") || lowerLabel.includes("email")) && !extractedEmail) {
         extractedEmail = stringVal;
       } else if (
-        (lowerKey.includes("phone") || lowerKey.includes("tel") || lowerKey.includes("whatsapp")) &&
+        (lowerKey.includes("phone") || lowerKey.includes("tel") || lowerKey.includes("whatsapp") || lowerLabel.includes("phone")) &&
         !extractedPhone
       ) {
         extractedPhone = stringVal;
       } else if (
-        (lowerKey.includes("store") || lowerKey.includes("site") || lowerKey.includes("url") || lowerKey.includes("website") || lowerKey.includes("brand") || lowerKey.includes("loja")) &&
+        (lowerKey.includes("store") || lowerKey.includes("site") || lowerKey.includes("url") || lowerKey.includes("website") || lowerKey.includes("brand") || lowerKey.includes("loja") || lowerLabel.includes("store") || lowerLabel.includes("website")) &&
         !extractedStore
       ) {
         extractedStore = stringVal;
       } else if (
-        (lowerKey.includes("revenue") || lowerKey.includes("faturamento") || lowerKey.includes("spend") || lowerKey.includes("monthly")) &&
+        (lowerKey.includes("revenue") || lowerKey.includes("faturamento") || lowerLabel.includes("revenue") || lowerLabel.includes("faturamento")) &&
         !extractedRevenue
       ) {
         extractedRevenue = stringVal;
+      } else if (
+        (lowerKey.includes("spend") || lowerKey.includes("ad spend") || lowerLabel.includes("spend") || lowerLabel.includes("ad spend")) &&
+        !extractedAdSpend
+      ) {
+        extractedAdSpend = stringVal;
+      } else if (
+        (lowerKey.includes("bottleneck") || lowerKey.includes("preventing") || lowerLabel.includes("bottleneck") || lowerLabel.includes("preventing")) &&
+        !extractedBottleneck
+      ) {
+        extractedBottleneck = stringVal;
+      } else if (
+        (lowerKey.includes("founder") || lowerKey.includes("decision") || lowerLabel.includes("founder") || lowerLabel.includes("decision maker")) &&
+        !extractedDecisionMaker
+      ) {
+        extractedDecisionMaker = stringVal;
+      } else if (
+        (lowerKey.includes("qualify") || lowerKey.includes("start") || lowerKey.includes("soon") || lowerLabel.includes("start") || lowerLabel.includes("qualify")) &&
+        !extractedTimeline
+      ) {
+        extractedTimeline = stringVal;
       } else {
-        const rawLabel =
-          typeof item === "object" && item !== null && "label" in item
-            ? (item as any).label
-            : key;
-        const cleanLabel = String(rawLabel).replace(/[*:]/g, "").trim();
-        otherAnswers.push(`${cleanLabel}: ${stringVal}`);
+        otherAnswers.push({ label: rawLabel, value: stringVal });
       }
     }
 
-    if (payload.description && !otherAnswers.some((a) => a.includes(payload.description))) {
-      otherAnswers.push(`Note: ${payload.description}`);
+    if (payload.description && !ignoredKeys.includes(payload.description.toLowerCase())) {
+      otherAnswers.push({ label: "Description", value: payload.description });
     }
-    if (payload.additionalNotes && !otherAnswers.some((a) => a.includes(payload.additionalNotes))) {
-      otherAnswers.push(`Notes: ${payload.additionalNotes}`);
+    if (payload.additionalNotes && !ignoredKeys.includes(payload.additionalNotes.toLowerCase())) {
+      otherAnswers.push({ label: "Notes", value: payload.additionalNotes });
     }
 
     const rawName = extractedName || primaryAttendee.name || payload.name || "Growth Audit Lead";
@@ -133,13 +178,18 @@ export async function POST(req: NextRequest) {
         })
       : "";
 
-    const roleParts: string[] = [];
-    if (extractedRevenue) roleParts.push(`Rev: ${extractedRevenue}`);
-    if (meetingDateStr) roleParts.push(`Call: ${meetingDateStr}`);
-    if (otherAnswers.length > 0) {
-      roleParts.push(...otherAnswers);
+    // Build a clean, professional Role summary for Quo
+    const roleSummaryParts: string[] = [];
+    if (extractedDecisionMaker) {
+      roleSummaryParts.push(extractedDecisionMaker.includes("Yes") || extractedDecisionMaker.includes("only") ? "Founder & Decision Maker" : extractedDecisionMaker);
+    } else {
+      roleSummaryParts.push("Growth Audit Lead");
     }
-    const role = roleParts.join(" • ") || "Free Growth Audit Lead";
+    if (extractedRevenue) roleSummaryParts.push(`Rev: ${extractedRevenue}`);
+    if (extractedAdSpend) roleSummaryParts.push(`Spend: ${extractedAdSpend}`);
+    if (meetingDateStr) roleSummaryParts.push(`Call: ${meetingDateStr}`);
+
+    const role = roleSummaryParts.join(" • ");
 
     const emailsList = email ? [{ name: "work", value: email }] : [];
     const phonesList = phone ? [{ name: "work", value: phone }] : [];
