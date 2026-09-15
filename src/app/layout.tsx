@@ -237,6 +237,7 @@ const jsonLdData = {
 };
 
 import Script from "next/script";
+import UtmTracker from "@/components/UtmTracker";
 
 export default function RootLayout({
   children,
@@ -269,6 +270,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
       </head>
       <body className="font-sans antialiased bg-[#001244] text-white selection:bg-[#D80064] selection:text-white">
+        <UtmTracker />
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <iframe

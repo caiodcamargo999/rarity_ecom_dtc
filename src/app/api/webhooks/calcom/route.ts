@@ -47,13 +47,24 @@ export async function POST(req: NextRequest) {
     const primaryAttendee = attendees[0] || {};
     const responses = payload.responses || payload.userFieldsResponses || {};
 
+    // Collect all metadata locations from Cal.com payload
+    const metadata: Record<string, any> = {
+      ...(rawBody.metadata || {}),
+      ...(rawBody.booking?.metadata || {}),
+      ...(payload.metadata || {}),
+      ...(payload.booking?.metadata || {}),
+    };
+
     // Helper to extract clean human-readable text from Cal.com responses
     const extractCleanText = (item: any): string => {
       if (item === null || item === undefined) return "";
       let val = typeof item === "object" && "value" in item ? item.value : item;
       if (val === null || val === undefined) return "";
       if (Array.isArray(val)) {
-        return val.map((v) => (typeof v === "object" ? JSON.stringify(v) : String(v))).join(", ").trim();
+        return val
+          .map((v) => (typeof v === "object" ? JSON.stringify(v) : String(v)))
+          .join(", ")
+          .trim();
       }
       if (typeof val === "object") {
         if (item.label && !item.isHidden && Object.keys(val).length > 0) {
@@ -106,37 +117,63 @@ export async function POST(req: NextRequest) {
       } else if ((lowerKey.includes("email") || lowerLabel.includes("email")) && !extractedEmail) {
         extractedEmail = stringVal;
       } else if (
-        (lowerKey.includes("phone") || lowerKey.includes("tel") || lowerKey.includes("whatsapp") || lowerLabel.includes("phone")) &&
+        (lowerKey.includes("phone") ||
+          lowerKey.includes("tel") ||
+          lowerKey.includes("whatsapp") ||
+          lowerLabel.includes("phone")) &&
         !extractedPhone
       ) {
         extractedPhone = stringVal;
       } else if (
-        (lowerKey.includes("store") || lowerKey.includes("site") || lowerKey.includes("url") || lowerKey.includes("website") || lowerKey.includes("brand") || lowerKey.includes("loja") || lowerLabel.includes("store") || lowerLabel.includes("website")) &&
+        (lowerKey.includes("store") ||
+          lowerKey.includes("site") ||
+          lowerKey.includes("url") ||
+          lowerKey.includes("website") ||
+          lowerKey.includes("brand") ||
+          lowerKey.includes("loja") ||
+          lowerLabel.includes("store") ||
+          lowerLabel.includes("website")) &&
         !extractedStore
       ) {
         extractedStore = stringVal;
       } else if (
-        (lowerKey.includes("revenue") || lowerKey.includes("faturamento") || lowerLabel.includes("revenue") || lowerLabel.includes("faturamento")) &&
+        (lowerKey.includes("revenue") ||
+          lowerKey.includes("faturamento") ||
+          lowerLabel.includes("revenue") ||
+          lowerLabel.includes("faturamento")) &&
         !extractedRevenue
       ) {
         extractedRevenue = stringVal;
       } else if (
-        (lowerKey.includes("spend") || lowerKey.includes("ad spend") || lowerLabel.includes("spend") || lowerLabel.includes("ad spend")) &&
+        (lowerKey.includes("spend") ||
+          lowerKey.includes("ad spend") ||
+          lowerLabel.includes("spend") ||
+          lowerLabel.includes("ad spend")) &&
         !extractedAdSpend
       ) {
         extractedAdSpend = stringVal;
       } else if (
-        (lowerKey.includes("bottleneck") || lowerKey.includes("preventing") || lowerLabel.includes("bottleneck") || lowerLabel.includes("preventing")) &&
+        (lowerKey.includes("bottleneck") ||
+          lowerKey.includes("preventing") ||
+          lowerLabel.includes("bottleneck") ||
+          lowerLabel.includes("preventing")) &&
         !extractedBottleneck
       ) {
         extractedBottleneck = stringVal;
       } else if (
-        (lowerKey.includes("founder") || lowerKey.includes("decision") || lowerLabel.includes("founder") || lowerLabel.includes("decision maker")) &&
+        (lowerKey.includes("founder") ||
+          lowerKey.includes("decision") ||
+          lowerLabel.includes("founder") ||
+          lowerLabel.includes("decision maker")) &&
         !extractedDecisionMaker
       ) {
         extractedDecisionMaker = stringVal;
       } else if (
-        (lowerKey.includes("qualify") || lowerKey.includes("start") || lowerKey.includes("soon") || lowerLabel.includes("start") || lowerLabel.includes("qualify")) &&
+        (lowerKey.includes("qualify") ||
+          lowerKey.includes("start") ||
+          lowerKey.includes("soon") ||
+          lowerLabel.includes("start") ||
+          lowerLabel.includes("qualify")) &&
         !extractedTimeline
       ) {
         extractedTimeline = stringVal;
@@ -144,6 +181,29 @@ export async function POST(req: NextRequest) {
         otherAnswers.push({ label: rawLabel, value: stringVal });
       }
     }
+
+    // 3. Extract UTM Parameters & Meta Ad Attribution
+    const getMetaOrResponse = (targetKey: string): string => {
+      const lowerTarget = targetKey.toLowerCase();
+      // Check metadata direct
+      if (metadata[targetKey]) return String(metadata[targetKey]).trim();
+      for (const [mKey, mVal] of Object.entries(metadata)) {
+        if (mKey.toLowerCase() === lowerTarget && mVal) return String(mVal).trim();
+      }
+      // Check responses
+      for (const [rKey, rVal] of Object.entries(responses)) {
+        if (rKey.toLowerCase() === lowerTarget) return extractCleanText(rVal);
+      }
+      return "";
+    };
+
+    const utmSource = getMetaOrResponse("utm_source") || (metadata.source ? String(metadata.source) : "");
+    const utmMedium = getMetaOrResponse("utm_medium") || (metadata.medium ? String(metadata.medium) : "");
+    const utmCampaign = getMetaOrResponse("utm_campaign") || (metadata.campaign ? String(metadata.campaign) : "");
+    const utmContent = getMetaOrResponse("utm_content") || (metadata.content ? String(metadata.content) : "");
+    const utmTerm = getMetaOrResponse("utm_term") || (metadata.term ? String(metadata.term) : "");
+    const fbclid = getMetaOrResponse("fbclid") || getMetaOrResponse("fbc") || (metadata.fbc ? String(metadata.fbc) : "");
+    const fbp = getMetaOrResponse("fbp") || (metadata.fbp ? String(metadata.fbp) : "");
 
     if (payload.description && !ignoredKeys.includes(payload.description.toLowerCase())) {
       otherAnswers.push({ label: "Description", value: payload.description });
@@ -178,15 +238,29 @@ export async function POST(req: NextRequest) {
         })
       : "";
 
-    // Build a clean, professional Role summary for Quo
+    // Build a clean, professional Role summary for Quo with Ad Attribution
     const roleSummaryParts: string[] = [];
     if (extractedDecisionMaker) {
-      roleSummaryParts.push(extractedDecisionMaker.includes("Yes") || extractedDecisionMaker.includes("only") ? "Founder & Decision Maker" : extractedDecisionMaker);
+      roleSummaryParts.push(
+        extractedDecisionMaker.includes("Yes") || extractedDecisionMaker.includes("only")
+          ? "Founder & Decision Maker"
+          : extractedDecisionMaker
+      );
     } else {
       roleSummaryParts.push("Growth Audit Lead");
     }
     if (extractedRevenue) roleSummaryParts.push(`Rev: ${extractedRevenue}`);
     if (extractedAdSpend) roleSummaryParts.push(`Spend: ${extractedAdSpend}`);
+
+    // Add immediate visual Ad Attribution badge to the contact card
+    const adAttributionParts: string[] = [];
+    if (utmCampaign) adAttributionParts.push(`Campaign: ${utmCampaign}`);
+    if (utmContent) adAttributionParts.push(`Ad: ${utmContent}`);
+    if (utmSource && !utmCampaign) adAttributionParts.push(`Src: ${utmSource}`);
+    if (adAttributionParts.length > 0) {
+      roleSummaryParts.push(`🎯 ${adAttributionParts.join(" • ")}`);
+    }
+
     if (meetingDateStr) roleSummaryParts.push(`Call: ${meetingDateStr}`);
 
     const role = roleSummaryParts.join(" • ");
@@ -194,13 +268,35 @@ export async function POST(req: NextRequest) {
     const emailsList = email ? [{ name: "work", value: email }] : [];
     const phonesList = phone ? [{ name: "work", value: phone }] : [];
 
-    const sourceUrl = extractedStore.startsWith("http")
-      ? extractedStore
-      : extractedStore
-      ? `https://${extractedStore}`
+    // Construct full attribution URL
+    const attributionUrlParams = new URLSearchParams();
+    if (utmSource) attributionUrlParams.set("utm_source", utmSource);
+    if (utmMedium) attributionUrlParams.set("utm_medium", utmMedium);
+    if (utmCampaign) attributionUrlParams.set("utm_campaign", utmCampaign);
+    if (utmContent) attributionUrlParams.set("utm_content", utmContent);
+    if (utmTerm) attributionUrlParams.set("utm_term", utmTerm);
+    if (fbclid) attributionUrlParams.set("fbclid", fbclid);
+
+    const qs = attributionUrlParams.toString();
+    const landingPageWithUtms = qs
+      ? `https://ecom.rarityagency.io/?${qs}`
       : "https://ecom.rarityagency.io";
 
-    // 3. Map to Quo Custom Fields (Dynamic and Fallback)
+    const sourceUrl = extractedStore
+      ? extractedStore.startsWith("http")
+        ? extractedStore
+        : `https://${extractedStore}`
+      : landingPageWithUtms;
+
+    // Contact source label for Quo
+    let sourceLabel = "Cal.com Growth Audit";
+    if (utmCampaign) {
+      sourceLabel = `Meta Ads (${utmCampaign})`;
+    } else if (utmSource) {
+      sourceLabel = `Paid Ad (${utmSource})`;
+    }
+
+    // 4. Map to Quo Custom Fields (Dynamic and Fallback)
     const customPropertyKeyMap: Record<string, string> = {
       revenue: "6aa567aea21ae4b5e1663735", // Monthly Revenue
       spend: "6aa568faa21ae4b5e166373b", // Monthly Ad Spend
@@ -208,6 +304,12 @@ export async function POST(req: NextRequest) {
       decision: "6aa56946a21ae4b5e1663747", // Decision Maker
       start: "6aa56a24a21ae4b5e166374d", // Ready to Start
       call: "6aa56a5aa21ae4b5e1663753", // Call Date and Time
+      utm_source: "",
+      utm_campaign: "",
+      utm_medium: "",
+      utm_content: "",
+      utm_term: "",
+      fbclid: "",
     };
 
     // Try to fetch existing custom fields dynamically from Quo to ensure accurate key mapping
@@ -219,12 +321,16 @@ export async function POST(req: NextRequest) {
         const cfData = await cfResponse.json();
         const fields = cfData?.data || [];
         for (const f of fields) {
-          const nameLower = (f.name || "").toLowerCase();
+          const nameLower = (f.name || "").toLowerCase().trim();
           if (nameLower.includes("revenue") || nameLower.includes("faturamento")) {
             customPropertyKeyMap.revenue = f.key;
           } else if (nameLower.includes("spend") || nameLower.includes("ad spend")) {
             customPropertyKeyMap.spend = f.key;
-          } else if (nameLower.includes("bottleneck") || nameLower.includes("scalling") || nameLower.includes("scaling")) {
+          } else if (
+            nameLower.includes("bottleneck") ||
+            nameLower.includes("scalling") ||
+            nameLower.includes("scaling")
+          ) {
             customPropertyKeyMap.bottleneck = f.key;
           } else if (nameLower.includes("decision") || nameLower.includes("founder")) {
             customPropertyKeyMap.decision = f.key;
@@ -232,6 +338,34 @@ export async function POST(req: NextRequest) {
             customPropertyKeyMap.start = f.key;
           } else if (nameLower.includes("call") || nameLower.includes("date") || nameLower.includes("time")) {
             customPropertyKeyMap.call = f.key;
+          } else if (nameLower === "utm source" || nameLower === "utm_source" || nameLower === "ad source") {
+            customPropertyKeyMap.utm_source = f.key;
+          } else if (
+            nameLower === "utm campaign" ||
+            nameLower === "utm_campaign" ||
+            nameLower === "campaign" ||
+            nameLower === "ad campaign"
+          ) {
+            customPropertyKeyMap.utm_campaign = f.key;
+          } else if (nameLower === "utm medium" || nameLower === "utm_medium" || nameLower === "medium") {
+            customPropertyKeyMap.utm_medium = f.key;
+          } else if (
+            nameLower === "utm content" ||
+            nameLower === "utm_content" ||
+            nameLower === "ad content" ||
+            nameLower === "ad name" ||
+            nameLower === "creative"
+          ) {
+            customPropertyKeyMap.utm_content = f.key;
+          } else if (
+            nameLower === "utm term" ||
+            nameLower === "utm_term" ||
+            nameLower === "ad set" ||
+            nameLower === "audience"
+          ) {
+            customPropertyKeyMap.utm_term = f.key;
+          } else if (nameLower === "fbclid" || nameLower === "fb click id" || nameLower === "meta click id") {
+            customPropertyKeyMap.fbclid = f.key;
           }
         }
       }
@@ -256,12 +390,35 @@ export async function POST(req: NextRequest) {
       customFieldsPayload.push({ key: customPropertyKeyMap.start, value: extractedTimeline });
     }
     if (payload.startTime && customPropertyKeyMap.call) {
-      customFieldsPayload.push({ key: customPropertyKeyMap.call, value: new Date(payload.startTime).toISOString() });
+      customFieldsPayload.push({
+        key: customPropertyKeyMap.call,
+        value: new Date(payload.startTime).toISOString(),
+      });
     }
 
-    // 4. Post to Quo (OpenPhone) API
+    // Append UTM Custom Fields to Quo if mapped
+    if (utmSource && customPropertyKeyMap.utm_source) {
+      customFieldsPayload.push({ key: customPropertyKeyMap.utm_source, value: utmSource });
+    }
+    if (utmCampaign && customPropertyKeyMap.utm_campaign) {
+      customFieldsPayload.push({ key: customPropertyKeyMap.utm_campaign, value: utmCampaign });
+    }
+    if (utmMedium && customPropertyKeyMap.utm_medium) {
+      customFieldsPayload.push({ key: customPropertyKeyMap.utm_medium, value: utmMedium });
+    }
+    if (utmContent && customPropertyKeyMap.utm_content) {
+      customFieldsPayload.push({ key: customPropertyKeyMap.utm_content, value: utmContent });
+    }
+    if (utmTerm && customPropertyKeyMap.utm_term) {
+      customFieldsPayload.push({ key: customPropertyKeyMap.utm_term, value: utmTerm });
+    }
+    if (fbclid && customPropertyKeyMap.fbclid) {
+      customFieldsPayload.push({ key: customPropertyKeyMap.fbclid, value: fbclid });
+    }
+
+    // 5. Post to Quo (OpenPhone) API
     const quoPayload: Record<string, any> = {
-      source: "Cal.com Growth Audit",
+      source: sourceLabel,
       sourceUrl: sourceUrl,
       defaultFields: {
         firstName,
@@ -285,11 +442,12 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify(quoPayload),
       });
       quoResult = await quoResponse.json();
+      console.log("✅ [Quo CRM] Contact created successfully:", quoResult?.data?.id);
     } catch (err) {
       console.error("Error creating contact in Quo:", err);
     }
 
-    // 4. Server-Side Meta Conversions API (CAPI) Dispatch
+    // 6. Server-Side Meta Conversions API (CAPI) Dispatch
     let capiResult: any = null;
     if (META_PIXEL_ID && META_CAPI_ACCESS_TOKEN) {
       try {
@@ -305,30 +463,43 @@ export async function POST(req: NextRequest) {
         if (clientIp) userDataPayload.client_ip_address = clientIp;
         if (clientUserAgent) userDataPayload.client_user_agent = clientUserAgent;
 
+        // Pass Meta Click ID (fbc) and Browser ID (fbp) for maximum match quality
+        if (fbclid) {
+          userDataPayload.fbc = fbclid.startsWith("fb.1.")
+            ? fbclid
+            : `fb.1.${currentTimestamp}.${fbclid}`;
+        }
+        if (fbp) {
+          userDataPayload.fbp = fbp;
+        }
+
+        const customDataPayload: Record<string, any> = {
+          content_name: "Free Growth Audit",
+          currency: "USD",
+          value: 0,
+        };
+        if (utmSource) customDataPayload.utm_source = utmSource;
+        if (utmCampaign) customDataPayload.utm_campaign = utmCampaign;
+        if (utmMedium) customDataPayload.utm_medium = utmMedium;
+        if (utmContent) customDataPayload.utm_content = utmContent;
+        if (utmTerm) customDataPayload.utm_term = utmTerm;
+
         const capiEvents = [
           {
             event_name: "Schedule",
             event_time: currentTimestamp,
             action_source: "website",
-            event_source_url: "https://ecom.rarityagency.io",
+            event_source_url: landingPageWithUtms,
             user_data: userDataPayload,
-            custom_data: {
-              content_name: "Free Growth Audit",
-              currency: "USD",
-              value: 0,
-            },
+            custom_data: customDataPayload,
           },
           {
             event_name: "Lead",
             event_time: currentTimestamp,
             action_source: "website",
-            event_source_url: "https://ecom.rarityagency.io",
+            event_source_url: landingPageWithUtms,
             user_data: userDataPayload,
-            custom_data: {
-              content_name: "Free Growth Audit",
-              currency: "USD",
-              value: 0,
-            },
+            custom_data: customDataPayload,
           },
         ];
 
@@ -352,12 +523,22 @@ export async function POST(req: NextRequest) {
       message: "Lead successfully synced to Quo CRM and Meta Conversions API",
       contactId: quoResult?.data?.id,
       metaCapi: capiResult,
+      attribution: {
+        utmSource,
+        utmMedium,
+        utmCampaign,
+        utmContent,
+        utmTerm,
+        fbclid,
+        landingPageWithUtms,
+      },
       leadSummary: {
         name: `${firstName} ${lastName}`.trim(),
         email,
         phone,
         company,
         role,
+        source: sourceLabel,
         sourceUrl,
         otherAnswers,
       },

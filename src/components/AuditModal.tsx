@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Cal, { getCalApi } from "@calcom/embed-react";
+import { getStoredUtms, UtmData } from "@/components/UtmTracker";
 
 interface AuditModalProps {
   isOpen: boolean;
@@ -10,6 +11,50 @@ interface AuditModalProps {
 }
 
 export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
+  const [utms, setUtms] = useState<UtmData>({});
+
+  // Capture UTMs on mount and when modal opens
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const captured = getStoredUtms();
+      setUtms(captured);
+    }
+  }, [isOpen]);
+
+  // Build Cal config with UTM parameters
+  const calConfig = useMemo(() => {
+    const baseConfig: Record<string, any> = {
+      layout: "month_view",
+      useSlotsViewOnSmallScreen: "true",
+    };
+
+    if (utms.utm_source) baseConfig.utm_source = utms.utm_source;
+    if (utms.utm_medium) baseConfig.utm_medium = utms.utm_medium;
+    if (utms.utm_campaign) baseConfig.utm_campaign = utms.utm_campaign;
+    if (utms.utm_content) baseConfig.utm_content = utms.utm_content;
+    if (utms.utm_term) baseConfig.utm_term = utms.utm_term;
+    if (utms.fbclid) baseConfig.fbclid = utms.fbclid;
+    if (utms.fbc) baseConfig.fbc = utms.fbc;
+    if (utms.fbp) baseConfig.fbp = utms.fbp;
+
+    return baseConfig;
+  }, [utms]);
+
+  // Build Cal Link with query params as fallback guarantee
+  const calLink = useMemo(() => {
+    const base = "caiodecamargo/free-growth-audit";
+    const params = new URLSearchParams();
+    if (utms.utm_source) params.set("utm_source", utms.utm_source);
+    if (utms.utm_medium) params.set("utm_medium", utms.utm_medium);
+    if (utms.utm_campaign) params.set("utm_campaign", utms.utm_campaign);
+    if (utms.utm_content) params.set("utm_content", utms.utm_content);
+    if (utms.utm_term) params.set("utm_term", utms.utm_term);
+    if (utms.fbclid) params.set("fbclid", utms.fbclid);
+
+    const qs = params.toString();
+    return qs ? `${base}?${qs}` : base;
+  }, [utms]);
+
   useEffect(() => {
     (async function () {
       const cal = await getCalApi({ namespace: "free-growth-audit" });
@@ -36,6 +81,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
           const phone = detail.phone || detail.phoneNumber || detail.booking?.phone || "";
 
           if (typeof window !== "undefined") {
+            const currentUtms = getStoredUtms();
             (window as any).dataLayer = (window as any).dataLayer || [];
             (window as any).dataLayer.push({
               event: "bookingSuccessful",
@@ -47,11 +93,18 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
               phone: phone,
               eventType: detail.eventType || "free-growth-audit",
               date: detail.date,
+              utm_source: currentUtms.utm_source || "",
+              utm_medium: currentUtms.utm_medium || "",
+              utm_campaign: currentUtms.utm_campaign || "",
+              utm_content: currentUtms.utm_content || "",
+              utm_term: currentUtms.utm_term || "",
+              fbclid: currentUtms.fbclid || "",
             });
-            console.log("✅ [GTM] Dispatched bookingSuccessful event to dataLayer:", {
+            console.log("✅ [GTM] Dispatched bookingSuccessful event with UTMs:", {
               name: fullName,
               email,
               phone,
+              utms: currentUtms,
             });
           }
         },
@@ -74,6 +127,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
           const lastName = nameParts.slice(1).join(" ") || "";
           const email = detail.email || "";
           const phone = detail.phone || detail.phoneNumber || "";
+          const currentUtms = getStoredUtms();
 
           (window as any).dataLayer = (window as any).dataLayer || [];
           (window as any).dataLayer.push({
@@ -84,6 +138,12 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
             last_name: lastName,
             email: email,
             phone: phone,
+            utm_source: currentUtms.utm_source || "",
+            utm_medium: currentUtms.utm_medium || "",
+            utm_campaign: currentUtms.utm_campaign || "",
+            utm_content: currentUtms.utm_content || "",
+            utm_term: currentUtms.utm_term || "",
+            fbclid: currentUtms.fbclid || "",
           });
         }
       } catch (err) {
@@ -160,13 +220,11 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
           {/* Cal.com Embed Container */}
           <div className="flex-1 w-full h-full min-h-0 pt-2 overflow-hidden rounded-xl sm:rounded-2xl">
             <Cal
+              key={calLink}
               namespace="free-growth-audit"
-              calLink="caiodecamargo/free-growth-audit"
+              calLink={calLink}
               style={{ width: "100%", height: "100%", overflow: "scroll" }}
-              config={{
-                layout: "month_view",
-                useSlotsViewOnSmallScreen: "true",
-              }}
+              config={calConfig}
             />
           </div>
         </motion.div>
