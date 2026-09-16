@@ -98,8 +98,10 @@
   .result-bar span{display:block;color:var(--muted);font-size:14px;margin-top:3px}
 
   /* players */
-  .player{display:flex;gap:18px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
-  .player .av{flex:none;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--teal-dim),var(--navy-2));display:flex;align-items:center;justify-content:center;font-family:var(--sans);font-weight:700;font-size:20px;color:#06231d}
+  .player{display:flex;gap:18px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;transition:all .3s ease}
+  .player:hover{border-color:var(--teal);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  .player .av, .player .av-img{flex:none;width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--teal);box-shadow:0 0 16px rgba(53,224,193,.25);background:var(--navy-2)}
+  .player .av{background:linear-gradient(135deg,var(--teal-dim),var(--navy-2));display:flex;align-items:center;justify-content:center;font-family:var(--sans);font-weight:700;font-size:24px;color:var(--teal)}
   .player .pn{font-family:var(--sans);font-weight:600;font-size:19px}
   .player .pr{color:var(--teal);font-size:13px;font-weight:500;margin:2px 0 8px;letter-spacing:.03em}
   .player .pd{color:var(--muted);font-size:14.5px;line-height:1.5}
@@ -224,11 +226,38 @@
     <div class="eyebrow">Who's actually on your account</div>
     <h2>Senior operators. <em>No juniors.</em></h2>
     <div class="cols c3">
-      <div class="player"><div class="av">C</div><div><div class="pn">Caio</div><div class="pr">Founder — on your account</div><div class="pd">The founder runs your strategy directly — not a senior you meet once on the pitch and never hear from again.</div></div></div>
-      <div class="player"><div class="av">D</div><div><div class="pn">Lead Designer</div><div class="pr">10+ yrs · conversion creative</div><div class="pd">Every ad is built to sell, not to win design awards — 10+ years turning brands into scroll-stopping, converting creative.</div></div></div>
-      <div class="player"><div class="av">◆</div><div><div class="pn">The Profit Engine</div><div class="pr">Your allowable-CAC system</div><div class="pd">The tooling that ties every dollar of spend to your contribution margin — the same number we calculated with you.</div></div></div>
+      <div class="player">
+        <img src="/caio_ai.png" alt="Caio Camargo" class="av-img">
+        <div>
+          <div class="pn">Caio Camargo</div>
+          <div class="pr">Founder &amp; Growth Operator</div>
+          <div class="pd">Runs your acquisition strategy and media buying directly — not a junior you meet once on a pitch and never hear from again.</div>
+        </div>
+      </div>
+      <div class="player">
+        <img src="/caique_ai.png" alt="Caique" class="av-img">
+        <div>
+          <div class="pn">Caique</div>
+          <div class="pr">Lead Conversion Designer</div>
+          <div class="pd">10+ years crafting high-converting direct-response creatives, motion graphics, and scroll-stopping ad assets designed to sell.</div>
+        </div>
+      </div>
+      <div class="player">
+        <div class="av">◆</div>
+        <div>
+          <div class="pn">The Profit Engine</div>
+          <div class="pr">Unit Economics &amp; MER Attribution</div>
+          <div class="pd">Proprietary allowable-CAC framework that ties every ad dollar spent directly to contribution margin and repeat LTV.</div>
+        </div>
+      </div>
     </div>
-    <div class="proof-slot"><div><b>Add real team photography or LinkedIn portraits</b><br><span>Names, roles and one specific result each will build more trust than generic avatars.</span></div><div class="needed">Material needed</div></div>
+    <div class="proof-slot" style="background:rgba(53,224,193,.05);border:1px solid rgba(53,224,193,.25)">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="color:var(--teal);font-size:22px;">🛡️</span>
+        <div><b style="color:var(--ink)">100% Senior Operator Attention</b><br><span style="color:var(--muted)">You work directly with the founders and leaders executing your creative &amp; spend. Capped client roster.</span></div>
+      </div>
+      <div class="needed" style="background:rgba(53,224,193,.15);color:var(--teal);border:1px solid var(--teal);font-weight:600;">Direct Access</div>
+    </div>
   </section>
 
   <!-- 7 METHODOLOGY -->
