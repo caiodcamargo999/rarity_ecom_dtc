@@ -90,14 +90,16 @@ export async function POST(req: Request) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(submission),
+          redirect: "follow",
         });
 
+        const resText = await response.text();
         if (response.ok) {
           sheetSynced = true;
-          console.log("[Onboarding API] Successfully synced to Google Sheets webhook");
+          console.log("[Onboarding API] Successfully synced to Google Sheets webhook:", resText);
         } else {
           console.error(
-            `[Onboarding API] Google Sheets webhook error: ${response.status} ${response.statusText}`
+            `[Onboarding API] Google Sheets webhook error: ${response.status} ${response.statusText} - ${resText}`
           );
         }
       } catch (webhookErr) {
