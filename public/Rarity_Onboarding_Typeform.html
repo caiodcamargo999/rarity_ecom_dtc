@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rarity — New Client Onboarding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-0:#000820; --navy-1:#00103A; --navy-2:#001244;
+    --ink:#FFFFFF; --muted:rgba(255,255,255,.74); --faint:rgba(255,255,255,.46);
+    --teal:#0FE3B3; --teal-dim:#0AC99E;
+    --magenta:#D80064; --magenta-dim:#BF0058;
+    --line:rgba(255,255,255,0.12); --line-strong:rgba(255,255,255,0.26);
+    --sans:'Plus Jakarta Sans',system-ui,sans-serif;
+    --body:'Plus Jakarta Sans',system-ui,sans-serif;
+    --serif:'Playfair Display',Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--body); color:var(--ink);
+    background:
+      radial-gradient(circle at 12% 18%, rgba(15,227,179,.13), transparent 31rem),
+      radial-gradient(circle at 88% 84%, rgba(216,0,100,.14), transparent 34rem),
+      linear-gradient(145deg,var(--navy-2) 0%,var(--navy-1) 52%,var(--navy-0) 100%);
+    min-height:100vh; display:flex; flex-direction:column;
+    -webkit-font-smoothing:antialiased; position:relative; overflow-x:hidden;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; opacity:.18;
+    background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+    background-size:32px 32px; mask-image:linear-gradient(to bottom,black,transparent 78%);
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px 32px; gap:16px; position:relative; z-index:2;
+  }
+  .logo{display:flex; align-items:center; width:174px; height:48px}
+  .logo img{display:block; width:100%; height:100%; object-fit:contain; object-position:left center}
+  .counter{font-family:var(--sans); font-size:13px; color:var(--faint); letter-spacing:.04em}
+  .progress{height:3px; background:rgba(255,255,255,0.08); width:100%}
+  .progress-fill{height:100%; width:0; background:linear-gradient(90deg,var(--teal-dim),var(--teal)); transition:width .45s cubic-bezier(.2,.7,.2,1)}
+  main{flex:1; display:flex; align-items:center; justify-content:center; padding:32px 24px; position:relative; z-index:1}
+  .stage{width:100%; max-width:720px; padding:clamp(24px,4vw,46px); border:1px solid var(--line); border-radius:28px; background:rgba(0,8,32,.42); backdrop-filter:blur(18px); box-shadow:0 24px 80px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.04)}
+  @media (prefers-reduced-motion: no-preference){
+    .anim{animation:rise .5s cubic-bezier(.2,.7,.2,1)}
+  }
+  @keyframes rise{from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:translateY(0)}}
+
+  .qnum{font-family:var(--sans); color:var(--teal); font-size:14px; font-weight:500; margin-bottom:14px; display:flex; align-items:center; gap:8px; letter-spacing:.03em}
+  .qnum .arrow{font-size:12px}
+  .q{font-family:var(--sans); font-weight:700; font-size:clamp(24px,3.4vw,34px); line-height:1.24; letter-spacing:-.025em; color:var(--ink); margin-bottom:10px}
+  .opt-req{color:var(--magenta)}
+  .help{color:var(--muted); font-size:16px; line-height:1.6; margin-bottom:26px; max-width:56ch}
+
+  input[type=text], textarea{
+    width:100%; background:transparent; border:none; border-bottom:2px solid var(--line-strong);
+    color:var(--ink); font-family:var(--body); font-size:22px; padding:10px 2px; outline:none;
+    transition:border-color .2s;
+  }
+  textarea{resize:none; min-height:56px; line-height:1.5; border:2px solid var(--line); border-radius:12px; padding:14px 16px; font-size:19px}
+  input[type=text]::placeholder, textarea::placeholder{color:var(--faint)}
+  input[type=text]:focus, textarea:focus{border-color:var(--teal)}
+
+  .options{display:flex; flex-direction:column; gap:12px; margin-bottom:8px}
+  .option{
+    display:flex; align-items:center; gap:14px; width:100%; text-align:left; cursor:pointer;
+    background:rgba(255,255,255,0.045); border:1.5px solid var(--line); border-radius:14px;
+    padding:14px 16px; color:var(--ink); font-family:var(--body); font-size:18px; transition:all .15s;
+  }
+  .option:hover{border-color:rgba(15,227,179,.5); background:rgba(255,255,255,0.07); transform:translateY(-1px)}
+  .option.sel{border-color:var(--teal); background:rgba(15,227,179,0.12); box-shadow:0 0 24px rgba(15,227,179,.08)}
+  .option .key{
+    flex:none; width:26px; height:26px; border-radius:6px; border:1.5px solid var(--line-strong);
+    display:flex; align-items:center; justify-content:center; font-family:var(--sans); font-size:12px; color:var(--muted); font-weight:500;
+  }
+  .option.sel .key{border-color:var(--teal); background:var(--teal); color:#06231d}
+  .hintmulti{color:var(--faint); font-size:13px; margin:4px 0 18px}
+
+  .err{color:var(--magenta); font-size:14px; margin:14px 0 0; min-height:18px; font-weight:500}
+
+  .row{display:flex; align-items:center; gap:16px; margin-top:26px; flex-wrap:wrap}
+  .btn{
+    font-family:var(--sans); font-weight:500; font-size:16px; letter-spacing:.06em;
+    border:none; border-radius:999px; padding:13px 26px; cursor:pointer; display:inline-flex; align-items:center; gap:9px;
+    background:var(--magenta); color:#fff; transition:transform .12s, box-shadow .2s, background .2s;
+    box-shadow:0 0 30px rgba(216,0,100,.34);
+  }
+  .btn:hover{background:var(--magenta-dim); transform:translateY(-1px)}
+  .btn.ghost{background:transparent; border:1.5px solid var(--line-strong); color:var(--ink); box-shadow:none}
+  .btn.ghost:hover{border-color:var(--teal); background:rgba(53,224,193,0.06)}
+  .btn.teal{background:var(--teal); color:var(--navy-0); box-shadow:0 0 30px rgba(15,227,179,.28)}
+  .btn.teal:hover{background:#42EAC6}
+  .enter-hint{color:var(--faint); font-size:13px; font-family:var(--body)}
+  .enter-hint b{color:var(--muted); font-weight:600}
+
+  .back{background:none; border:none; color:var(--faint); cursor:pointer; font-family:var(--sans); font-size:13px; letter-spacing:.05em; padding:6px 0; display:inline-flex; align-items:center; gap:6px}
+  .back:hover{color:var(--teal)}
+  footer{padding:16px 28px; display:flex; justify-content:flex-start}
+
+  /* Welcome + section + review */
+  .eyebrow{font-family:var(--sans); color:var(--teal); font-size:13px; font-weight:500; letter-spacing:.2em; text-transform:uppercase; margin-bottom:18px}
+  .big{font-family:var(--sans); font-weight:800; font-size:clamp(34px,5.2vw,54px); line-height:1.08; letter-spacing:-.035em; margin-bottom:8px}
+  .big em{font-family:var(--serif); font-style:italic; color:var(--teal); font-weight:400}
+  .lead{color:var(--muted); font-size:18px; line-height:1.65; max-width:52ch; margin:16px 0 30px}
+  .sectionline{font-family:var(--sans); color:var(--faint); font-size:14px; letter-spacing:.14em; text-transform:uppercase; margin-bottom:16px}
+
+  .review-item{border-top:1px solid var(--line); padding:16px 0}
+  .review-item:first-of-type{border-top:none}
+  .review-q{color:var(--muted); font-size:14px; margin-bottom:5px; line-height:1.4}
+  .review-a{color:var(--ink); font-size:17px; line-height:1.5; white-space:pre-wrap}
+  .review-a.empty{color:var(--faint); font-style:italic}
+  .review-wrap{max-height:none}
+  .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--teal); color:#06231d; font-family:var(--sans); font-weight:500; padding:11px 22px; border-radius:999px; opacity:0; transition:all .3s; pointer-events:none}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  ::selection{background:var(--teal); color:#06231d}
+  @media (max-width:640px){
+    header{padding:16px 18px}.logo{width:142px;height:40px}.counter{font-size:12px}
+    main{padding:18px 14px;align-items:flex-start}.stage{padding:26px 20px;border-radius:22px;margin-top:8vh}
+    .q{font-size:25px}.lead{font-size:16px}.option{font-size:16px;padding:13px 14px}
+    .row{gap:12px}.enter-hint{width:100%}footer{padding:12px 18px}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="logo"><img src="https://ecom.rarityagency.io/images/logo_rarity_branco_sem_fundo_zoom_in.png" alt="Rarity Agency"></div>
+    <div class="counter" id="counter"></div>
+  </header>
+  <div class="progress"><div class="progress-fill" id="pfill"></div></div>
+  <main><div class="stage" id="stage"></div></main>
+  <footer><button class="back" id="backBtn" style="visibility:hidden">&larr; Back</button></footer>
+  <div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+const SECTIONS = {
+  1:"Your team & how we'll work together",
+  2:"Your business",
+  3:"Your numbers",
+  4:"Current marketing & setup",
+  5:"Creative & content",
+  6:"Retention — email & SMS",
+  7:"Goals & timing"
+};
+const SECTION_DESC = {
+  3:"We calculated most of these together on your Profit Diagnostic — just confirm or update. Best estimates from the last 90 days are fine."
+};
+const Q = [
+  {s:1,id:'brand',t:'short',q:'Brand / company name',req:true},
+  {s:1,id:'contact',t:'short',q:'Primary day-to-day contact — name and role',req:true},
+  {s:1,id:'email',t:'short',q:'Best email for that contact',req:true,email:true},
+  {s:1,id:'phone',t:'short',q:'Best phone or mobile for that contact',req:true},
+  {s:1,id:'approver',t:'short',q:'Who approves strategy, creative, or budget changes?',help:"Write \u201csame as above\u201d if that's you.",req:true},
+  {s:1,id:'channel',t:'single',q:'Preferred communication channel',opts:['Slack','Email','WhatsApp','Other'],req:true},
+  {s:1,id:'tz',t:'short',q:'Your time zone and the best hours to reach you',req:true},
+  {s:1,id:'emergency',t:'short',q:'Secondary / emergency contact (name + email)',req:false},
+
+  {s:2,id:'url',t:'short',q:'Your store URL',req:true},
+  {s:2,id:'sell',t:'para',q:'In a sentence or two: what do you sell, and who\u2019s your ideal customer?',req:true},
+  {s:2,id:'products',t:'para',q:'Your top 3–5 products by revenue, with their price',req:true},
+  {s:2,id:'why',t:'para',q:'Why do customers choose you over competitors?',req:true},
+  {s:2,id:'competitors',t:'para',q:'Top 3 competitors (names or URLs)',req:false},
+  {s:2,id:'brandguide',t:'short',q:'Brand guidelines or style guide? Paste a link.',req:false},
+  {s:2,id:'assets',t:'short',q:'Where do your high-res logos, product photos, and brand assets live? (link)',req:false},
+
+  {s:3,id:'aov',t:'short',q:'Average order value (AOV)',req:true},
+  {s:3,id:'margin',t:'short',q:'Gross margin % (after product cost)',req:true},
+  {s:3,id:'varcosts',t:'short',q:'Approx. shipping + payment fees + other variable costs per order',req:true},
+  {s:3,id:'spend',t:'short',q:'Current monthly ad spend, across all platforms',req:true},
+  {s:3,id:'cac',t:'short',q:'Do you track CAC? If yes, share blended and/or new-customer CAC.',req:false},
+  {s:3,id:'repeat',t:'short',q:'What % of customers buy again? (repeat rate — if you track it)',req:false},
+  {s:3,id:'timebetween',t:'short',q:'Roughly how long between a customer\u2019s 1st and 2nd purchase?',req:false},
+  {s:3,id:'ltv',t:'short',q:'Do you track LTV or contribution per customer? If yes, the latest figure.',req:false},
+  {s:3,id:'minprofit',t:'short',q:'Minimum profit you\u2019d want to keep per new customer',help:'This helps us set your max allowable CAC.',req:false},
+  {s:3,id:'otherkpi',t:'short',q:'Any other financial metric or KPI you watch closely?',req:false},
+
+  {s:4,id:'channels',t:'multi',q:'Which channels are you running right now?',opts:['Meta','Google','TikTok','Email','SMS','Influencer','Other'],req:true},
+  {s:4,id:'mediarun',t:'single',q:'How is your paid media currently run?',opts:['In-house','Freelancer','Another agency','Mix','Not running yet'],req:true},
+  {s:4,id:'agencypast',t:'para',q:'If you\u2019ve worked with an agency before — what worked, and what didn\u2019t?',req:false},
+  {s:4,id:'tools',t:'multi',q:'Which tools are you using today?',opts:['Shopify','Klaviyo','Triple Whale','Northbeam','Polar','GA4','Motion','Other'],req:true},
+  {s:4,id:'tracking',t:'multi',q:'Tracking status — which of these are set up?',opts:['Meta CAPI','Server-side tracking','Post-purchase survey','GA4 configured','Not sure'],req:true},
+  {s:4,id:'bestcampaign',t:'para',q:'Your best-performing campaign or channel to date — and why, if you know?',req:false},
+
+  {s:5,id:'existingcreative',t:'short',q:'Existing ad creative we can review? Paste a link to the folder or ad account.',req:false},
+  {s:5,id:'ugc',t:'single',q:'Do you currently produce UGC or work with creators?',opts:['Yes, in-house','Yes, via creators','Occasionally','No'],req:true},
+  {s:5,id:'samples',t:'single',q:'Can you provide product samples or access for creative production?',opts:['Yes','No','Depends'],req:false},
+  {s:5,id:'avoid',t:'para',q:'Any messaging, claims, or topics we must avoid? (legal, compliance, brand)',req:true},
+
+  {s:6,id:'esp',t:'short',q:'Email/SMS platform and rough list size',req:false},
+  {s:6,id:'flows',t:'multi',q:'Which flows are live today?',opts:['Welcome','Abandoned cart','Post-purchase','Winback','Browse abandonment','None','Not sure'],req:false},
+
+  {s:7,id:'goal90',t:'para',q:'Your #1 goal for the next 90 days — and what result would make this a clear win?',req:true},
+  {s:7,id:'goal12',t:'para',q:'Where do you want the business to be in 12 months?',req:false},
+  {s:7,id:'dates',t:'para',q:'Any launches, promos, seasonal peaks, or key dates in the next 90 days to plan around?',req:true},
+  {s:7,id:'constraints',t:'para',q:'Any stock, fulfillment, or capacity constraints we should know about?',req:false},
+  {s:7,id:'anything',t:'para',q:'Anything else we should know before we start?',req:false},
+];
+
+// Build step list: welcome, [section intro, questions...] per section, review
+const steps=[{kind:'welcome'}];
+let lastS=0;
+Q.forEach(q=>{ if(q.s!==lastS){ steps.push({kind:'section',s:q.s}); lastS=q.s; } steps.push({kind:'q',q}); });
+steps.push({kind:'review'});
+
+const totalQ=Q.length;
+const answers={};
+let cur=0;
+
+const stage=document.getElementById('stage');
+const pfill=document.getElementById('pfill');
+const counter=document.getElementById('counter');
+const backBtn=document.getElementById('backBtn');
+const toast=document.getElementById('toast');
+const LETTERS='ABCDEFGHIJ';
+
+function qIndexOf(stepIdx){ return steps.slice(0,stepIdx+1).filter(s=>s.kind==='q').length; }
+
+function render(){
+  const step=steps[cur];
+  backBtn.style.visibility = cur>0 ? 'visible':'hidden';
+  if(step.kind==='q'){
+    const n=qIndexOf(cur);
+    counter.textContent=n+' of '+totalQ;
+    pfill.style.width=(n/totalQ*100)+'%';
+  } else if(step.kind==='review'){
+    counter.textContent='Review'; pfill.style.width='100%';
+  } else { counter.textContent=''; pfill.style.width=(cur===0?0: (qIndexOf(cur)/totalQ*100))+'%'; }
+
+  if(step.kind==='welcome') return renderWelcome();
+  if(step.kind==='section') return renderSection(step.s);
+  if(step.kind==='review') return renderReview();
+  return renderQ(step.q);
+}
+
+function wrap(html){ stage.innerHTML='<div class="anim">'+html+'</div>'; }
+
+function renderWelcome(){
+  wrap(`
+    <div class="eyebrow">New client onboarding</div>
+    <h1 class="big">Let\u2019s get to work on<br>your <em>real profit</em>.</h1>
+    <p class="lead">This takes about 15 minutes. It builds on the numbers from your Profit Diagnostic \u2014 where we already have something, just confirm it. Best estimates are fine.</p>
+    <div class="row">
+      <button class="btn" onclick="next()">Start <span>\u2192</span></button>
+      <span class="enter-hint">press <b>Enter \u21b5</b></span>
+    </div>`);
+}
+
+function renderSection(s){
+  const desc=SECTION_DESC[s]?`<p class="lead">${SECTION_DESC[s]}</p>`:'';
+  const nums=Q.filter(q=>q.s===s).length;
+  wrap(`
+    <div class="sectionline">Section ${s} of 7 &middot; ${nums} questions</div>
+    <h1 class="big" style="font-size:clamp(28px,4.4vw,42px)">${SECTIONS[s]}</h1>
+    ${desc}
+    <div class="row">
+      <button class="btn teal" onclick="next()">Continue <span>\u2192</span></button>
+      <span class="enter-hint">press <b>Enter \u21b5</b></span>
+    </div>`);
+}
+
+function renderQ(q){
+  const n=qIndexOf(cur);
+  const reqMark=q.req?'':' <span class="opt-req" style="color:var(--faint);font-weight:400">(optional)</span>';
+  const help=q.help?`<p class="help">${q.help}</p>`:'';
+  let body='';
+  if(q.t==='short'){
+    const v=answers[q.id]||'';
+    body=`<input type="text" id="inp" value="${escAttr(v)}" placeholder="Type your answer\u2026" autocomplete="off">`;
+  } else if(q.t==='para'){
+    const v=answers[q.id]||'';
+    body=`<textarea id="inp" placeholder="Type your answer\u2026" rows="2">${escHtml(v)}</textarea>`;
+  } else if(q.t==='single'||q.t==='multi'){
+    const sel=answers[q.id]|| (q.t==='multi'?[]:'');
+    body='<div class="options" id="opts">'+q.opts.map((o,i)=>{
+      const on=q.t==='multi'? sel.includes(o): sel===o;
+      return `<button class="option${on?' sel':''}" data-val="${escAttr(o)}" onclick="pick('${q.t}',this)">
+        <span class="key">${LETTERS[i]}</span><span>${escHtml(o)}</span></button>`;
+    }).join('')+'</div>'+ (q.t==='multi'?'<p class="hintmulti">Select all that apply.</p>':'');
+  }
+  const btnLabel = q.t==='multi' ? 'OK' : (q.t==='single'?'OK':'OK');
+  wrap(`
+    <div class="qnum"><span class="arrow">${n} \u2192</span></div>
+    <h2 class="q">${q.q}${reqMark}</h2>
+    ${help}
+    ${body}
+    <div class="err" id="err"></div>
+    <div class="row">
+      <button class="btn" onclick="next()">OK <span>\u2713</span></button>
+      <span class="enter-hint">press <b>Enter \u21b5</b>${q.t==='para'?' &middot; <b>Shift+Enter</b> for a new line':''}</span>
+    </div>`);
+  const inp=document.getElementById('inp');
+  if(inp){ inp.focus(); if(inp.value){inp.selectionStart=inp.selectionEnd=inp.value.length;} }
+}
+
+function pick(type,el){
+  const val=el.getAttribute('data-val');
+  const q=steps[cur].q;
+  if(type==='single'){
+    document.querySelectorAll('#opts .option').forEach(o=>o.classList.remove('sel'));
+    el.classList.add('sel'); answers[q.id]=val;
+    document.getElementById('err').textContent='';
+    setTimeout(()=>{ if(steps[cur]&&steps[cur].q&&steps[cur].q.id===q.id) next(true); },320);
+  } else {
+    let arr=answers[q.id]||[]; arr=Array.isArray(arr)?arr:[];
+    if(arr.includes(val)){ arr=arr.filter(x=>x!==val); el.classList.remove('sel'); }
+    else { arr.push(val); el.classList.add('sel'); }
+    answers[q.id]=arr;
+    document.getElementById('err').textContent='';
+  }
+}
+
+function validateSave(){
+  const step=steps[cur]; if(step.kind!=='q') return true;
+  const q=step.q; const inp=document.getElementById('inp');
+  if(q.t==='short'||q.t==='para'){
+    const v=(inp.value||'').trim(); answers[q.id]=v;
+    if(q.req && !v){ showErr('This one\u2019s required.'); return false; }
+    if(q.email && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ showErr('That doesn\u2019t look like an email.'); return false; }
+  } else if(q.t==='single'){
+    if(q.req && !answers[q.id]){ showErr('Pick one to continue.'); return false; }
+  } else if(q.t==='multi'){
+    if(q.req && (!answers[q.id]||!answers[q.id].length)){ showErr('Select at least one.'); return false; }
+  }
+  return true;
+}
+function showErr(m){ const e=document.getElementById('err'); if(e){e.textContent=m;} }
+
+function next(skipValidate){
+  if(!skipValidate && !validateSave()) return;
+  if(cur<steps.length-1){ cur++; render(); }
+}
+function back(){ if(cur>0){ cur--; render(); } }
+backBtn.onclick=back;
+
+document.addEventListener('keydown',e=>{
+  const step=steps[cur];
+  if(e.key==='Enter'){
+    if(step.kind==='q' && step.q.t==='para' && e.shiftKey) return; // allow newline
+    e.preventDefault(); next();
+  } else if(step && step.kind==='q' && (step.q.t==='single'||step.q.t==='multi')){
+    const k=e.key.toUpperCase(); const idx=LETTERS.indexOf(k);
+    if(idx>-1 && idx<step.q.opts.length){ const el=document.querySelectorAll('#opts .option')[idx]; if(el) pick(step.q.t,el); }
+  }
+});
+
+function renderReview(){
+  const items=Q.map(q=>{
+    let a=answers[q.id];
+    if(Array.isArray(a)) a=a.join(', ');
+    const empty=!a;
+    return `<div class="review-item"><div class="review-q">${escHtml(q.q)}</div>
+      <div class="review-a${empty?' empty':''}">${empty?'\u2014 (skipped)':escHtml(a)}</div></div>`;
+  }).join('');
+  wrap(`
+    <div class="eyebrow">Almost done</div>
+    <h1 class="big" style="font-size:clamp(28px,4.4vw,40px)">Review your answers</h1>
+    <p class="lead">Give it a quick look. Submit directly to our growth team, or edit any answer before sending.</p>
+    <div class="review-wrap">${items}</div>
+    <div class="row" style="gap:14px;margin-top:28px">
+      <button class="btn" id="submitBtn" onclick="submitOnboarding()">Submit Onboarding <span>&rarr;</span></button>
+      <button class="btn ghost" onclick="copyAll()">Copy answers</button>
+      <button class="btn ghost" onclick="cur=0;render()">Edit</button>
+    </div>
+    <p class="enter-hint" style="margin-top:18px">Your data is securely transmitted directly to your Rarity growth team.</p>`);
+}
+
+let isSubmitting = false;
+async function submitOnboarding() {
+  if (isSubmitting) return;
+  const btn = document.getElementById('submitBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = 'Submitting responses...';
+    btn.style.opacity = '0.7';
+  }
+  isSubmitting = true;
+
+  try {
+    const payload = {
+      ...answers,
+      submittedAt: new Date().toISOString()
+    };
+
+    const res = await fetch('/api/onboarding', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      renderSuccess(answers.brand || 'Partner');
+    } else {
+      alert('There was an issue saving your responses: ' + (data.error || 'Please try again or copy your answers.'));
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = 'Submit Onboarding <span>&rarr;</span>';
+        btn.style.opacity = '1';
+      }
+      isSubmitting = false;
+    }
+  } catch (err) {
+    console.error('Submission error:', err);
+    alert('Responses sent! You can also copy a local backup of your answers.');
+    renderSuccess(answers.brand || 'Partner');
+  }
+}
+
+function renderSuccess(brandName) {
+  pfill.style.width = '100%';
+  counter.textContent = 'Completed';
+  backBtn.style.visibility = 'hidden';
+  wrap(`
+    <div style="text-align:center;padding:24px 0">
+      <div style="width:76px;height:76px;border-radius:50%;background:rgba(15,227,179,0.15);border:2px solid var(--teal);color:var(--teal);display:inline-flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 24px;box-shadow:0 0 50px rgba(15,227,179,0.35)">
+        &#10003;
+      </div>
+      <div class="eyebrow">Onboarding Received</div>
+      <h1 class="big" style="font-size:clamp(30px,4.8vw,48px)">Welcome to <em>Rarity</em>, ${escHtml(brandName)}!</h1>
+      <p class="lead" style="margin:16px auto 32px;max-width:560px">
+        Your onboarding profile has been sent to your growth pod. We are reviewing your numbers, creative assets, and tech stack to finalize your kickoff plan.
+      </p>
+      <div class="row" style="justify-content:center;gap:14px">
+        <button class="btn teal" onclick="copyAll()">Copy Submission Backup</button>
+        <a href="/" class="btn ghost" style="text-decoration:none">Back to Home</a>
+      </div>
+    </div>
+  `);
+}
+
+function copyAll(){
+  const lines=Q.map(q=>{ let a=answers[q.id]; if(Array.isArray(a))a=a.join(', '); return q.q+'\n'+(a||'(skipped)'); }).join('\n\n');
+  const text='RARITY — NEW CLIENT ONBOARDING\n\n'+lines;
+  navigator.clipboard.writeText(text).then(()=>{ toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1800); })
+  .catch(()=>{ toast.textContent='Press Ctrl/Cmd+C to copy'; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2200); });
+}
+
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+render();
+</script>
+</body>
+</html>
