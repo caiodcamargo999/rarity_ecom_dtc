@@ -131,19 +131,19 @@ export default function RarityAdCarouselV2({ onOpenAudit }: RarityAdCarouselV2Pr
           {/* Left Arrow on Side */}
           <button
             onClick={prevSlide}
-            className="absolute -left-2 sm:-left-6 lg:-left-7 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-[#000c2e]/95 hover:bg-[#D80064] text-white border-2 border-white/20 hover:border-brand-teal shadow-[0_0_25px_rgba(0,0,0,0.7)] flex items-center justify-center transition-all duration-200 cursor-pointer group hover:scale-105"
+            className="absolute left-0 sm:-left-6 lg:-left-7 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[#000c2e]/95 hover:bg-[#D80064] text-white border-2 border-white/20 hover:border-brand-teal shadow-[0_0_25px_rgba(0,0,0,0.7)] flex items-center justify-center transition-all duration-200 cursor-pointer group hover:scale-105"
             aria-label="Previous case"
           >
-            <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 group-hover:-translate-x-0.5 transition-transform" />
+            <ChevronLeft className="w-5 h-5 sm:w-7 sm:h-7 group-hover:-translate-x-0.5 transition-transform" />
           </button>
 
           {/* Right Arrow on Side */}
           <button
             onClick={nextSlide}
-            className="absolute -right-2 sm:-right-6 lg:-right-7 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-[#000c2e]/95 hover:bg-[#D80064] text-white border-2 border-white/20 hover:border-brand-teal shadow-[0_0_25px_rgba(0,0,0,0.7)] flex items-center justify-center transition-all duration-200 cursor-pointer group hover:scale-105"
+            className="absolute right-0 sm:-right-6 lg:-right-7 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[#000c2e]/95 hover:bg-[#D80064] text-white border-2 border-white/20 hover:border-brand-teal shadow-[0_0_25px_rgba(0,0,0,0.7)] flex items-center justify-center transition-all duration-200 cursor-pointer group hover:scale-105"
             aria-label="Next case"
           >
-            <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7 group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight className="w-5 h-5 sm:w-7 sm:h-7 group-hover:translate-x-0.5 transition-transform" />
           </button>
 
           {/* Active Card */}

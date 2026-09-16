@@ -183,9 +183,23 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
   const [selectedCreative, setSelectedCreative] = useState<CreativeItem | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Touch gesture support
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const creatives = selectedFormat === "feed" ? feedCreatives : storyCreatives;
   const total = creatives.length;
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Reset index when format changes
   const handleFormatChange = (format: FormatType) => {
@@ -210,7 +224,31 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
     setCurrentIndex((prev) => (prev + 1) % total);
   };
 
-  // Calculate position offset for 3D carousel
+  const minSwipeDistance = 45;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setIsAutoPlay(false);
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    if (isLeftSwipe) {
+      handleNext();
+    } else if (isRightSwipe) {
+      handlePrev();
+    }
+  };
+
+  // Calculate position offset for 3D/2.5D carousel
   const getCardStyle = (index: number) => {
     const diff = (index - currentIndex + total) % total;
     let position = diff;
@@ -225,7 +263,8 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
         opacity: 1,
         scale: 1,
         rotateY: 0,
-        translateX: 0,
+        x: 0,
+        z: 0,
         filter: "brightness(1)",
         pointerEvents: "auto" as const,
       };
@@ -233,44 +272,52 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
       // Immediate right card
       return {
         zIndex: 20,
-        opacity: 0.75,
-        scale: 0.86,
-        rotateY: -22,
-        translateX: selectedFormat === "feed" ? "68%" : "55%",
-        filter: "brightness(0.7)",
+        opacity: isMobile ? 0.35 : 0.7,
+        scale: isMobile ? 0.8 : 0.86,
+        rotateY: isMobile ? 0 : -16,
+        x: isMobile
+          ? (selectedFormat === "feed" ? "76%" : "68%")
+          : (selectedFormat === "feed" ? "64%" : "52%"),
+        z: isMobile ? 0 : -60,
+        filter: "brightness(0.65)",
         pointerEvents: "auto" as const,
       };
     } else if (position === -1) {
       // Immediate left card
       return {
         zIndex: 20,
-        opacity: 0.75,
-        scale: 0.86,
-        rotateY: 22,
-        translateX: selectedFormat === "feed" ? "-68%" : "-55%",
-        filter: "brightness(0.7)",
+        opacity: isMobile ? 0.35 : 0.7,
+        scale: isMobile ? 0.8 : 0.86,
+        rotateY: isMobile ? 0 : 16,
+        x: isMobile
+          ? (selectedFormat === "feed" ? "-76%" : "-68%")
+          : (selectedFormat === "feed" ? "-64%" : "-52%"),
+        z: isMobile ? 0 : -60,
+        filter: "brightness(0.65)",
         pointerEvents: "auto" as const,
       };
     } else if (position === 2) {
       // Far right
       return {
         zIndex: 10,
-        opacity: 0.35,
+        opacity: isMobile ? 0 : 0.35,
         scale: 0.72,
-        rotateY: -35,
-        translateX: selectedFormat === "feed" ? "125%" : "105%",
-        filter: "brightness(0.4)",
+        rotateY: isMobile ? 0 : -26,
+        x: selectedFormat === "feed" ? "120%" : "100%",
+        z: isMobile ? 0 : -130,
+        filter: "brightness(0.35)",
         pointerEvents: "none" as const,
       };
     } else if (position === -2) {
       // Far left
       return {
         zIndex: 10,
-        opacity: 0.35,
+        opacity: isMobile ? 0 : 0.35,
         scale: 0.72,
-        rotateY: 35,
-        translateX: selectedFormat === "feed" ? "-125%" : "-105%",
-        filter: "brightness(0.4)",
+        rotateY: isMobile ? 0 : 26,
+        x: selectedFormat === "feed" ? "-120%" : "-100%",
+        z: isMobile ? 0 : -130,
+        filter: "brightness(0.35)",
         pointerEvents: "none" as const,
       };
     } else {
@@ -280,7 +327,8 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
         opacity: 0,
         scale: 0.6,
         rotateY: 0,
-        translateX: position > 0 ? "180%" : "-180%",
+        x: position > 0 ? "160%" : "-160%",
+        z: -160,
         filter: "brightness(0.2)",
         pointerEvents: "none" as const,
       };
@@ -385,12 +433,19 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
           </motion.div>
         </div>
 
-        {/* 3D Carousel Stage */}
+        {/* Carousel Stage */}
         <div
-          className="relative max-w-5xl mx-auto h-[380px] sm:h-[460px] md:h-[520px] flex items-center justify-center my-6"
-          style={{ perspective: "1200px" }}
+          className={`relative max-w-5xl mx-auto flex items-center justify-center my-6 transition-all duration-300 touch-pan-y ${
+            selectedFormat === "feed"
+              ? "h-[330px] sm:h-[420px] md:h-[480px]"
+              : "h-[400px] sm:h-[490px] md:h-[550px]"
+          }`}
+          style={{ perspective: isMobile ? "none" : "1200px" }}
           onMouseEnter={() => setIsAutoPlay(false)}
           onMouseLeave={() => setIsAutoPlay(true)}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
         >
           {creatives.map((item, index) => {
             const style = getCardStyle(index);
@@ -402,8 +457,8 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
                 animate={style}
                 transition={{
                   type: "spring",
-                  stiffness: 260,
-                  damping: 24,
+                  stiffness: 280,
+                  damping: 26,
                   mass: 0.8,
                 }}
                 onClick={() => {
@@ -415,15 +470,18 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
                 }}
                 className={`absolute cursor-pointer transition-shadow select-none ${
                   selectedFormat === "feed"
-                    ? "w-[260px] sm:w-[340px] md:w-[410px] aspect-square"
-                    : "w-[180px] sm:w-[240px] md:w-[280px] aspect-[9/16]"
+                    ? "w-[250px] sm:w-[330px] md:w-[400px] aspect-square"
+                    : "w-[170px] sm:w-[230px] md:w-[270px] aspect-[9/16]"
                 }`}
-                style={{ transformStyle: "preserve-3d" }}
+                style={{
+                  transformStyle: isMobile ? "flat" : "preserve-3d",
+                  zIndex: style.zIndex,
+                }}
               >
                 <div
-                  className={`w-full h-full rounded-2xl sm:rounded-3xl overflow-hidden border transition-all duration-300 relative group shadow-2xl ${
+                  className={`w-full h-full rounded-2xl sm:rounded-3xl overflow-hidden border transition-all duration-300 relative group shadow-2xl bg-[#000d28] ${
                     isCenter
-                      ? "border-white/40 ring-4 ring-[#0FE3B3]/20 shadow-[#00103A]/80 shadow-2xl"
+                      ? "border-[#0FE3B3]/40 ring-4 ring-[#0FE3B3]/20 shadow-[0_0_40px_rgba(0,16,58,0.9)]"
                       : "border-white/10 hover:border-white/30"
                   }`}
                 >
@@ -432,25 +490,25 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
                     src={item.image}
                     alt={item.title}
                     fill
-                    sizes="(max-width: 768px) 300px, 450px"
+                    sizes="(max-width: 640px) 260px, (max-width: 768px) 340px, 420px"
                     className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
                     priority={index < 3}
                   />
 
                   {/* Gradient Overlay */}
                   <div
-                    className={`absolute inset-0 bg-gradient-to-t from-[#000820]/90 via-transparent to-black/20 transition-opacity duration-300 ${
+                    className={`absolute inset-0 bg-gradient-to-t from-[#000820]/95 via-[#000820]/30 to-black/20 transition-opacity duration-300 ${
                       isCenter ? "opacity-90" : "opacity-60 group-hover:opacity-80"
                     }`}
                   />
 
                   {/* Top Badge */}
                   <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
-                    <span className="px-2.5 py-1 rounded-full bg-[#00103A]/80 border border-white/20 text-white font-bold text-[10px] sm:text-xs backdrop-blur-md">
+                    <span className="px-2.5 py-1 rounded-full bg-[#00103A]/85 border border-white/20 text-white font-bold text-[10px] sm:text-xs backdrop-blur-md shadow-sm">
                       {item.tag}
                     </span>
                     {isCenter && (
-                      <span className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center backdrop-blur-md transition-colors shadow">
+                      <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center backdrop-blur-md transition-colors shadow">
                         <Maximize2 className="w-3.5 h-3.5" />
                       </span>
                     )}
@@ -458,15 +516,15 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
 
                   {/* Bottom Info for Center Card */}
                   {isCenter && (
-                    <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 z-10 text-left">
-                      <div className="flex items-center gap-1.5 text-[#0FE3B3] text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#0FE3B3]"></span>
-                        {item.brand} • {item.niche}
+                    <div className="absolute bottom-0 left-0 right-0 p-3.5 sm:p-5 z-10 text-left bg-gradient-to-t from-[#000820] via-[#000820]/80 to-transparent">
+                      <div className="flex items-center gap-1.5 text-[#0FE3B3] text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-0.5 sm:mb-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#0FE3B3] shrink-0"></span>
+                        <span className="truncate">{item.brand} • {item.niche}</span>
                       </div>
-                      <h4 className="text-white text-sm sm:text-base md:text-lg font-extrabold leading-snug line-clamp-1">
+                      <h4 className="text-white text-xs sm:text-base md:text-lg font-extrabold leading-snug line-clamp-1">
                         {item.title}
                       </h4>
-                      <p className="text-white/75 text-[11px] sm:text-xs mt-1 line-clamp-1">
+                      <p className="text-white/75 text-[10px] sm:text-xs mt-0.5 line-clamp-1">
                         🎯 {item.angle}
                       </p>
                     </div>
@@ -478,20 +536,26 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
 
           {/* Left Arrow Button */}
           <button
-            onClick={handlePrev}
-            className="absolute -left-2 sm:left-2 md:left-6 z-40 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-[#00103A]/80 border border-white/20 text-white hover:bg-white/20 hover:border-[#0FE3B3] hover:text-[#0FE3B3] flex items-center justify-center transition-all shadow-xl backdrop-blur-md cursor-pointer hover:scale-110 active:scale-95"
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePrev();
+            }}
+            className="absolute left-1 sm:left-4 md:left-6 z-40 w-10 h-10 sm:w-13 sm:h-13 rounded-full bg-[#000e30]/90 border border-white/20 text-white hover:bg-white/20 hover:border-[#0FE3B3] hover:text-[#0FE3B3] flex items-center justify-center transition-all shadow-2xl backdrop-blur-md cursor-pointer hover:scale-110 active:scale-95"
             aria-label="Previous Creative"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
 
           {/* Right Arrow Button */}
           <button
-            onClick={handleNext}
-            className="absolute -right-2 sm:right-2 md:right-6 z-40 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-[#00103A]/80 border border-white/20 text-white hover:bg-white/20 hover:border-[#0FE3B3] hover:text-[#0FE3B3] flex items-center justify-center transition-all shadow-xl backdrop-blur-md cursor-pointer hover:scale-110 active:scale-95"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNext();
+            }}
+            className="absolute right-1 sm:right-4 md:right-6 z-40 w-10 h-10 sm:w-13 sm:h-13 rounded-full bg-[#000e30]/90 border border-white/20 text-white hover:bg-white/20 hover:border-[#0FE3B3] hover:text-[#0FE3B3] flex items-center justify-center transition-all shadow-2xl backdrop-blur-md cursor-pointer hover:scale-110 active:scale-95"
             aria-label="Next Creative"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
@@ -544,8 +608,8 @@ export default function CreativeShowcaseSection({ onOpenAudit }: CreativeShowcas
 
               {/* Creative Image Preview */}
               <div
-                className={`relative w-full md:w-1/2 rounded-2xl overflow-hidden border border-white/20 shrink-0 ${
-                  selectedFormat === "feed" ? "aspect-square" : "aspect-[9/16] max-h-[460px]"
+                className={`relative w-full md:w-1/2 rounded-2xl overflow-hidden border border-white/20 shrink-0 bg-[#000d28] ${
+                  selectedFormat === "feed" ? "aspect-square max-h-[380px] sm:max-h-[460px]" : "aspect-[9/16] max-h-[420px] sm:max-h-[500px]"
                 }`}
               >
                 <Image
