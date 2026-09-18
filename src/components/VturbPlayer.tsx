@@ -7,6 +7,46 @@ interface VturbPlayerProps {
   className?: string;
 }
 
+export function pauseAllVturbVideos() {
+  if (typeof window === "undefined") return;
+
+  try {
+    // 1. Pause via VTurb global smartplayer instances
+    const sp = (window as any).smartplayer;
+    if (sp && sp.instances && Array.isArray(sp.instances)) {
+      sp.instances.forEach((inst: any) => {
+        try {
+          if (typeof inst?.pause === "function") inst.pause();
+        } catch (e) {}
+      });
+    }
+
+    // 2. Pause all native HTML5 video elements in document
+    document.querySelectorAll("video").forEach((v) => {
+      try {
+        v.pause();
+      } catch (e) {}
+    });
+
+    // 3. Pause vturb-smartplayer custom elements and shadow roots
+    document.querySelectorAll("vturb-smartplayer").forEach((el: any) => {
+      try {
+        if (typeof el?.pause === "function") el.pause();
+        if (el?.player && typeof el.player.pause === "function") el.player.pause();
+        if (el?.shadowRoot) {
+          el.shadowRoot.querySelectorAll("video").forEach((v: HTMLVideoElement) => {
+            try {
+              v.pause();
+            } catch (e) {}
+          });
+        }
+      } catch (e) {}
+    });
+  } catch (err) {
+    console.error("Error pausing VTurb videos:", err);
+  }
+}
+
 export default function VturbPlayer({
   videoId = "vid-6aad51ea85641ef58dd2f744",
   className = "",

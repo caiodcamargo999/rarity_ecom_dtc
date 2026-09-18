@@ -9,11 +9,15 @@ import GrowthProtocolSectionV2 from "@/components/lp2/GrowthProtocolSectionV2";
 import ServicesGridV2 from "@/components/lp2/ServicesGridV2";
 import ScaleCtaSectionV2 from "@/components/lp2/ScaleCtaSectionV2";
 import AuditModal from "@/components/AuditModal";
+import { pauseAllVturbVideos } from "@/components/VturbPlayer";
 
 export default function RarityLandingPage02() {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
 
-  const handleOpenAudit = () => setIsAuditModalOpen(true);
+  const handleOpenAudit = () => {
+    pauseAllVturbVideos();
+    setIsAuditModalOpen(true);
+  };
   const handleCloseAudit = () => setIsAuditModalOpen(false);
 
   return (

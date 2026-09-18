@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Cal, { getCalApi } from "@calcom/embed-react";
 import { getStoredUtms, UtmData } from "@/components/UtmTracker";
+import { pauseAllVturbVideos } from "@/components/VturbPlayer";
 
 interface AuditModalProps {
   isOpen: boolean;
@@ -114,12 +115,19 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     }
   }, [isOpen]);
 
-  // Reset modal state when opened
+  // Reset modal state and pause videos when opened
   useEffect(() => {
     if (isOpen) {
       setStage("quiz");
       setCurrentStep(1);
       setErrorMsg("");
+
+      // Automatically pause any running video playback
+      pauseAllVturbVideos();
+      const timer = setTimeout(() => {
+        pauseAllVturbVideos();
+      }, 120);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 

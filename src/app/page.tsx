@@ -11,12 +11,16 @@ import AuditProcessSection from "@/components/AuditProcessSection";
 import Footer from "@/components/Footer";
 import AuditModal from "@/components/AuditModal";
 import VideoModal from "@/components/VideoModal";
+import { pauseAllVturbVideos } from "@/components/VturbPlayer";
 
 export default function Home() {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
-  const handleOpenAudit = () => setIsAuditModalOpen(true);
+  const handleOpenAudit = () => {
+    pauseAllVturbVideos();
+    setIsAuditModalOpen(true);
+  };
   const handleCloseAudit = () => setIsAuditModalOpen(false);
 
   const handleOpenVideo = () => setIsVideoModalOpen(true);
