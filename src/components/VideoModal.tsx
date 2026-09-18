@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import VturbPlayer from "./VturbPlayer";
 
 interface VideoModalProps {
   isOpen: boolean;
@@ -20,7 +21,7 @@ export default function VideoModal({ isOpen, onClose, onOpenAudit }: VideoModalP
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-navy-950/85 backdrop-blur-md"
+          className="absolute inset-0 bg-[#000820]/90 backdrop-blur-md cursor-pointer"
         />
 
         {/* Modal Container */}
@@ -34,7 +35,7 @@ export default function VideoModal({ isOpen, onClose, onOpenAudit }: VideoModalP
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+            className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/70 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
             aria-label="Close video"
           >
             <svg
@@ -52,14 +53,8 @@ export default function VideoModal({ isOpen, onClose, onOpenAudit }: VideoModalP
           </button>
 
           {/* Video Player Box */}
-          <div className="relative aspect-video w-full bg-black flex items-center justify-center">
-            <video
-              src="/videos/landscape.mp4"
-              controls
-              autoPlay
-              playsInline
-              className="w-full h-full object-cover"
-            />
+          <div className="w-full bg-black">
+            <VturbPlayer />
           </div>
 
           {/* Bottom Bar in Modal */}
@@ -77,7 +72,7 @@ export default function VideoModal({ isOpen, onClose, onOpenAudit }: VideoModalP
                 onClose();
                 onOpenAudit();
               }}
-              className="w-full sm:w-auto px-6 py-3 rounded-full bg-brand-magenta text-white font-bold text-xs uppercase tracking-wider hover:bg-brand-magentaHover transition-all whitespace-nowrap cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#D80064] hover:bg-[#BF0058] text-white font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer shadow-[0_0_20px_rgba(216,0,100,0.35)]"
             >
               Get Free Audit
             </button>

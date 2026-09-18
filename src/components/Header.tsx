@@ -18,12 +18,13 @@ export default function Header() {
             className="group block transition-transform duration-200 hover:scale-105"
             aria-label="Rarity Agency Home"
           >
-            <div className="relative w-36 sm:w-44 h-9 sm:h-11">
+            <div className="relative flex items-center justify-center">
               <Image
                 src="/images/logo_rarity_azul_sem_fundo_zoom_in.png"
                 alt="Rarity Agency"
-                fill
-                className="object-contain"
+                width={176}
+                height={44}
+                className="w-36 sm:w-44 h-auto object-contain"
                 priority
               />
             </div>

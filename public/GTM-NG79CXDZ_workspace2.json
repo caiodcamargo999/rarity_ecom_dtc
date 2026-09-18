@@ -860,7 +860,7 @@
               {
                 "type": "TEMPLATE",
                 "key": "arg1",
-                "value": "^(bookingSuccessful|lead|cal_booking_successful|gtm.formSubmit)$"
+                "value": "^(bookingSuccessful|cal_booking_successful)$"
               }
             ]
           }

@@ -268,6 +268,31 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','${gtmId}');`,
           }}
         />
+        {/* VTurb Video Player Fast-Load Optimizations */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `!function(i,n){i._plt=i._plt||(n&&n.timeOrigin?n.timeOrigin+n.now():Date.now())}(window,performance);`,
+          }}
+        />
+        <link
+          rel="preload"
+          href="https://scripts.converteai.net/09142a2a-f8a3-4494-907a-9caa59d978dd/players/6aad51ea85641ef58dd2f744/v4/player.js"
+          as="script"
+        />
+        <link
+          rel="preload"
+          href="https://scripts.converteai.net/lib/js/smartplayer-wc/v4/smartplayer.js"
+          as="script"
+        />
+        <link
+          rel="preload"
+          href="https://cdn.converteai.net/09142a2a-f8a3-4494-907a-9caa59d978dd/6aad51dd51b0f618853abb52/main.m3u8"
+          as="fetch"
+        />
+        <link rel="dns-prefetch" href="https://cdn.converteai.net" />
+        <link rel="dns-prefetch" href="https://scripts.converteai.net" />
+        <link rel="dns-prefetch" href="https://images.converteai.net" />
+        <link rel="dns-prefetch" href="https://license.vturb.com" />
       </head>
       <body className="font-sans antialiased bg-[#001244] text-white selection:bg-[#D80064] selection:text-white">
         <UtmTracker />

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.json();
 
-    // 1. Handle Ping / Test Webhooks from Cal.com
+    // 1. Handle Ping / Test Webhooks / Cancellations from Cal.com
     if (
       rawBody.triggerEvent === "PING" ||
       rawBody.ping === true ||
@@ -39,6 +39,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         message: "Ping received successfully!",
+      });
+    }
+
+    if (
+      rawBody.triggerEvent === "BOOKING_CANCELLED" ||
+      rawBody.triggerEvent === "BOOKING_REJECTED"
+    ) {
+      return NextResponse.json({
+        success: true,
+        message: "Cancellation/rejection received and ignored for lead creation.",
       });
     }
 
@@ -205,6 +215,37 @@ export async function POST(req: NextRequest) {
     const fbclid = getMetaOrResponse("fbclid") || getMetaOrResponse("fbc") || (metadata.fbc ? String(metadata.fbc) : "");
     const fbp = getMetaOrResponse("fbp") || (metadata.fbp ? String(metadata.fbp) : "");
 
+    // Fallback to query metadata parameters if not in responses
+    if (!extractedStore) extractedStore = getMetaOrResponse("store") || getMetaOrResponse("brand");
+    if (!extractedRevenue) extractedRevenue = getMetaOrResponse("revenue");
+    if (!extractedAdSpend) extractedAdSpend = getMetaOrResponse("spend") || getMetaOrResponse("adspend");
+    if (!extractedBottleneck) extractedBottleneck = getMetaOrResponse("bottleneck");
+    if (!extractedDecisionMaker) extractedDecisionMaker = getMetaOrResponse("role") || getMetaOrResponse("decision");
+    if (!extractedPhone) extractedPhone = getMetaOrResponse("phone");
+
+    // Also parse notes string if passed from Typeform
+    const combinedNotes = `${payload.description || ""} ${payload.additionalNotes || ""} ${metadata.notes || ""}`.trim();
+    if (combinedNotes) {
+      if (!extractedStore && combinedNotes.includes("Brand/Store:")) {
+        extractedStore = combinedNotes.split("Brand/Store:")[1]?.split("|")[0]?.trim() || "";
+      }
+      if (!extractedRevenue && combinedNotes.includes("Revenue:")) {
+        extractedRevenue = combinedNotes.split("Revenue:")[1]?.split("|")[0]?.trim() || "";
+      }
+      if (!extractedAdSpend && combinedNotes.includes("Ad Spend:")) {
+        extractedAdSpend = combinedNotes.split("Ad Spend:")[1]?.split("|")[0]?.trim() || "";
+      }
+      if (!extractedBottleneck && combinedNotes.includes("Bottleneck:")) {
+        extractedBottleneck = combinedNotes.split("Bottleneck:")[1]?.split("|")[0]?.trim() || "";
+      }
+      if (!extractedDecisionMaker && combinedNotes.includes("Role:")) {
+        extractedDecisionMaker = combinedNotes.split("Role:")[1]?.split("|")[0]?.trim() || "";
+      }
+      if (!extractedPhone && combinedNotes.includes("Phone:")) {
+        extractedPhone = combinedNotes.split("Phone:")[1]?.split("|")[0]?.trim() || "";
+      }
+    }
+
     if (payload.description && !ignoredKeys.includes(payload.description.toLowerCase())) {
       otherAnswers.push({ label: "Description", value: payload.description });
     }
@@ -233,6 +274,7 @@ export async function POST(req: NextRequest) {
           timeZone: primaryAttendee.timeZone || "America/Sao_Paulo",
           day: "2-digit",
           month: "2-digit",
+          year: "numeric",
           hour: "2-digit",
           minute: "2-digit",
         })
@@ -389,10 +431,10 @@ export async function POST(req: NextRequest) {
     if (extractedTimeline && customPropertyKeyMap.start) {
       customFieldsPayload.push({ key: customPropertyKeyMap.start, value: extractedTimeline });
     }
-    if (payload.startTime && customPropertyKeyMap.call) {
+    if (meetingDateStr && customPropertyKeyMap.call) {
       customFieldsPayload.push({
         key: customPropertyKeyMap.call,
-        value: new Date(payload.startTime).toISOString(),
+        value: meetingDateStr,
       });
     }
 
@@ -449,7 +491,7 @@ export async function POST(req: NextRequest) {
 
     // 6. Server-Side Meta Conversions API (CAPI) Dispatch
     let capiResult: any = null;
-    if (META_PIXEL_ID && META_CAPI_ACCESS_TOKEN) {
+    if (META_PIXEL_ID && META_CAPI_ACCESS_TOKEN && email) {
       try {
         const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0] || "";
         const clientUserAgent = req.headers.get("user-agent") || "";
