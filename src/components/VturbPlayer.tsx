@@ -10,41 +10,96 @@ interface VturbPlayerProps {
 export function pauseAllVturbVideos() {
   if (typeof window === "undefined") return;
 
-  try {
-    // 1. Pause via VTurb global smartplayer instances
-    const sp = (window as any).smartplayer;
-    if (sp && sp.instances && Array.isArray(sp.instances)) {
-      sp.instances.forEach((inst: any) => {
+  const executePause = () => {
+    try {
+      // 1. Traverse window.smartplayer global object & instances
+      const sp = (window as any).smartplayer;
+      if (sp) {
+        if (typeof sp.pause === "function") sp.pause();
+        if (typeof sp.playback?.pause === "function") sp.playback.pause();
+
+        const instances = sp.instances
+          ? Array.isArray(sp.instances)
+            ? sp.instances
+            : Object.values(sp.instances)
+          : [];
+
+        instances.forEach((inst: any) => {
+          try {
+            if (typeof inst?.playback?.pause === "function") inst.playback.pause();
+            if (typeof inst?.player?.playback?.pause === "function") inst.player.playback.pause();
+            if (typeof inst?.video?.pause === "function") inst.video.pause();
+            if (typeof inst?.pause === "function") inst.pause();
+            if (typeof inst?.player?.pause === "function") inst.player.pause();
+          } catch (e) {}
+        });
+      }
+
+      // 2. Target all <vturb-smartplayer> custom elements directly
+      document.querySelectorAll("vturb-smartplayer").forEach((el: any) => {
         try {
-          if (typeof inst?.pause === "function") inst.pause();
+          if (typeof el?.playback?.pause === "function") el.playback.pause();
+          if (typeof el?.player?.playback?.pause === "function") el.player.playback.pause();
+          if (typeof el?.video?.pause === "function") el.video.pause();
+          if (typeof el?.pause === "function") el.pause();
+          if (typeof el?.player?.pause === "function") el.player.pause();
+          if (typeof el?.smartplayer?.playback?.pause === "function") el.smartplayer.playback.pause();
+          if (typeof el?.smartplayer?.pause === "function") el.smartplayer.pause();
         } catch (e) {}
-      });
-    }
 
-    // 2. Pause all native HTML5 video elements in document
-    document.querySelectorAll("video").forEach((v) => {
-      try {
-        v.pause();
-      } catch (e) {}
-    });
-
-    // 3. Pause vturb-smartplayer custom elements and shadow roots
-    document.querySelectorAll("vturb-smartplayer").forEach((el: any) => {
-      try {
-        if (typeof el?.pause === "function") el.pause();
-        if (el?.player && typeof el.player.pause === "function") el.player.pause();
         if (el?.shadowRoot) {
-          el.shadowRoot.querySelectorAll("video").forEach((v: HTMLVideoElement) => {
+          try {
+            el.shadowRoot.querySelectorAll("video").forEach((v: HTMLVideoElement) => {
+              try {
+                v.pause();
+              } catch (e) {}
+            });
+          } catch (e) {}
+        }
+      });
+
+      // 3. Deep search all video elements in DOM and shadow roots
+      const pauseAllVideosInTree = (root: Document | ShadowRoot | Element) => {
+        try {
+          root.querySelectorAll("video").forEach((v) => {
             try {
               v.pause();
             } catch (e) {}
           });
-        }
-      } catch (e) {}
-    });
-  } catch (err) {
-    console.error("Error pausing VTurb videos:", err);
-  }
+        } catch (e) {}
+
+        try {
+          root.querySelectorAll("*").forEach((child) => {
+            if (child.shadowRoot) {
+              pauseAllVideosInTree(child.shadowRoot);
+            }
+          });
+        } catch (e) {}
+      };
+
+      pauseAllVideosInTree(document);
+
+      // 4. Send postMessage to any iframes
+      document.querySelectorAll("iframe").forEach((iframe) => {
+        try {
+          iframe.contentWindow?.postMessage(
+            JSON.stringify({ event: "command", func: "pauseVideo", args: "" }),
+            "*"
+          );
+          iframe.contentWindow?.postMessage({ type: "pause" }, "*");
+        } catch (e) {}
+      });
+    } catch (err) {
+      console.error("Error pausing VTurb videos:", err);
+    }
+  };
+
+  // Run immediately and repeatedly over 500ms to catch active playback frames
+  executePause();
+  setTimeout(executePause, 40);
+  setTimeout(executePause, 120);
+  setTimeout(executePause, 250);
+  setTimeout(executePause, 500);
 }
 
 export default function VturbPlayer({
