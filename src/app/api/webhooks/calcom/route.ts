@@ -560,9 +560,38 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 7. Update Google Sheets: Mark "Scheduled on Cal.com?" as Yes with meeting date
+    const sheetsWebhookUrl =
+      process.env.GOOGLE_SHEETS_AUDIT_WEBHOOK_URL ||
+      process.env.GOOGLE_SHEETS_ONBOARDING_WEBHOOK_URL;
+
+    if (sheetsWebhookUrl && sheetsWebhookUrl.startsWith("http") && email) {
+      try {
+        const sheetUpdatePayload = {
+          action: "update_booking_status",
+          email: email,
+          phone: phone,
+          name: rawName,
+          company: company,
+          scheduledOnCal: meetingDateStr ? `Yes (${meetingDateStr})` : "Yes",
+          meetingDate: meetingDateStr,
+        };
+
+        await fetch(sheetsWebhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(sheetUpdatePayload),
+          redirect: "follow",
+        });
+        console.log("✅ [Google Sheets] Updated lead booking status to Scheduled for:", email);
+      } catch (sheetErr) {
+        console.error("Error updating Google Sheet booking status:", sheetErr);
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      message: "Lead successfully synced to Quo CRM and Meta Conversions API",
+      message: "Lead successfully synced to Quo CRM, Meta Conversions API, and Google Sheets",
       contactId: quoResult?.data?.id,
       metaCapi: capiResult,
       attribution: {

@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
       monthlyAdSpend,
       bottleneck,
       role,
+      scheduledOnCal: "No",
       utm_source: utms?.utm_source || "",
       utm_medium: utms?.utm_medium || "",
       utm_campaign: utms?.utm_campaign || "",
