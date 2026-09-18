@@ -2,12 +2,15 @@
  * RARITY AGENCY - GOOGLE APPS SCRIPT
  * Sincronização Inteligente de Leads & Agendamentos (Cal.com + Typeform/Quiz)
  *
- * Funcionalidades:
- * 1. Ao preencher o diagnóstico (Typeform/Quiz): Grava o lead com "Scheduled on Cal.com?" = "No".
- * 2. Ao agendar no Cal.com: Localiza o lead existente (por E-mail ou Telefone),
- *    atualiza o campo "Scheduled on Cal.com?" para "Yes" e atualiza Nome/E-mail/Telefone
- *    com os dados oficiais do Cal.com (Sem duplicar linhas!).
- * 3. Se alguém agendar direto no Cal.com sem passar pelo quiz, cria uma nova linha com "Yes".
+ * FLUXO COMPLETO:
+ * 1. Ao clicar em "Select Date & Time" no Quiz:
+ *    -> SEMPRE INSERE UMA NOVA LINHA com "Scheduled on Cal.com?" = "No".
+ * 2. Ao confirmar o agendamento no Cal.com:
+ *    -> LOCALIZA A LINHA DO LEAD (por E-mail ou Telefone) e muda para "Yes".
+ *    -> Atualiza Nome, E-mail e Telefone com os dados oficiais do Cal.com.
+ *    -> NÃO DUPLICA LINHAS!
+ * 3. Se alguém agendar direto no Cal.com sem passar pelo Quiz:
+ *    -> Insere uma nova linha já marcada como "Yes".
  */
 
 function doPost(e) {
@@ -25,18 +28,15 @@ function doPost(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName("Leads") || ss.getActiveSheet();
 
-    // Cabeçalhos padrão esperados (Row 1):
+    // Cabeçalhos esperados (Row 1):
     // A: Timestamp | B: Brand / Store URL | C: Full Name | D: Email | E: Phone / WhatsApp |
     // F: Monthly Revenue | G: Monthly Ad Spend | H: Bottleneck | I: Role |
     // J: Scheduled on Cal.com? | K: UTM Source | L: UTM Medium | M: UTM Campaign |
     // N: UTM Content | O: UTM Term | P: FBCLID
 
     var headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 16)).getValues()[0];
-
-    // Mapeamento dinâmico de índices de colunas (base 1)
     var colMap = getColumnMapping(headers);
 
-    // Normalização de dados recebidos
     var incomingEmail = (data.email || "").toString().trim().toLowerCase();
     var incomingPhoneDigits = (data.phone || "").toString().replace(/[^0-9]/g, "");
     var isBookingConfirmed = (data.scheduledOnCal === "Yes" || data.action === "update_booking_status");
@@ -44,47 +44,44 @@ function doPost(e) {
     var lastRow = sheet.getLastRow();
     var matchedRowIndex = -1;
 
-    // Se temos mais de 1 linha (ou seja, temos leads gravados além do cabeçalho)
-    if (lastRow > 1) {
-      var emailValues = sheet.getRange(2, colMap.email, lastRow - 1, 1).getValues();
-      var phoneValues = sheet.getRange(2, colMap.phone, lastRow - 1, 1).getValues();
-
-      // Busca do mais recente para o mais antigo (de baixo para cima)
-      for (var i = emailValues.length - 1; i >= 0; i--) {
-        var rowEmail = (emailValues[i][0] || "").toString().trim().toLowerCase();
-        var rowPhoneDigits = (phoneValues[i][0] || "").toString().replace(/[^0-9]/g, "");
-
-        // Match primário por E-mail (exato, case-insensitive)
-        if (incomingEmail && rowEmail === incomingEmail) {
-          matchedRowIndex = i + 2; // +2 porque o array começou na linha 2
-          break;
-        }
-
-        // Match secundário por Telefone (se tiver pelo menos 8 dígitos)
-        if (incomingPhoneDigits && incomingPhoneDigits.length >= 8 && rowPhoneDigits && rowPhoneDigits.length >= 8) {
-          if (rowPhoneDigits.indexOf(incomingPhoneDigits) !== -1 || incomingPhoneDigits.indexOf(rowPhoneDigits) !== -1) {
-            matchedRowIndex = i + 2;
-            break;
-          }
-        }
-      }
-    }
-
     var now = new Date();
     var defaultTimestamp = Utilities.formatDate(now, "America/New_York", "MMM dd, yyyy, h:mm a");
-
-    // Formata telefone com apóstrofo inicial para o Google Sheets não converter em fórmula matemática
     var formattedPhone = data.phone ? (data.phone.toString().startsWith("+") ? "'" + data.phone : data.phone) : "";
 
     // ----------------------------------------------------
-    // CASO 1: LEAD JÁ EXISTE NA PLANILHA (ATUALIZAÇÃO)
+    // CASO 1: AGENDAMENTO CONFIRMADO NO CAL.COM
     // ----------------------------------------------------
-    if (matchedRowIndex > 1) {
-      if (isBookingConfirmed) {
-        // Atualiza status para Yes
+    if (isBookingConfirmed) {
+      if (lastRow > 1) {
+        var emailValues = sheet.getRange(2, colMap.email, lastRow - 1, 1).getValues();
+        var phoneValues = sheet.getRange(2, colMap.phone, lastRow - 1, 1).getValues();
+
+        // Busca do lead mais recente para o mais antigo (de baixo para cima)
+        for (var i = emailValues.length - 1; i >= 0; i--) {
+          var rowEmail = (emailValues[i][0] || "").toString().trim().toLowerCase();
+          var rowPhoneDigits = (phoneValues[i][0] || "").toString().replace(/[^0-9]/g, "");
+
+          // 1) Match por E-mail
+          if (incomingEmail && rowEmail === incomingEmail) {
+            matchedRowIndex = i + 2;
+            break;
+          }
+
+          // 2) Match por Telefone
+          if (incomingPhoneDigits && incomingPhoneDigits.length >= 8 && rowPhoneDigits && rowPhoneDigits.length >= 8) {
+            if (rowPhoneDigits.indexOf(incomingPhoneDigits) !== -1 || incomingPhoneDigits.indexOf(rowPhoneDigits) !== -1) {
+              matchedRowIndex = i + 2;
+              break;
+            }
+          }
+        }
+      }
+
+      // Se encontrou o lead criado previamente no quiz, atualiza para 'Yes' SEM DUPLICAR
+      if (matchedRowIndex > 1) {
         sheet.getRange(matchedRowIndex, colMap.scheduled).setValue("Yes");
 
-        // Cal.com é a fonte verídica de contato: atualiza Nome, Email e Telefone
+        // Cal.com é a fonte verídica: atualiza Nome, Email e Telefone
         if (data.fullName || data.name) {
           sheet.getRange(matchedRowIndex, colMap.fullName).setValue(data.fullName || data.name);
         }
@@ -94,39 +91,21 @@ function doPost(e) {
         if (formattedPhone) {
           sheet.getRange(matchedRowIndex, colMap.phone).setValue(formattedPhone);
         }
-      } else {
-        // Se for atualização do quiz, apenas marca 'No' se ainda estiver vazio
-        var currentScheduledVal = sheet.getRange(matchedRowIndex, colMap.scheduled).getValue();
-        if (!currentScheduledVal || currentScheduledVal.toString().trim() === "") {
-          sheet.getRange(matchedRowIndex, colMap.scheduled).setValue("No");
-        }
+
+        return responseJson({
+          status: "success",
+          action: "updated_existing_lead_to_scheduled",
+          row: matchedRowIndex,
+          scheduledOnCal: "Yes"
+        });
       }
-
-      // Preenche dados do quiz caso a linha existente ainda não tenha
-      updateCellIfProvided(sheet, matchedRowIndex, colMap.brand, data.brandOrStore || data.company);
-      updateCellIfProvided(sheet, matchedRowIndex, colMap.revenue, data.monthlyRevenue || data.revenue);
-      updateCellIfProvided(sheet, matchedRowIndex, colMap.adSpend, data.monthlyAdSpend || data.spend);
-      updateCellIfProvided(sheet, matchedRowIndex, colMap.bottleneck, data.bottleneck);
-      updateCellIfProvided(sheet, matchedRowIndex, colMap.role, data.role);
-      updateCellIfProvided(sheet, matchedRowIndex, colMap.utmSource, data.utm_source);
-      updateCellIfProvided(sheet, matchedRowIndex, colMap.utmMedium, data.utm_medium);
-      updateCellIfProvided(sheet, matchedRowIndex, colMap.utmCampaign, data.utm_campaign);
-      updateCellIfProvided(sheet, matchedRowIndex, colMap.utmContent, data.utm_content);
-      updateCellIfProvided(sheet, matchedRowIndex, colMap.utmTerm, data.utm_term);
-      updateCellIfProvided(sheet, matchedRowIndex, colMap.fbclid, data.fbclid);
-
-      return responseJson({
-        status: "success",
-        action: "updated_existing_lead",
-        row: matchedRowIndex,
-        scheduledOnCal: isBookingConfirmed ? "Yes" : "No"
-      });
     }
 
     // ----------------------------------------------------
-    // CASO 2: NOVO LEAD (INSERÇÃO DE NOVA LINHA)
+    // CASO 2: NOVO ENVIO DO DIAGNÓSTICO (OU AGENDAMENTO DIRETO)
+    // -> SEMPRE CRIA UMA NOVA LINHA NA PLANILHA
     // ----------------------------------------------------
-    var scheduledStatus = isBookingConfirmed ? "Yes" : (data.scheduledOnCal || "No");
+    var scheduledStatus = isBookingConfirmed ? "Yes" : "No";
 
     var newRow = [];
     newRow[colMap.timestamp - 1] = data.timestamp || defaultTimestamp;
@@ -165,17 +144,7 @@ function doPost(e) {
   }
 }
 
-function updateCellIfProvided(sheet, row, col, value) {
-  if (value !== undefined && value !== null && value !== "") {
-    var cell = sheet.getRange(row, col);
-    if (!cell.getValue() || cell.getValue().toString().trim() === "") {
-      cell.setValue(value);
-    }
-  }
-}
-
 function getColumnMapping(headers) {
-  // Padrões padrão se as colunas forem A..P
   var map = {
     timestamp: 1,
     brand: 2,
