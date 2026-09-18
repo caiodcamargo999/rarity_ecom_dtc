@@ -221,10 +221,11 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     return baseConfig;
   }, [utms, answers]);
 
-  // Listen for Cal.com booking successful event
+  // Listen for Cal.com booking successful event & preload calendar
   useEffect(() => {
     (async function () {
       const cal = await getCalApi({ namespace: "free-growth-audit" });
+      cal("preload", { calLink: "caiodecamargo/free-growth-audit" });
       cal("ui", {
         theme: "dark",
         cssVarsPerTheme: {
@@ -452,24 +453,22 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     }, 220);
   };
 
-  const handleSubmitQuiz = async () => {
-    setIsSubmittingQuiz(true);
-    try {
-      // Send diagnostic data to our backend API to save prospect
-      await fetch("/api/audit-diagnostic", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...answers,
-          utms,
-        }),
-      });
-    } catch (err) {
-      console.error("Error syncing quiz diagnostic:", err);
-    } finally {
-      setIsSubmittingQuiz(false);
-      setStage("calendar");
-    }
+  const handleSubmitQuiz = () => {
+    // 1. Instantly switch to Calendar stage without any blocking network wait
+    setStage("calendar");
+
+    // 2. Dispatch diagnostic sync in the background
+    fetch("/api/audit-diagnostic", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...answers,
+        utms,
+      }),
+      keepalive: true,
+    }).catch((err) => {
+      console.error("Background error syncing quiz diagnostic:", err);
+    });
   };
 
   if (!isOpen) return null;
@@ -545,501 +544,504 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
 
           {/* Body Content Area */}
           <div className="flex-1 w-full h-full min-h-0 overflow-y-auto pt-2 flex flex-col">
-            {stage === "quiz" ? (
-              <div className="flex-1 flex flex-col justify-between max-w-2xl mx-auto w-full py-4 sm:py-6 px-1">
-                <AnimatePresence mode="wait">
-                  {/* Step 1: Brand & Store URL */}
-                  {currentStep === 1 && (
-                    <motion.div
-                      key="step1"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.25 }}
-                      className="flex-1 flex flex-col justify-center"
-                    >
-                      <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
-                        <span>01</span>
-                        <span>•</span>
-                        <span>Brand Information</span>
-                      </div>
-                      <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-3">
-                        What is your Brand Name & Store URL?
-                      </h4>
-                      <p className="text-sm sm:text-base text-white/70 mb-6">
-                        We perform a forensic analysis of your store, ads, and allowable CPA prior to our call.
-                      </p>
+            {/* Stage 1: Diagnostic Quiz */}
+            <div
+              className={`flex-1 flex-col justify-between max-w-2xl mx-auto w-full py-4 sm:py-6 px-1 ${
+                stage === "quiz" ? "flex" : "hidden"
+              }`}
+            >
+              <AnimatePresence mode="wait">
+                {/* Step 1: Brand & Store URL */}
+                {currentStep === 1 && (
+                  <motion.div
+                    key="step1"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex-1 flex flex-col justify-center"
+                  >
+                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
+                      <span>01</span>
+                      <span>•</span>
+                      <span>Brand Information</span>
+                    </div>
+                    <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-3">
+                      What is your Brand Name & Store URL?
+                    </h4>
+                    <p className="text-sm sm:text-base text-white/70 mb-6">
+                      We perform a forensic analysis of your store, ads, and allowable CPA prior to our call.
+                    </p>
 
-                      <div className="relative">
+                    <div className="relative">
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={answers.brandOrStore}
+                        onChange={(e) => {
+                          setAnswers({ ...answers, brandOrStore: e.target.value });
+                          setErrorMsg("");
+                        }}
+                        placeholder="e.g., LuxeAura • luxeaura.com"
+                        className="w-full bg-white/[0.05] border-2 border-white/20 focus:border-[#0FE3B3] rounded-xl px-4 py-3.5 text-base sm:text-lg text-white placeholder-white/40 outline-none transition-all duration-200 shadow-inner"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Step 2: Monthly Revenue */}
+                {currentStep === 2 && (
+                  <motion.div
+                    key="step2"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex-1 flex flex-col justify-center"
+                  >
+                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
+                      <span>02</span>
+                      <span>•</span>
+                      <span>Current Scale</span>
+                    </div>
+                    <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
+                      What is your current monthly revenue?
+                    </h4>
+                    <p className="text-sm text-white/70 mb-5">
+                      Select one option (or press A, B, C, D on keyboard)
+                    </p>
+
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {REVENUE_OPTIONS.map((opt) => {
+                        const isSelected = answers.monthlyRevenue === opt.label;
+                        return (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => handleSelectOption("monthlyRevenue", opt.label)}
+                            className={`flex items-center justify-between p-3.5 sm:p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
+                              isSelected
+                                ? "bg-[#0FE3B3]/15 border-[#0FE3B3] text-white shadow-[0_0_20px_rgba(15,227,179,0.2)]"
+                                : "bg-white/[0.04] border-white/15 hover:border-white/40 hover:bg-white/[0.07] text-white/90"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center border transition-colors ${
+                                  isSelected
+                                    ? "bg-[#0FE3B3] text-[#00103A] border-[#0FE3B3]"
+                                    : "bg-white/10 text-white/70 border-white/20"
+                                }`}
+                              >
+                                {opt.key}
+                              </span>
+                              <div>
+                                <div className="text-sm sm:text-base font-bold text-white">{opt.label}</div>
+                                <div className="text-xs text-white/60">{opt.sub}</div>
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <svg className="w-5 h-5 text-[#0FE3B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <path d="M20 6L9 17l-5-5" />
+                              </svg>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Step 3: Monthly Ad Spend */}
+                {currentStep === 3 && (
+                  <motion.div
+                    key="step3"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex-1 flex flex-col justify-center"
+                  >
+                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
+                      <span>03</span>
+                      <span>•</span>
+                      <span>Paid Media Investment</span>
+                    </div>
+                    <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
+                      How much do you invest in paid ads monthly?
+                    </h4>
+                    <p className="text-sm text-white/70 mb-5">
+                      Combined Meta, Google PMax, TikTok & other channels.
+                    </p>
+
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {AD_SPEND_OPTIONS.map((opt) => {
+                        const isSelected = answers.monthlyAdSpend === opt.label;
+                        return (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => handleSelectOption("monthlyAdSpend", opt.label)}
+                            className={`flex items-center justify-between p-3.5 sm:p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
+                              isSelected
+                                ? "bg-[#0FE3B3]/15 border-[#0FE3B3] text-white shadow-[0_0_20px_rgba(15,227,179,0.2)]"
+                                : "bg-white/[0.04] border-white/15 hover:border-white/40 hover:bg-white/[0.07] text-white/90"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center border transition-colors ${
+                                  isSelected
+                                    ? "bg-[#0FE3B3] text-[#00103A] border-[#0FE3B3]"
+                                    : "bg-white/10 text-white/70 border-white/20"
+                                }`}
+                              >
+                                {opt.key}
+                              </span>
+                              <div>
+                                <div className="text-sm sm:text-base font-bold text-white">{opt.label}</div>
+                                <div className="text-xs text-white/60">{opt.sub}</div>
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <svg className="w-5 h-5 text-[#0FE3B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <path d="M20 6L9 17l-5-5" />
+                              </svg>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Step 4: Primary Bottleneck (Open Text Field) */}
+                {currentStep === 4 && (
+                  <motion.div
+                    key="step4"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex-1 flex flex-col justify-center"
+                  >
+                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
+                      <span>04</span>
+                      <span>•</span>
+                      <span>Scaling Challenge</span>
+                    </div>
+                    <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
+                      What is your #1 growth bottleneck?
+                    </h4>
+                    <p className="text-sm text-white/70 mb-5">
+                      Tell us what is currently holding back your brand from scaling profitably.
+                    </p>
+
+                    <div className="relative">
+                      <textarea
+                        ref={textareaRef}
+                        rows={4}
+                        value={answers.bottleneck}
+                        onChange={(e) => {
+                          setAnswers({ ...answers, bottleneck: e.target.value });
+                          setErrorMsg("");
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleNext();
+                          }
+                        }}
+                        placeholder="e.g., Creative fatigue on Meta, rising customer acquisition costs (CAC), plateauing at $80k/mo, attribution clarity, or need for senior media buyers..."
+                        className="w-full bg-white/[0.05] border-2 border-white/20 focus:border-[#0FE3B3] focus:shadow-[0_0_20px_rgba(15,227,179,0.15)] rounded-xl p-4 text-base sm:text-lg text-white placeholder-white/35 outline-none transition-all duration-200 resize-none"
+                      />
+                      <div className="text-[11px] text-white/40 mt-2 flex items-center justify-between">
+                        <span>Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 font-mono text-[10px]">Enter ↵</kbd> to continue (or Shift + Enter for new line)</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Step 5: Role */}
+                {currentStep === 5 && (
+                  <motion.div
+                    key="step5"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex-1 flex flex-col justify-center"
+                  >
+                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
+                      <span>05</span>
+                      <span>•</span>
+                      <span>Your Role</span>
+                    </div>
+                    <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
+                      What is your role at the brand?
+                    </h4>
+                    <p className="text-sm text-white/70 mb-5">
+                      We tailor the call agenda to your specific decision-making level.
+                    </p>
+
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {ROLE_OPTIONS.map((opt) => {
+                        const isSelected = answers.role === opt.label;
+                        return (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => handleSelectOption("role", opt.label)}
+                            className={`flex items-center justify-between p-3.5 sm:p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
+                              isSelected
+                                ? "bg-[#0FE3B3]/15 border-[#0FE3B3] text-white shadow-[0_0_20px_rgba(15,227,179,0.2)]"
+                                : "bg-white/[0.04] border-white/15 hover:border-white/40 hover:bg-white/[0.07] text-white/90"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center border transition-colors ${
+                                  isSelected
+                                    ? "bg-[#0FE3B3] text-[#00103A] border-[#0FE3B3]"
+                                    : "bg-white/10 text-white/70 border-white/20"
+                                }`}
+                              >
+                                {opt.key}
+                              </span>
+                              <div>
+                                <div className="text-sm sm:text-base font-bold text-white">{opt.label}</div>
+                                <div className="text-xs text-white/60">{opt.sub}</div>
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <svg className="w-5 h-5 text-[#0FE3B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <path d="M20 6L9 17l-5-5" />
+                              </svg>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Step 6: Contact Information */}
+                {currentStep === 6 && (
+                  <motion.div
+                    key="step6"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex-1 flex flex-col justify-center"
+                  >
+                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
+                      <span>06</span>
+                      <span>•</span>
+                      <span>Final Step</span>
+                    </div>
+                    <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
+                      Where should we send your Diagnostic?
+                    </h4>
+                    <p className="text-sm text-white/70 mb-5">
+                      Enter your contact details to unlock calendar slots with our senior operators.
+                    </p>
+
+                    <div className="space-y-3.5">
+                      <div>
+                        <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">
+                          Full Name *
+                        </label>
                         <input
                           ref={inputRef}
                           type="text"
-                          value={answers.brandOrStore}
-                          onChange={(e) => {
-                            setAnswers({ ...answers, brandOrStore: e.target.value });
-                            setErrorMsg("");
-                          }}
-                          placeholder="e.g., LuxeAura • luxeaura.com"
-                          className="w-full bg-white/[0.05] border-2 border-white/20 focus:border-[#0FE3B3] rounded-xl px-4 py-3.5 text-base sm:text-lg text-white placeholder-white/40 outline-none transition-all duration-200 shadow-inner"
+                          value={answers.fullName}
+                          onChange={(e) => setAnswers({ ...answers, fullName: e.target.value })}
+                          placeholder="e.g., Alex Johnson"
+                          className="w-full bg-white/[0.05] border-2 border-white/20 focus:border-[#0FE3B3] rounded-xl px-4 py-3 text-sm sm:text-base text-white placeholder-white/40 outline-none transition-all duration-200"
                         />
                       </div>
-                    </motion.div>
-                  )}
 
-                  {/* Step 2: Monthly Revenue */}
-                  {currentStep === 2 && (
-                    <motion.div
-                      key="step2"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.25 }}
-                      className="flex-1 flex flex-col justify-center"
-                    >
-                      <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
-                        <span>02</span>
-                        <span>•</span>
-                        <span>Current Scale</span>
-                      </div>
-                      <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
-                        What is your current monthly revenue?
-                      </h4>
-                      <p className="text-sm text-white/70 mb-5">
-                        Select one option (or press A, B, C, D on keyboard)
-                      </p>
-
-                      <div className="grid grid-cols-1 gap-2.5">
-                        {REVENUE_OPTIONS.map((opt) => {
-                          const isSelected = answers.monthlyRevenue === opt.label;
-                          return (
-                            <button
-                              key={opt.key}
-                              type="button"
-                              onClick={() => handleSelectOption("monthlyRevenue", opt.label)}
-                              className={`flex items-center justify-between p-3.5 sm:p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
-                                isSelected
-                                  ? "bg-[#0FE3B3]/15 border-[#0FE3B3] text-white shadow-[0_0_20px_rgba(15,227,179,0.2)]"
-                                  : "bg-white/[0.04] border-white/15 hover:border-white/40 hover:bg-white/[0.07] text-white/90"
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <span
-                                  className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center border transition-colors ${
-                                    isSelected
-                                      ? "bg-[#0FE3B3] text-[#00103A] border-[#0FE3B3]"
-                                      : "bg-white/10 text-white/70 border-white/20"
-                                  }`}
-                                >
-                                  {opt.key}
-                                </span>
-                                <div>
-                                  <div className="text-sm sm:text-base font-bold text-white">{opt.label}</div>
-                                  <div className="text-xs text-white/60">{opt.sub}</div>
-                                </div>
-                              </div>
-                              {isSelected && (
-                                <svg className="w-5 h-5 text-[#0FE3B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                  <path d="M20 6L9 17l-5-5" />
-                                </svg>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Step 3: Monthly Ad Spend */}
-                  {currentStep === 3 && (
-                    <motion.div
-                      key="step3"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.25 }}
-                      className="flex-1 flex flex-col justify-center"
-                    >
-                      <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
-                        <span>03</span>
-                        <span>•</span>
-                        <span>Paid Media Investment</span>
-                      </div>
-                      <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
-                        How much do you invest in paid ads monthly?
-                      </h4>
-                      <p className="text-sm text-white/70 mb-5">
-                        Combined Meta, Google PMax, TikTok & other channels.
-                      </p>
-
-                      <div className="grid grid-cols-1 gap-2.5">
-                        {AD_SPEND_OPTIONS.map((opt) => {
-                          const isSelected = answers.monthlyAdSpend === opt.label;
-                          return (
-                            <button
-                              key={opt.key}
-                              type="button"
-                              onClick={() => handleSelectOption("monthlyAdSpend", opt.label)}
-                              className={`flex items-center justify-between p-3.5 sm:p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
-                                isSelected
-                                  ? "bg-[#0FE3B3]/15 border-[#0FE3B3] text-white shadow-[0_0_20px_rgba(15,227,179,0.2)]"
-                                  : "bg-white/[0.04] border-white/15 hover:border-white/40 hover:bg-white/[0.07] text-white/90"
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <span
-                                  className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center border transition-colors ${
-                                    isSelected
-                                      ? "bg-[#0FE3B3] text-[#00103A] border-[#0FE3B3]"
-                                      : "bg-white/10 text-white/70 border-white/20"
-                                  }`}
-                                >
-                                  {opt.key}
-                                </span>
-                                <div>
-                                  <div className="text-sm sm:text-base font-bold text-white">{opt.label}</div>
-                                  <div className="text-xs text-white/60">{opt.sub}</div>
-                                </div>
-                              </div>
-                              {isSelected && (
-                                <svg className="w-5 h-5 text-[#0FE3B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                  <path d="M20 6L9 17l-5-5" />
-                                </svg>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Step 4: Primary Bottleneck (Open Text Field) */}
-                  {currentStep === 4 && (
-                    <motion.div
-                      key="step4"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.25 }}
-                      className="flex-1 flex flex-col justify-center"
-                    >
-                      <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
-                        <span>04</span>
-                        <span>•</span>
-                        <span>Scaling Challenge</span>
-                      </div>
-                      <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
-                        What is your #1 growth bottleneck?
-                      </h4>
-                      <p className="text-sm text-white/70 mb-5">
-                        Tell us what is currently holding back your brand from scaling profitably.
-                      </p>
-
-                      <div className="relative">
-                        <textarea
-                          ref={textareaRef}
-                          rows={4}
-                          value={answers.bottleneck}
-                          onChange={(e) => {
-                            setAnswers({ ...answers, bottleneck: e.target.value });
-                            setErrorMsg("");
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              handleNext();
-                            }
-                          }}
-                          placeholder="e.g., Creative fatigue on Meta, rising customer acquisition costs (CAC), plateauing at $80k/mo, attribution clarity, or need for senior media buyers..."
-                          className="w-full bg-white/[0.05] border-2 border-white/20 focus:border-[#0FE3B3] focus:shadow-[0_0_20px_rgba(15,227,179,0.15)] rounded-xl p-4 text-base sm:text-lg text-white placeholder-white/35 outline-none transition-all duration-200 resize-none"
+                      <div>
+                        <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">
+                          Work Email *
+                        </label>
+                        <input
+                          type="email"
+                          value={answers.email}
+                          onChange={(e) => setAnswers({ ...answers, email: e.target.value })}
+                          placeholder="alex@brandname.com"
+                          className="w-full bg-white/[0.05] border-2 border-white/20 focus:border-[#0FE3B3] rounded-xl px-4 py-3 text-sm sm:text-base text-white placeholder-white/40 outline-none transition-all duration-200"
                         />
-                        <div className="text-[11px] text-white/40 mt-2 flex items-center justify-between">
-                          <span>Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 font-mono text-[10px]">Enter ↵</kbd> to continue (or Shift + Enter for new line)</span>
-                        </div>
                       </div>
-                    </motion.div>
-                  )}
 
-                  {/* Step 5: Role */}
-                  {currentStep === 5 && (
-                    <motion.div
-                      key="step5"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.25 }}
-                      className="flex-1 flex flex-col justify-center"
-                    >
-                      <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
-                        <span>05</span>
-                        <span>•</span>
-                        <span>Your Role</span>
-                      </div>
-                      <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
-                        What is your role at the brand?
-                      </h4>
-                      <p className="text-sm text-white/70 mb-5">
-                        We tailor the call agenda to your specific decision-making level.
-                      </p>
-
-                      <div className="grid grid-cols-1 gap-2.5">
-                        {ROLE_OPTIONS.map((opt) => {
-                          const isSelected = answers.role === opt.label;
-                          return (
+                      <div>
+                        <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">
+                          Phone / WhatsApp *
+                        </label>
+                        <div className="relative" ref={countryDropdownRef}>
+                          <div className="flex items-center w-full bg-white/[0.05] border-2 border-white/20 focus-within:border-[#0FE3B3] focus-within:shadow-[0_0_20px_rgba(15,227,179,0.15)] rounded-xl transition-all duration-200">
+                            {/* Country Code Toggle Button (US default) */}
                             <button
-                              key={opt.key}
                               type="button"
-                              onClick={() => handleSelectOption("role", opt.label)}
-                              className={`flex items-center justify-between p-3.5 sm:p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
-                                isSelected
-                                  ? "bg-[#0FE3B3]/15 border-[#0FE3B3] text-white shadow-[0_0_20px_rgba(15,227,179,0.2)]"
-                                  : "bg-white/[0.04] border-white/15 hover:border-white/40 hover:bg-white/[0.07] text-white/90"
-                              }`}
+                              onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                              className="h-[46px] sm:h-[50px] px-3.5 bg-white/[0.06] hover:bg-white/[0.12] border-r border-white/15 rounded-l-[10px] flex items-center gap-2 text-white transition-colors cursor-pointer shrink-0 select-none"
+                              aria-label="Select Country Code"
                             >
-                              <div className="flex items-center gap-3">
-                                <span
-                                  className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center border transition-colors ${
-                                    isSelected
-                                      ? "bg-[#0FE3B3] text-[#00103A] border-[#0FE3B3]"
-                                      : "bg-white/10 text-white/70 border-white/20"
-                                  }`}
-                                >
-                                  {opt.key}
-                                </span>
-                                <div>
-                                  <div className="text-sm sm:text-base font-bold text-white">{opt.label}</div>
-                                  <div className="text-xs text-white/60">{opt.sub}</div>
-                                </div>
-                              </div>
-                              {isSelected && (
-                                <svg className="w-5 h-5 text-[#0FE3B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                  <path d="M20 6L9 17l-5-5" />
-                                </svg>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Step 6: Contact Information */}
-                  {currentStep === 6 && (
-                    <motion.div
-                      key="step6"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.25 }}
-                      className="flex-1 flex flex-col justify-center"
-                    >
-                      <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
-                        <span>06</span>
-                        <span>•</span>
-                        <span>Final Step</span>
-                      </div>
-                      <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
-                        Where should we send your Diagnostic?
-                      </h4>
-                      <p className="text-sm text-white/70 mb-5">
-                        Enter your contact details to unlock calendar slots with our senior operators.
-                      </p>
-
-                      <div className="space-y-3.5">
-                        <div>
-                          <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">
-                            Full Name *
-                          </label>
-                          <input
-                            ref={inputRef}
-                            type="text"
-                            value={answers.fullName}
-                            onChange={(e) => setAnswers({ ...answers, fullName: e.target.value })}
-                            placeholder="e.g., Alex Johnson"
-                            className="w-full bg-white/[0.05] border-2 border-white/20 focus:border-[#0FE3B3] rounded-xl px-4 py-3 text-sm sm:text-base text-white placeholder-white/40 outline-none transition-all duration-200"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">
-                            Work Email *
-                          </label>
-                          <input
-                            type="email"
-                            value={answers.email}
-                            onChange={(e) => setAnswers({ ...answers, email: e.target.value })}
-                            placeholder="alex@brandname.com"
-                            className="w-full bg-white/[0.05] border-2 border-white/20 focus:border-[#0FE3B3] rounded-xl px-4 py-3 text-sm sm:text-base text-white placeholder-white/40 outline-none transition-all duration-200"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">
-                            Phone / WhatsApp *
-                          </label>
-                          <div className="relative" ref={countryDropdownRef}>
-                            <div className="flex items-center w-full bg-white/[0.05] border-2 border-white/20 focus-within:border-[#0FE3B3] focus-within:shadow-[0_0_20px_rgba(15,227,179,0.15)] rounded-xl transition-all duration-200">
-                              {/* Country Code Toggle Button (US default) */}
-                              <button
-                                type="button"
-                                onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
-                                className="h-[46px] sm:h-[50px] px-3.5 bg-white/[0.06] hover:bg-white/[0.12] border-r border-white/15 rounded-l-[10px] flex items-center gap-2 text-white transition-colors cursor-pointer shrink-0 select-none"
-                                aria-label="Select Country Code"
+                              <span className="text-xl leading-none">{selectedCountry.flag}</span>
+                              <span className="text-xs sm:text-sm font-bold text-white tracking-tight">
+                                {selectedCountry.code}
+                              </span>
+                              <svg
+                                className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 ${
+                                  isCountryDropdownOpen ? "rotate-180 text-[#0FE3B3]" : ""
+                                }`}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
                               >
-                                <span className="text-xl leading-none">{selectedCountry.flag}</span>
-                                <span className="text-xs sm:text-sm font-bold text-white tracking-tight">
-                                  {selectedCountry.code}
-                                </span>
-                                <svg
-                                  className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 ${
-                                    isCountryDropdownOpen ? "rotate-180 text-[#0FE3B3]" : ""
-                                  }`}
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                >
-                                  <path d="M6 9l6 6 6-6" />
-                                </svg>
-                              </button>
+                                <path d="M6 9l6 6 6-6" />
+                              </svg>
+                            </button>
 
-                              {/* Phone Text Input */}
-                              <input
-                                type="tel"
-                                value={phoneRaw}
-                                onChange={(e) => {
-                                  let val = e.target.value;
-                                  // Clean leading dial code if pasted
-                                  if (val.startsWith(selectedCountry.code)) {
-                                    val = val.slice(selectedCountry.code.length).trim();
-                                  } else if (val.startsWith("+1") && selectedCountry.code === "+1") {
-                                    val = val.slice(2).trim();
-                                  }
-                                  setPhoneRaw(val);
-                                  const fullNumber = val.trim() ? `${selectedCountry.code} ${val.trim()}` : "";
-                                  setAnswers((prev) => ({ ...prev, phone: fullNumber }));
-                                  setErrorMsg("");
-                                }}
-                                placeholder="(555) 000-0000"
-                                className="w-full h-[46px] sm:h-[50px] bg-transparent px-3.5 text-sm sm:text-base text-white placeholder-white/35 outline-none rounded-r-[10px]"
-                              />
-                            </div>
-
-                            {/* Country Dropdown Menu */}
-                            {isCountryDropdownOpen && (
-                              <div className="absolute top-full left-0 mt-1.5 w-72 max-h-60 bg-[#000e2e] border border-white/20 rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.85)] overflow-y-auto z-50 p-1.5 divide-y divide-white/5 backdrop-blur-2xl">
-                                <div className="px-2 py-1 text-[11px] font-semibold text-white/40 uppercase tracking-wider">
-                                  Select Country Code
-                                </div>
-                                {COUNTRY_CODES.map((c) => (
-                                  <button
-                                    key={c.iso + c.code}
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedCountry(c);
-                                      setIsCountryDropdownOpen(false);
-                                      const fullNumber = phoneRaw.trim() ? `${c.code} ${phoneRaw.trim()}` : "";
-                                      setAnswers((prev) => ({ ...prev, phone: fullNumber }));
-                                    }}
-                                    className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg text-left transition-colors cursor-pointer ${
-                                      selectedCountry.iso === c.iso && selectedCountry.code === c.code
-                                        ? "bg-[#0FE3B3]/20 text-[#0FE3B3] font-bold"
-                                        : "hover:bg-white/10 text-white/85"
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-2.5">
-                                      <span className="text-lg leading-none">{c.flag}</span>
-                                      <span className="font-medium text-white">{c.name}</span>
-                                    </div>
-                                    <span className="font-mono text-xs text-white/60 font-semibold">{c.code}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            )}
+                            {/* Phone Text Input */}
+                            <input
+                              type="tel"
+                              value={phoneRaw}
+                              onChange={(e) => {
+                                let val = e.target.value;
+                                // Clean leading dial code if pasted
+                                if (val.startsWith(selectedCountry.code)) {
+                                  val = val.slice(selectedCountry.code.length).trim();
+                                } else if (val.startsWith("+1") && selectedCountry.code === "+1") {
+                                  val = val.slice(2).trim();
+                                }
+                                setPhoneRaw(val);
+                                const fullNumber = val.trim() ? `${selectedCountry.code} ${val.trim()}` : "";
+                                setAnswers((prev) => ({ ...prev, phone: fullNumber }));
+                                setErrorMsg("");
+                              }}
+                              placeholder="(555) 000-0000"
+                              className="w-full h-[46px] sm:h-[50px] bg-transparent px-3.5 text-sm sm:text-base text-white placeholder-white/35 outline-none rounded-r-[10px]"
+                            />
                           </div>
+
+                          {/* Country Dropdown Menu */}
+                          {isCountryDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-1.5 w-72 max-h-60 bg-[#000e2e] border border-white/20 rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.85)] overflow-y-auto z-50 p-1.5 divide-y divide-white/5 backdrop-blur-2xl">
+                              <div className="px-2 py-1 text-[11px] font-semibold text-white/40 uppercase tracking-wider">
+                                Select Country Code
+                              </div>
+                              {COUNTRY_CODES.map((c) => (
+                                <button
+                                  key={c.iso + c.code}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedCountry(c);
+                                    setIsCountryDropdownOpen(false);
+                                    const fullNumber = phoneRaw.trim() ? `${c.code} ${phoneRaw.trim()}` : "";
+                                    setAnswers((prev) => ({ ...prev, phone: fullNumber }));
+                                  }}
+                                  className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg text-left transition-colors cursor-pointer ${
+                                    selectedCountry.iso === c.iso && selectedCountry.code === c.code
+                                      ? "bg-[#0FE3B3]/20 text-[#0FE3B3] font-bold"
+                                      : "hover:bg-white/10 text-white/85"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <span className="text-lg leading-none">{c.flag}</span>
+                                    <span className="font-medium text-white">{c.name}</span>
+                                  </div>
+                                  <span className="font-mono text-xs text-white/60 font-semibold">{c.code}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Error Message */}
-                {errorMsg && (
-                  <div className="mt-3 text-xs sm:text-sm font-semibold text-[#D80064] flex items-center gap-1.5">
-                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="8" x2="12" y2="12" />
-                      <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                    {errorMsg}
-                  </div>
+                    </div>
+                  </motion.div>
                 )}
+              </AnimatePresence>
 
-                {/* Bottom Navigation CTA */}
-                <div className="pt-5 border-t border-white/10 flex items-center justify-between mt-auto">
-                  <div className="text-xs text-white/50 hidden sm:block">
-                    Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 font-mono text-[11px]">Enter ↵</kbd> to continue
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    disabled={isSubmittingQuiz}
-                    className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#D80064] to-[#BF0058] hover:from-[#BF0058] hover:to-[#9F0048] text-white text-sm sm:text-base font-bold tracking-wide shadow-[0_0_25px_rgba(216,0,100,0.35)] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer ml-auto"
-                  >
-                    {isSubmittingQuiz ? (
-                      <span>Unlocking Calendar...</span>
-                    ) : currentStep === TOTAL_STEPS ? (
-                      <>
-                        <span>Select Date & Time</span>
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <path d="M5 12h14M12 5l7 7-7 7" />
-                        </svg>
-                      </>
-                    ) : (
-                      <>
-                        <span>Continue</span>
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <path d="M5 12h14M12 5l7 7-7 7" />
-                        </svg>
-                      </>
-                    )}
-                  </button>
+              {/* Error Message */}
+              {errorMsg && (
+                <div className="mt-3 text-xs sm:text-sm font-semibold text-[#D80064] flex items-center gap-1.5">
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  {errorMsg}
                 </div>
+              )}
+
+              {/* Bottom Navigation CTA */}
+              <div className="pt-5 border-t border-white/10 flex items-center justify-between mt-auto">
+                <div className="text-xs text-white/50 hidden sm:block">
+                  Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 font-mono text-[11px]">Enter ↵</kbd> to continue
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#D80064] to-[#BF0058] hover:from-[#BF0058] hover:to-[#9F0048] text-white text-sm sm:text-base font-bold tracking-wide shadow-[0_0_25px_rgba(216,0,100,0.35)] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer ml-auto"
+                >
+                  {currentStep === TOTAL_STEPS ? (
+                    <>
+                      <span>Select Date & Time</span>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                    </>
+                  ) : (
+                    <>
+                      <span>Continue</span>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                    </>
+                  )}
+                </button>
               </div>
-            ) : (
-              /* Stage 2: Cal.com Calendar Embed */
-              <div className="flex-1 w-full h-full min-h-0 flex flex-col overflow-hidden">
-                <div className="bg-white/[0.04] border border-[#0FE3B3]/30 rounded-xl p-3 mb-2 flex items-center justify-between shrink-0">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-6 h-6 rounded-full bg-[#0FE3B3]/20 text-[#0FE3B3] flex items-center justify-center font-bold text-xs">
-                      ✓
-                    </div>
-                    <div className="text-xs sm:text-sm text-white/90">
-                      <span className="font-bold text-white">Diagnostic saved for {answers.fullName || "you"}!</span> Pick your time slot below:
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setStage("quiz");
-                      setCurrentStep(TOTAL_STEPS);
-                    }}
-                    className="text-xs text-[#0FE3B3] hover:underline font-semibold cursor-pointer hidden sm:inline"
-                  >
-                    Edit Info
-                  </button>
-                </div>
+            </div>
 
-                <div className="flex-1 w-full h-full min-h-0 overflow-hidden rounded-xl sm:rounded-2xl">
-                  <Cal
-                    key={calLink}
-                    namespace="free-growth-audit"
-                    calLink={calLink}
-                    style={{ width: "100%", height: "100%", overflow: "scroll" }}
-                    config={calConfig}
-                  />
+            {/* Stage 2: Cal.com Calendar Embed (Preloaded in DOM) */}
+            <div
+              className={`flex-1 w-full h-full min-h-0 flex-col overflow-hidden ${
+                stage === "calendar" ? "flex" : "hidden"
+              }`}
+            >
+              <div className="bg-white/[0.04] border border-[#0FE3B3]/30 rounded-xl p-3 mb-2 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-full bg-[#0FE3B3]/20 text-[#0FE3B3] flex items-center justify-center font-bold text-xs">
+                    ✓
+                  </div>
+                  <div className="text-xs sm:text-sm text-white/90">
+                    <span className="font-bold text-white">Diagnostic saved for {answers.fullName || "you"}!</span> Pick your time slot below:
+                  </div>
                 </div>
+                <button
+                  onClick={() => {
+                    setStage("quiz");
+                    setCurrentStep(TOTAL_STEPS);
+                  }}
+                  className="text-xs text-[#0FE3B3] hover:underline font-semibold cursor-pointer hidden sm:inline"
+                >
+                  Edit Info
+                </button>
               </div>
-            )}
+
+              <div className="flex-1 w-full h-full min-h-0 overflow-hidden rounded-xl sm:rounded-2xl">
+                <Cal
+                  namespace="free-growth-audit"
+                  calLink="caiodecamargo/free-growth-audit"
+                  style={{ width: "100%", height: "100%", overflow: "scroll" }}
+                  config={calConfig}
+                />
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>
