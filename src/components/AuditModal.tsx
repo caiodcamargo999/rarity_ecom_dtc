@@ -46,29 +46,6 @@ const AD_SPEND_OPTIONS = [
   { key: "D", label: "$75k+ / month", sub: "High-volume ad account spending" },
 ];
 
-const BOTTLENECK_OPTIONS = [
-  {
-    key: "A",
-    label: "Creative Fatigue & Lack of High-Converting UGC / Video Hooks",
-    sub: "Need 30+ new ad variations and fresh psychological angles every month",
-  },
-  {
-    key: "B",
-    label: "Meta & Google PMax Performance Plateaus / High CAC",
-    sub: "In-platform ROAS looks okay, but net contribution margin is flat",
-  },
-  {
-    key: "C",
-    label: "Attribution, Blended MER & Real Financial Clarity",
-    sub: "Uncertain which ad channels and campaigns are driving true bank deposits",
-  },
-  {
-    key: "D",
-    label: "Need Senior Growth Operators Instead of Junior Media Buyers",
-    sub: "Want direct partner access with senior DTC operators managing your accounts",
-  },
-];
-
 const ROLE_OPTIONS = [
   { key: "A", label: "Founder / CEO / Co-Founder", sub: "Primary executive & business owner" },
   { key: "B", label: "Head of Growth / CMO / VP of Marketing", sub: "Leading marketing & paid media strategy" },
@@ -113,6 +90,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
   const countryDropdownRef = useRef<HTMLDivElement>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Close country dropdown on outside click
   useEffect(() => {
@@ -145,11 +123,13 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     }
   }, [isOpen]);
 
-  // Auto-focus input on step change
+  // Auto-focus input/textarea on step change
   useEffect(() => {
     if (isOpen && stage === "quiz") {
       const timer = setTimeout(() => {
-        if (inputRef.current) {
+        if (currentStep === 4) {
+          textareaRef.current?.focus();
+        } else if (inputRef.current) {
           inputRef.current.focus();
         }
       }, 150);
@@ -368,11 +348,6 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
           if (matched) {
             handleSelectOption("monthlyAdSpend", matched.label);
           }
-        } else if (currentStep === 4) {
-          const matched = BOTTLENECK_OPTIONS.find((o) => o.key === key);
-          if (matched) {
-            handleSelectOption("bottleneck", matched.label);
-          }
         } else if (currentStep === 5) {
           const matched = ROLE_OPTIONS.find((o) => o.key === key);
           if (matched) {
@@ -408,8 +383,8 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
         return false;
       }
     } else if (currentStep === 4) {
-      if (!answers.bottleneck) {
-        setErrorMsg("Please select an option.");
+      if (!answers.bottleneck.trim()) {
+        setErrorMsg("Please describe your primary growth bottleneck.");
         return false;
       }
     } else if (currentStep === 5) {
@@ -729,7 +704,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
                     </motion.div>
                   )}
 
-                  {/* Step 4: Primary Bottleneck */}
+                  {/* Step 4: Primary Bottleneck (Open Text Field) */}
                   {currentStep === 4 && (
                     <motion.div
                       key="step4"
@@ -748,46 +723,30 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
                         What is your #1 growth bottleneck?
                       </h4>
                       <p className="text-sm text-white/70 mb-5">
-                        Select your primary focus area for the diagnostic.
+                        Tell us what is currently holding back your brand from scaling profitably.
                       </p>
 
-                      <div className="grid grid-cols-1 gap-2.5">
-                        {BOTTLENECK_OPTIONS.map((opt) => {
-                          const isSelected = answers.bottleneck === opt.label;
-                          return (
-                            <button
-                              key={opt.key}
-                              type="button"
-                              onClick={() => handleSelectOption("bottleneck", opt.label)}
-                              className={`flex items-start justify-between p-3.5 sm:p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
-                                isSelected
-                                  ? "bg-[#0FE3B3]/15 border-[#0FE3B3] text-white shadow-[0_0_20px_rgba(15,227,179,0.2)]"
-                                  : "bg-white/[0.04] border-white/15 hover:border-white/40 hover:bg-white/[0.07] text-white/90"
-                              }`}
-                            >
-                              <div className="flex items-start gap-3">
-                                <span
-                                  className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center border shrink-0 mt-0.5 transition-colors ${
-                                    isSelected
-                                      ? "bg-[#0FE3B3] text-[#00103A] border-[#0FE3B3]"
-                                      : "bg-white/10 text-white/70 border-white/20"
-                                  }`}
-                                >
-                                  {opt.key}
-                                </span>
-                                <div>
-                                  <div className="text-sm sm:text-base font-bold text-white leading-tight">{opt.label}</div>
-                                  <div className="text-xs text-white/60 mt-1">{opt.sub}</div>
-                                </div>
-                              </div>
-                              {isSelected && (
-                                <svg className="w-5 h-5 text-[#0FE3B3] shrink-0 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                  <path d="M20 6L9 17l-5-5" />
-                                </svg>
-                              )}
-                            </button>
-                          );
-                        })}
+                      <div className="relative">
+                        <textarea
+                          ref={textareaRef}
+                          rows={4}
+                          value={answers.bottleneck}
+                          onChange={(e) => {
+                            setAnswers({ ...answers, bottleneck: e.target.value });
+                            setErrorMsg("");
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              handleNext();
+                            }
+                          }}
+                          placeholder="e.g., Creative fatigue on Meta, rising customer acquisition costs (CAC), plateauing at $80k/mo, attribution clarity, or need for senior media buyers..."
+                          className="w-full bg-white/[0.05] border-2 border-white/20 focus:border-[#0FE3B3] focus:shadow-[0_0_20px_rgba(15,227,179,0.15)] rounded-xl p-4 text-base sm:text-lg text-white placeholder-white/35 outline-none transition-all duration-200 resize-none"
+                        />
+                        <div className="text-[11px] text-white/40 mt-2 flex items-center justify-between">
+                          <span>Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 font-mono text-[10px]">Enter ↵</kbd> to continue (or Shift + Enter for new line)</span>
+                        </div>
                       </div>
                     </motion.div>
                   )}

@@ -1,5 +1,1 @@
-import { redirect } from "next/navigation";
-
-export default function RarityAuditPage() {
-  redirect("/");
-}
+export { default } from "../lp2/page";
