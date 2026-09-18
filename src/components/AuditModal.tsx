@@ -1052,7 +1052,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
               <div className="flex-1 w-full h-full min-h-0 overflow-hidden rounded-xl sm:rounded-2xl">
                 <Cal
                   namespace="free-growth-audit"
-                  calLink="caiodecamargo/free-growth-audit"
+                  calLink={calLink}
                   style={{ width: "100%", height: "100%", overflow: "scroll" }}
                   config={calConfig}
                 />

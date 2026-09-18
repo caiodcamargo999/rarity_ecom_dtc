@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { syncLeadToQuoCrm } from "@/lib/quoCrm";
 
 export async function POST(req: NextRequest) {
   try {
@@ -86,6 +87,25 @@ export async function POST(req: NextRequest) {
     } else {
       console.log("ℹ️ [Google Sheets] GOOGLE_SHEETS_AUDIT_WEBHOOK_URL not configured yet. Payload logged in console.");
     }
+
+    // 2. Sync to Quo CRM (with all custom fields: Revenue, Spend, Bottleneck, Role, Call Date/Time)
+    syncLeadToQuoCrm({
+      fullName,
+      email,
+      phone,
+      brandOrStore,
+      monthlyRevenue,
+      monthlyAdSpend,
+      bottleneck,
+      role,
+      meetingDate: data.meetingDate || undefined,
+      scheduledOnCal,
+      utms,
+      source: "Growth Diagnostic Website",
+      sourceUrl: brandOrStore ? `https://${brandOrStore.replace(/^https?:\/\//, "")}` : "https://rarityagency.com",
+    }).catch((quoErr) => {
+      console.error("Error syncing contact to Quo CRM in background:", quoErr);
+    });
 
     return NextResponse.json({
       success: true,
