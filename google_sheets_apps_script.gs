@@ -1,16 +1,13 @@
 /**
  * RARITY AGENCY - GOOGLE APPS SCRIPT
- * Sincronização Inteligente de Leads & Agendamentos (Cal.com + Typeform/Quiz)
+ * Sincronização Inteligente com Sobrescrita por E-mail ou Telefone (Sem Duplicar Linhas)
  *
- * FLUXO COMPLETO:
- * 1. Ao clicar em "Select Date & Time" no Quiz:
- *    -> SEMPRE INSERE UMA NOVA LINHA com "Scheduled on Cal.com?" = "No".
- * 2. Ao confirmar o agendamento no Cal.com:
- *    -> LOCALIZA A LINHA DO LEAD (por E-mail ou Telefone) e muda para "Yes".
- *    -> Atualiza Nome, E-mail e Telefone com os dados oficiais do Cal.com.
- *    -> NÃO DUPLICA LINHAS!
- * 3. Se alguém agendar direto no Cal.com sem passar pelo Quiz:
- *    -> Insere uma nova linha já marcada como "Yes".
+ * REGRAS:
+ * 1. Identifica se o lead já existe na planilha por E-MAIL ou por TELEFONE.
+ * 2. Se JÁ EXISTIR: Sobrescreve e atualiza os dados na mesma linha (não gera nova linha).
+ * 3. Se NÃO EXISTIR: Insere uma nova linha.
+ * 4. Ao enviar o diagnóstico: grava os dados e define "Scheduled on Cal.com?" como "No" (ou mantém "Yes" se já tiver agendado).
+ * 5. Ao confirmar no Cal.com: atualiza "Scheduled on Cal.com?" para "Yes" e atualiza Nome, E-mail e Telefone com os dados verídicos do Cal.com.
  */
 
 function doPost(e) {
@@ -28,15 +25,11 @@ function doPost(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName("Leads") || ss.getActiveSheet();
 
-    // Cabeçalhos esperados (Row 1):
-    // A: Timestamp | B: Brand / Store URL | C: Full Name | D: Email | E: Phone / WhatsApp |
-    // F: Monthly Revenue | G: Monthly Ad Spend | H: Bottleneck | I: Role |
-    // J: Scheduled on Cal.com? | K: UTM Source | L: UTM Medium | M: UTM Campaign |
-    // N: UTM Content | O: UTM Term | P: FBCLID
-
+    // Mapeamento dinâmico dos cabeçalhos da planilha (Row 1)
     var headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 16)).getValues()[0];
     var colMap = getColumnMapping(headers);
 
+    // Normalização dos dados recebidos para busca
     var incomingEmail = (data.email || "").toString().trim().toLowerCase();
     var incomingPhoneDigits = (data.phone || "").toString().replace(/[^0-9]/g, "");
     var isBookingConfirmed = (data.scheduledOnCal === "Yes" || data.action === "update_booking_status");
@@ -44,66 +37,105 @@ function doPost(e) {
     var lastRow = sheet.getLastRow();
     var matchedRowIndex = -1;
 
+    // ----------------------------------------------------
+    // BUSCA POR E-MAIL OU TELEFONE IGUAL (DE BAIXO PARA CIMA)
+    // ----------------------------------------------------
+    if (lastRow > 1) {
+      var emailValues = sheet.getRange(2, colMap.email, lastRow - 1, 1).getValues();
+      var phoneValues = sheet.getRange(2, colMap.phone, lastRow - 1, 1).getValues();
+
+      for (var i = emailValues.length - 1; i >= 0; i--) {
+        var rowEmail = (emailValues[i][0] || "").toString().trim().toLowerCase();
+        var rowPhoneDigits = (phoneValues[i][0] || "").toString().replace(/[^0-9]/g, "");
+
+        // 1. Identificação por E-MAIL igual
+        if (incomingEmail && rowEmail && rowEmail === incomingEmail) {
+          matchedRowIndex = i + 2; // +2 porque a leitura começou na linha 2
+          break;
+        }
+
+        // 2. Identificação por TELEFONE igual (mínimo de 8 dígitos para precisão)
+        if (incomingPhoneDigits && incomingPhoneDigits.length >= 8 && rowPhoneDigits && rowPhoneDigits.length >= 8) {
+          if (rowPhoneDigits.indexOf(incomingPhoneDigits) !== -1 || incomingPhoneDigits.indexOf(rowPhoneDigits) !== -1) {
+            matchedRowIndex = i + 2;
+            break;
+          }
+        }
+      }
+    }
+
     var now = new Date();
     var defaultTimestamp = Utilities.formatDate(now, "America/New_York", "MMM dd, yyyy, h:mm a");
     var formattedPhone = data.phone ? (data.phone.toString().startsWith("+") ? "'" + data.phone : data.phone) : "";
 
     // ----------------------------------------------------
-    // CASO 1: AGENDAMENTO CONFIRMADO NO CAL.COM
+    // CASO 1: LEAD ENCONTRADO -> SOBRESCREVE OS DADOS NA MESMA LINHA
     // ----------------------------------------------------
-    if (isBookingConfirmed) {
-      if (lastRow > 1) {
-        var emailValues = sheet.getRange(2, colMap.email, lastRow - 1, 1).getValues();
-        var phoneValues = sheet.getRange(2, colMap.phone, lastRow - 1, 1).getValues();
+    if (matchedRowIndex > 1) {
+      // Atualiza Timestamp
+      sheet.getRange(matchedRowIndex, colMap.timestamp).setValue(data.timestamp || defaultTimestamp);
 
-        // Busca do lead mais recente para o mais antigo (de baixo para cima)
-        for (var i = emailValues.length - 1; i >= 0; i--) {
-          var rowEmail = (emailValues[i][0] || "").toString().trim().toLowerCase();
-          var rowPhoneDigits = (phoneValues[i][0] || "").toString().replace(/[^0-9]/g, "");
-
-          // 1) Match por E-mail
-          if (incomingEmail && rowEmail === incomingEmail) {
-            matchedRowIndex = i + 2;
-            break;
-          }
-
-          // 2) Match por Telefone
-          if (incomingPhoneDigits && incomingPhoneDigits.length >= 8 && rowPhoneDigits && rowPhoneDigits.length >= 8) {
-            if (rowPhoneDigits.indexOf(incomingPhoneDigits) !== -1 || incomingPhoneDigits.indexOf(rowPhoneDigits) !== -1) {
-              matchedRowIndex = i + 2;
-              break;
-            }
-          }
-        }
+      // Sobrescreve Nome se enviado
+      if (data.fullName || data.name) {
+        sheet.getRange(matchedRowIndex, colMap.fullName).setValue(data.fullName || data.name);
       }
 
-      // Se encontrou o lead criado previamente no quiz, atualiza para 'Yes' SEM DUPLICAR
-      if (matchedRowIndex > 1) {
+      // Sobrescreve Email se enviado
+      if (data.email) {
+        sheet.getRange(matchedRowIndex, colMap.email).setValue(data.email);
+      }
+
+      // Sobrescreve Telefone se enviado
+      if (formattedPhone) {
+        sheet.getRange(matchedRowIndex, colMap.phone).setValue(formattedPhone);
+      }
+
+      // Sobrescreve dados do Quiz se enviados
+      if (data.brandOrStore || data.company) {
+        sheet.getRange(matchedRowIndex, colMap.brand).setValue(data.brandOrStore || data.company);
+      }
+      if (data.monthlyRevenue || data.revenue) {
+        sheet.getRange(matchedRowIndex, colMap.revenue).setValue(data.monthlyRevenue || data.revenue);
+      }
+      if (data.monthlyAdSpend || data.spend) {
+        sheet.getRange(matchedRowIndex, colMap.adSpend).setValue(data.monthlyAdSpend || data.spend);
+      }
+      if (data.bottleneck) {
+        sheet.getRange(matchedRowIndex, colMap.bottleneck).setValue(data.bottleneck);
+      }
+      if (data.role) {
+        sheet.getRange(matchedRowIndex, colMap.role).setValue(data.role);
+      }
+
+      // Sobrescreve UTMs se enviadas
+      if (data.utm_source) sheet.getRange(matchedRowIndex, colMap.utmSource).setValue(data.utm_source);
+      if (data.utm_medium) sheet.getRange(matchedRowIndex, colMap.utmMedium).setValue(data.utm_medium);
+      if (data.utm_campaign) sheet.getRange(matchedRowIndex, colMap.utmCampaign).setValue(data.utm_campaign);
+      if (data.utm_content) sheet.getRange(matchedRowIndex, colMap.utmContent).setValue(data.utm_content);
+      if (data.utm_term) sheet.getRange(matchedRowIndex, colMap.utmTerm).setValue(data.utm_term);
+      if (data.fbclid) sheet.getRange(matchedRowIndex, colMap.fbclid).setValue(data.fbclid);
+
+      // Atualiza Status de Agendamento:
+      if (isBookingConfirmed) {
         sheet.getRange(matchedRowIndex, colMap.scheduled).setValue("Yes");
-
-        // Cal.com é a fonte verídica: atualiza Nome, Email e Telefone
-        if (data.fullName || data.name) {
-          sheet.getRange(matchedRowIndex, colMap.fullName).setValue(data.fullName || data.name);
+      } else {
+        var currentStatus = sheet.getRange(matchedRowIndex, colMap.scheduled).getValue();
+        // Se ainda não estava como 'Yes', define como 'No'
+        if (currentStatus !== "Yes") {
+          sheet.getRange(matchedRowIndex, colMap.scheduled).setValue("No");
         }
-        if (data.email) {
-          sheet.getRange(matchedRowIndex, colMap.email).setValue(data.email);
-        }
-        if (formattedPhone) {
-          sheet.getRange(matchedRowIndex, colMap.phone).setValue(formattedPhone);
-        }
-
-        return responseJson({
-          status: "success",
-          action: "updated_existing_lead_to_scheduled",
-          row: matchedRowIndex,
-          scheduledOnCal: "Yes"
-        });
       }
+
+      return responseJson({
+        status: "success",
+        action: "overwritten_existing_lead",
+        row: matchedRowIndex,
+        scheduledOnCal: isBookingConfirmed ? "Yes" : sheet.getRange(matchedRowIndex, colMap.scheduled).getValue()
+      });
     }
 
     // ----------------------------------------------------
-    // CASO 2: NOVO ENVIO DO DIAGNÓSTICO (OU AGENDAMENTO DIRETO)
-    // -> SEMPRE CRIA UMA NOVA LINHA NA PLANILHA
+    // CASO 2: NOVO LEAD (E-MAIL E TELEFONE INÉDITOS) -> INSERE NOVA LINHA
     // ----------------------------------------------------
     var scheduledStatus = isBookingConfirmed ? "Yes" : "No";
 
@@ -135,10 +167,7 @@ function doPost(e) {
     });
 
   } catch (err) {
-    return responseJson({
-      status: "error",
-      message: err.toString()
-    });
+    return responseJson({ status: "error", message: err.toString() });
   } finally {
     lock.releaseLock();
   }
