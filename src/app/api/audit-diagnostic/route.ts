@@ -25,7 +25,11 @@ export async function POST(req: NextRequest) {
     // Format phone with leading quote if starting with '+' so Google Sheets doesn't parse it as a math formula
     const formattedPhone = phone && phone.startsWith("+") ? `'${phone}` : phone;
 
+    const scheduledOnCal = data.scheduledOnCal || (data.action === "update_booking_status" ? "Yes" : "No");
+    const action = data.action || (scheduledOnCal === "Yes" ? "update_booking_status" : "insert_lead");
+
     const leadPayload = {
+      action,
       timestamp: timestampFormatted,
       brandOrStore,
       fullName,
@@ -35,7 +39,8 @@ export async function POST(req: NextRequest) {
       monthlyAdSpend,
       bottleneck,
       role,
-      scheduledOnCal: "No",
+      scheduledOnCal,
+      meetingDate: data.meetingDate || "",
       utm_source: utms?.utm_source || "",
       utm_medium: utms?.utm_medium || "",
       utm_campaign: utms?.utm_campaign || "",
@@ -44,7 +49,7 @@ export async function POST(req: NextRequest) {
       fbclid: utms?.fbclid || "",
     };
 
-    console.log("=== NEW AUDIT QUIZ SUBMISSION (SENDING TO SPREADSHEET) ===", leadPayload);
+    console.log(`=== AUDIT LEAD [${action}] (SENDING TO SPREADSHEET) ===`, leadPayload);
 
     // 1. Send to Google Sheets Webhook
     const sheetsWebhookUrl =

@@ -560,21 +560,34 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 7. Update Google Sheets: Mark "Scheduled on Cal.com?" as Yes with meeting date
+    // 7. Update Google Sheets: Mark "Scheduled on Cal.com?" as Yes with verified Cal.com data
     const sheetsWebhookUrl =
       process.env.GOOGLE_SHEETS_AUDIT_WEBHOOK_URL ||
       process.env.GOOGLE_SHEETS_ONBOARDING_WEBHOOK_URL;
 
     if (sheetsWebhookUrl && sheetsWebhookUrl.startsWith("http") && email) {
       try {
+        const formattedPhone = phone && phone.startsWith("+") ? `'${phone}` : phone;
         const sheetUpdatePayload = {
           action: "update_booking_status",
           email: email,
-          phone: phone,
+          phone: formattedPhone,
           name: rawName,
+          fullName: rawName,
           company: company,
-          scheduledOnCal: meetingDateStr ? `Yes (${meetingDateStr})` : "Yes",
+          brandOrStore: extractedStore || company,
+          monthlyRevenue: extractedRevenue,
+          monthlyAdSpend: extractedAdSpend,
+          bottleneck: extractedBottleneck,
+          role: extractedDecisionMaker,
+          scheduledOnCal: "Yes",
           meetingDate: meetingDateStr,
+          utm_source: utmSource,
+          utm_medium: utmMedium,
+          utm_campaign: utmCampaign,
+          utm_content: utmContent,
+          utm_term: utmTerm,
+          fbclid: fbclid,
         };
 
         await fetch(sheetsWebhookUrl, {

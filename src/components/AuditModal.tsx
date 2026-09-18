@@ -240,50 +240,77 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
         action: "bookingSuccessful",
         callback: (e: any) => {
           const detail = e?.detail?.data || e?.data || {};
-          const fullName = detail.name || detail.booking?.name || answers.fullName || "";
-          const nameParts = fullName.trim().split(" ");
-          const firstName = nameParts[0] || "";
-          const lastName = nameParts.slice(1).join(" ") || "";
-          const email = detail.email || detail.booking?.email || answers.email || "";
-          const phone =
-            detail.phone || detail.phoneNumber || detail.booking?.phone || answers.phone || "";
-
-          if (typeof window !== "undefined") {
-            const currentUtms = getStoredUtms();
-            (window as any).dataLayer = (window as any).dataLayer || [];
-            (window as any).dataLayer.push({
-              event: "bookingSuccessful",
-              data: detail,
-              name: fullName,
-              first_name: firstName,
-              last_name: lastName,
-              email: email,
-              phone: phone,
-              store: answers.brandOrStore,
-              revenue: answers.monthlyRevenue,
-              ad_spend: answers.monthlyAdSpend,
-              bottleneck: answers.bottleneck,
-              role: answers.role,
-              eventType: detail.eventType || "free-growth-audit",
-              date: detail.date,
-              utm_source: currentUtms.utm_source || "",
-              utm_medium: currentUtms.utm_medium || "",
-              utm_campaign: currentUtms.utm_campaign || "",
-              utm_content: currentUtms.utm_content || "",
-              utm_term: currentUtms.utm_term || "",
-              fbclid: currentUtms.fbclid || "",
-            });
-            console.log("✅ [GTM] Dispatched bookingSuccessful event with quiz data & UTMs:", {
-              name: fullName,
-              email,
-              phone,
-              brand: answers.brandOrStore,
-              utms: currentUtms,
-            });
-          }
+          handleBookingComplete(detail);
         },
       });
     })();
+
+    const handleBookingComplete = (detail: any) => {
+      const fullName = detail.name || detail.booking?.name || answers.fullName || "";
+      const nameParts = fullName.trim().split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+      const email = detail.email || detail.booking?.email || answers.email || "";
+      const phone =
+        detail.phone || detail.phoneNumber || detail.booking?.phone || answers.phone || "";
+      const currentUtms = getStoredUtms();
+
+      if (typeof window !== "undefined") {
+        (window as any).dataLayer = (window as any).dataLayer || [];
+        (window as any).dataLayer.push({
+          event: "bookingSuccessful",
+          data: detail,
+          name: fullName,
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          phone: phone,
+          store: answers.brandOrStore,
+          revenue: answers.monthlyRevenue,
+          ad_spend: answers.monthlyAdSpend,
+          bottleneck: answers.bottleneck,
+          role: answers.role,
+          eventType: detail.eventType || "free-growth-audit",
+          date: detail.date,
+          utm_source: currentUtms.utm_source || "",
+          utm_medium: currentUtms.utm_medium || "",
+          utm_campaign: currentUtms.utm_campaign || "",
+          utm_content: currentUtms.utm_content || "",
+          utm_term: currentUtms.utm_term || "",
+          fbclid: currentUtms.fbclid || "",
+        });
+        console.log("✅ [GTM] Dispatched bookingSuccessful event with quiz data & UTMs:", {
+          name: fullName,
+          email,
+          phone,
+          brand: answers.brandOrStore,
+          utms: currentUtms,
+        });
+      }
+
+      // Immediately update Google Sheets: mark scheduledOnCal as "Yes" and overwrite name/email/phone with verified Cal.com data
+      fetch("/api/audit-diagnostic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_booking_status",
+          brandOrStore: answers.brandOrStore,
+          monthlyRevenue: answers.monthlyRevenue,
+          monthlyAdSpend: answers.monthlyAdSpend,
+          bottleneck: answers.bottleneck,
+          role: answers.role,
+          fullName,
+          email,
+          phone,
+          scheduledOnCal: "Yes",
+          meetingDate: detail.date || detail.startTime || "",
+          utms: currentUtms,
+        }),
+        keepalive: true,
+      }).catch((err) => {
+        console.error("Background error updating Google Sheets booking status:", err);
+      });
+    };
 
     // Fallback listener for postMessage events from Cal iframe
     const handleMessage = (event: MessageEvent) => {
@@ -295,35 +322,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
           msg?.event === "bookingSuccessful"
         ) {
           const detail = msg?.data || msg?.detail || {};
-          const fullName = detail.name || answers.fullName || "";
-          const nameParts = fullName.trim().split(" ");
-          const firstName = nameParts[0] || "";
-          const lastName = nameParts.slice(1).join(" ") || "";
-          const email = detail.email || answers.email || "";
-          const phone = detail.phone || detail.phoneNumber || answers.phone || "";
-          const currentUtms = getStoredUtms();
-
-          (window as any).dataLayer = (window as any).dataLayer || [];
-          (window as any).dataLayer.push({
-            event: "bookingSuccessful",
-            data: detail,
-            name: fullName,
-            first_name: firstName,
-            last_name: lastName,
-            email: email,
-            phone: phone,
-            store: answers.brandOrStore,
-            revenue: answers.monthlyRevenue,
-            ad_spend: answers.monthlyAdSpend,
-            bottleneck: answers.bottleneck,
-            role: answers.role,
-            utm_source: currentUtms.utm_source || "",
-            utm_medium: currentUtms.utm_medium || "",
-            utm_campaign: currentUtms.utm_campaign || "",
-            utm_content: currentUtms.utm_content || "",
-            utm_term: currentUtms.utm_term || "",
-            fbclid: currentUtms.fbclid || "",
-          });
+          handleBookingComplete(detail);
         }
       } catch (err) {
         // Ignore non-JSON postMessages
