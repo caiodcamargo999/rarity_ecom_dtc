@@ -16,6 +16,14 @@ export async function POST(req: NextRequest) {
       utms = {},
     } = data;
 
+    // Reject incomplete empty submissions (e.g., keystroke events with no contact info)
+    if (!email?.trim() && !phone?.trim() && !fullName?.trim()) {
+      return NextResponse.json(
+        { success: false, message: "Ignored: No contact information provided" },
+        { status: 400 }
+      );
+    }
+
     const timestampFormatted = new Date().toLocaleString("en-US", {
       timeZone: "America/New_York",
       dateStyle: "medium",

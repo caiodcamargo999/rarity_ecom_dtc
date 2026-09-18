@@ -115,12 +115,21 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     }
   }, [isOpen]);
 
+  const answersRef = useRef<QuizAnswers>(answers);
+  answersRef.current = answers;
+
+  const utmsRef = useRef<UtmData>(utms);
+  utmsRef.current = utms;
+
+  const bookingHandledRef = useRef(false);
+
   // Reset modal state and pause videos when opened
   useEffect(() => {
     if (isOpen) {
       setStage("quiz");
       setCurrentStep(1);
       setErrorMsg("");
+      bookingHandledRef.current = false;
 
       // Automatically pause any running video playback
       pauseAllVturbVideos();
@@ -221,7 +230,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     return baseConfig;
   }, [utms, answers]);
 
-  // Listen for Cal.com booking successful event & preload calendar
+  // Listen for Cal.com booking successful event & preload calendar (MOUNT ONCE)
   useEffect(() => {
     (async function () {
       const cal = await getCalApi({ namespace: "free-growth-audit" });
@@ -246,14 +255,22 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     })();
 
     const handleBookingComplete = (detail: any) => {
-      const fullName = detail.name || detail.booking?.name || answers.fullName || "";
+      // Guard against multiple firings
+      if (bookingHandledRef.current) return;
+      bookingHandledRef.current = true;
+
+      const latestAnswers = answersRef.current;
+      const latestUtms = utmsRef.current;
+
+      const fullName = detail.name || detail.booking?.name || latestAnswers.fullName || "";
       const nameParts = fullName.trim().split(" ");
       const firstName = nameParts[0] || "";
       const lastName = nameParts.slice(1).join(" ") || "";
-      const email = detail.email || detail.booking?.email || answers.email || "";
+      const email = detail.email || detail.booking?.email || latestAnswers.email || "";
       const phone =
-        detail.phone || detail.phoneNumber || detail.booking?.phone || answers.phone || "";
-      const currentUtms = getStoredUtms();
+        detail.phone || detail.phoneNumber || detail.booking?.phone || latestAnswers.phone || "";
+
+      if (!email && !phone && !fullName) return;
 
       if (typeof window !== "undefined") {
         (window as any).dataLayer = (window as any).dataLayer || [];
@@ -265,26 +282,26 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
           last_name: lastName,
           email: email,
           phone: phone,
-          store: answers.brandOrStore,
-          revenue: answers.monthlyRevenue,
-          ad_spend: answers.monthlyAdSpend,
-          bottleneck: answers.bottleneck,
-          role: answers.role,
+          store: latestAnswers.brandOrStore,
+          revenue: latestAnswers.monthlyRevenue,
+          ad_spend: latestAnswers.monthlyAdSpend,
+          bottleneck: latestAnswers.bottleneck,
+          role: latestAnswers.role,
           eventType: detail.eventType || "free-growth-audit",
           date: detail.date,
-          utm_source: currentUtms.utm_source || "",
-          utm_medium: currentUtms.utm_medium || "",
-          utm_campaign: currentUtms.utm_campaign || "",
-          utm_content: currentUtms.utm_content || "",
-          utm_term: currentUtms.utm_term || "",
-          fbclid: currentUtms.fbclid || "",
+          utm_source: latestUtms.utm_source || "",
+          utm_medium: latestUtms.utm_medium || "",
+          utm_campaign: latestUtms.utm_campaign || "",
+          utm_content: latestUtms.utm_content || "",
+          utm_term: latestUtms.utm_term || "",
+          fbclid: latestUtms.fbclid || "",
         });
         console.log("✅ [GTM] Dispatched bookingSuccessful event with quiz data & UTMs:", {
           name: fullName,
           email,
           phone,
-          brand: answers.brandOrStore,
-          utms: currentUtms,
+          brand: latestAnswers.brandOrStore,
+          utms: latestUtms,
         });
       }
 
@@ -294,17 +311,17 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "update_booking_status",
-          brandOrStore: answers.brandOrStore,
-          monthlyRevenue: answers.monthlyRevenue,
-          monthlyAdSpend: answers.monthlyAdSpend,
-          bottleneck: answers.bottleneck,
-          role: answers.role,
+          brandOrStore: latestAnswers.brandOrStore,
+          monthlyRevenue: latestAnswers.monthlyRevenue,
+          monthlyAdSpend: latestAnswers.monthlyAdSpend,
+          bottleneck: latestAnswers.bottleneck,
+          role: latestAnswers.role,
           fullName,
           email,
           phone,
           scheduledOnCal: "Yes",
           meetingDate: detail.date || detail.startTime || "",
-          utms: currentUtms,
+          utms: latestUtms,
         }),
         keepalive: true,
       }).catch((err) => {
@@ -331,7 +348,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [answers]);
+  }, []);
 
   // Handle keyboard shortcuts (A, B, C, D, Enter, Escape)
   useEffect(() => {

@@ -34,6 +34,11 @@ function doPost(e) {
     var incomingPhoneDigits = (data.phone || "").toString().replace(/[^0-9]/g, "");
     var isBookingConfirmed = (data.scheduledOnCal === "Yes" || data.action === "update_booking_status");
 
+    // Ignora envios sem nenhum dado de contato
+    if (!incomingEmail && !incomingPhoneDigits && !data.fullName && !data.name) {
+      return responseJson({ status: "ignored", message: "No contact details provided" });
+    }
+
     var lastRow = sheet.getLastRow();
     var matchedRowIndex = -1;
 
