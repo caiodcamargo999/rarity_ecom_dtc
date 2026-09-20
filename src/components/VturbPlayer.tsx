@@ -5,6 +5,10 @@ import { useEffect } from "react";
 interface VturbPlayerProps {
   videoId?: string;
   className?: string;
+  delaySeconds?: number;
+  onPlay?: () => void;
+  onTimeUpdate?: (currentTime: number) => void;
+  onUnlock?: () => void;
 }
 
 export function pauseAllVturbVideos() {
@@ -105,9 +109,13 @@ export function pauseAllVturbVideos() {
 export default function VturbPlayer({
   videoId = "vid-6aad51ea85641ef58dd2f744",
   className = "",
+  delaySeconds = 60,
+  onPlay,
+  onTimeUpdate,
+  onUnlock,
 }: VturbPlayerProps) {
   useEffect(() => {
-    // Dynamically inject player script if not already present
+    // 1. Dynamically inject player script if not already present
     const scriptId = "vturb-player-js-6aad51ea85641ef58dd2f744";
     if (!document.getElementById(scriptId)) {
       const s = document.createElement("script");
@@ -117,10 +125,96 @@ export default function VturbPlayer({
       s.async = true;
       document.head.appendChild(s);
     }
-  }, []);
+
+    const playerEl = document.getElementById(videoId);
+
+    const triggerPlay = () => {
+      onPlay?.();
+      window.dispatchEvent(new CustomEvent("rarity:video:play"));
+    };
+
+    const triggerUnlock = () => {
+      onUnlock?.();
+      window.dispatchEvent(new CustomEvent("rarity:video:unlock"));
+    };
+
+    const handlePlayerReady = () => {
+      // Use VTurb's native displayHiddenElements method if supported
+      try {
+        const el: any = document.getElementById(videoId);
+        if (el && typeof el.displayHiddenElements === "function") {
+          el.displayHiddenElements(delaySeconds, [".vsl-delayed-cta", ".esconder"], {
+            persist: true,
+          });
+        }
+      } catch (e) {}
+    };
+
+    if (playerEl) {
+      playerEl.addEventListener("player:ready", handlePlayerReady);
+      playerEl.addEventListener("play", triggerPlay);
+      playerEl.addEventListener("playing", triggerPlay);
+      playerEl.addEventListener("timeupdate", (e: any) => {
+        const time = e?.target?.currentTime || 0;
+        onTimeUpdate?.(time);
+        if (time >= delaySeconds) triggerUnlock();
+      });
+    }
+
+    // 2. Poll window.smartplayer instances to attach timeupdate and play hooks
+    let pollInterval = setInterval(() => {
+      try {
+        const sp = (window as any).smartplayer;
+        if (sp && sp.instances) {
+          const instances = Array.isArray(sp.instances)
+            ? sp.instances
+            : Object.values(sp.instances);
+
+          instances.forEach((inst: any) => {
+            if (!inst.__hasDelayListeners) {
+              inst.__hasDelayListeners = true;
+
+              if (typeof inst.on === "function") {
+                inst.on("play", triggerPlay);
+                inst.on("timeupdate", () => {
+                  const curr = inst?.video?.currentTime || 0;
+                  onTimeUpdate?.(curr);
+                  if (curr >= delaySeconds) triggerUnlock();
+                });
+              }
+
+              if (inst.video) {
+                inst.video.addEventListener("play", triggerPlay);
+                inst.video.addEventListener("timeupdate", () => {
+                  const curr = inst.video.currentTime || 0;
+                  onTimeUpdate?.(curr);
+                  if (curr >= delaySeconds) triggerUnlock();
+                });
+              }
+            }
+          });
+        }
+      } catch (e) {}
+    }, 500);
+
+    return () => {
+      clearInterval(pollInterval);
+      if (playerEl) {
+        playerEl.removeEventListener("player:ready", handlePlayerReady);
+        playerEl.removeEventListener("play", triggerPlay);
+        playerEl.removeEventListener("playing", triggerPlay);
+      }
+    };
+  }, [videoId, delaySeconds, onPlay, onTimeUpdate, onUnlock]);
+
+  const handleContainerClick = () => {
+    onPlay?.();
+    window.dispatchEvent(new CustomEvent("rarity:video:play"));
+  };
 
   return (
     <div
+      onClick={handleContainerClick}
       className={`relative w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-black transition-all duration-300 hover:border-[#0FE3B3]/60 hover:shadow-[0_0_40px_rgba(15,227,179,0.25)] ${className}`}
     >
       {/* @ts-ignore */}

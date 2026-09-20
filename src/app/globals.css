@@ -77,3 +77,9 @@ body {
   animation: none;
   box-shadow: 0 0 35px rgba(216, 0, 100, 0.8), 0 0 70px rgba(216, 0, 100, 0.4);
 }
+
+/* VSL Delayed Elements styling */
+.vsl-delayed-cta {
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+

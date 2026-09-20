@@ -12,10 +12,16 @@ import Footer from "@/components/Footer";
 import AuditModal from "@/components/AuditModal";
 import VideoModal from "@/components/VideoModal";
 import { pauseAllVturbVideos } from "@/components/VturbPlayer";
+import { useVslDelay } from "@/hooks/useVslDelay";
 
 export default function Home() {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+
+  // 1-minute (60 seconds) delay from video play
+  const { isUnlocked, startPlayback, handleTimeUpdate, unlock } = useVslDelay({
+    delaySeconds: 60,
+  });
 
   const handleOpenAudit = () => {
     pauseAllVturbVideos();
@@ -31,26 +37,42 @@ export default function Home() {
       {/* Top Navigation Bar */}
       <Header />
 
-      {/* Hero Section */}
+      {/* Hero Section with VTurb Video & Delayed CTA Button */}
       <HeroSection
         onOpenAudit={handleOpenAudit}
         onOpenVideo={handleOpenVideo}
+        isCtaVisible={isUnlocked}
+        onPlay={startPlayback}
+        onTimeUpdate={handleTimeUpdate}
+        onUnlock={unlock}
       />
 
       {/* The Problem Section */}
-      <ProblemSection onOpenAudit={handleOpenAudit} />
+      <ProblemSection
+        onOpenAudit={handleOpenAudit}
+        isCtaVisible={isUnlocked}
+      />
 
       {/* One Team. One Number. Three Levers. */}
       <ThreeLeversSection />
 
       {/* Case Studies & Testimonials */}
-      <CaseStudiesSection onOpenAudit={handleOpenAudit} />
+      <CaseStudiesSection
+        onOpenAudit={handleOpenAudit}
+        isCtaVisible={isUnlocked}
+      />
 
       {/* Real Client Ad Creatives 3D Showcase */}
-      <CreativeShowcaseSection onOpenAudit={handleOpenAudit} />
+      <CreativeShowcaseSection
+        onOpenAudit={handleOpenAudit}
+        isCtaVisible={isUnlocked}
+      />
 
       {/* The Free Growth Audit (What Actually Happens) */}
-      <AuditProcessSection onOpenAudit={handleOpenAudit} />
+      <AuditProcessSection
+        onOpenAudit={handleOpenAudit}
+        isCtaVisible={isUnlocked}
+      />
 
       {/* Footer */}
       <Footer />

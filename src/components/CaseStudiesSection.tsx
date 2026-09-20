@@ -7,6 +7,7 @@ import DashboardPreview from "@/components/common/DashboardPreview";
 
 interface CaseStudiesSectionProps {
   onOpenAudit: () => void;
+  isCtaVisible?: boolean;
 }
 
 const carouselCases = [
@@ -98,6 +99,35 @@ const carouselCases = [
       "Targeted product listing ad dominance in non-branded categories",
     ],
   },
+  {
+    id: "tiktok-1",
+    channel: "TikTok Ads",
+    channelColor: "bg-pink-600/20 border-pink-500/40 text-pink-400",
+    tag: "TikTok UGC • Viral Scaling",
+    title: "6.40x ROAS & Sub-$20 CAC from Cold Traffic",
+    image: "/images/cases/tiktok-case-1.png",
+    aspectRatio: "aspect-[16/6]",
+    stats: [
+      { label: "Total Revenue", value: "$850,000+" },
+      { label: "Ad Spend", value: "$132,800" },
+      { label: "Avg ROAS", value: "6.40x" },
+      { label: "Cost / Acquisition", value: "$19.40" },
+    ],
+    summary:
+      "Built an always-on UGC testing engine using AI creator matching, pumping 20+ authentic TikTok native hooks weekly to feed top-of-funnel customer acquisition.",
+    strategy: [
+      "Native UGC creative styling that looks like genuine user reviews",
+      "Fast-kill testing rules cutting non-performing variants in 48h",
+      "Dynamic Spark Ads utilizing creator organic profile authority",
+    ],
+  },
+];
+
+const impactMetrics = [
+  { value: "$30M+", label: "Client Revenue Generated" },
+  { value: "3.4x", label: "Average Blended MER" },
+  { value: "150+", label: "Winning Creative Sprints" },
+  { value: "0%", label: "Hidden Spend Percentage" },
 ];
 
 const founderTestimonials = [
@@ -182,7 +212,10 @@ const stats = [
   { value: "0%", label: "Hidden Spend Percentage" },
 ];
 
-export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionProps) {
+export default function CaseStudiesSection({
+  onOpenAudit,
+  isCtaVisible = true,
+}: CaseStudiesSectionProps) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -456,35 +489,39 @@ export default function CaseStudiesSection({ onOpenAudit }: CaseStudiesSectionPr
         </div>
 
         {/* Section CTA Button */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-14 sm:mt-16 text-center"
-        >
-          <button
-            onClick={onOpenAudit}
-            className="btn-magenta-glow group relative inline-flex items-center justify-center px-8 sm:px-12 py-4 rounded-full bg-brand-magenta text-white font-extrabold text-xs sm:text-sm tracking-wider uppercase transition-all duration-300 hover:bg-brand-magentaHover hover:scale-105 active:scale-95 shadow-xl cursor-pointer"
-          >
-            <span>GET YOUR FREE GROWTH AUDIT</span>
-            <svg
-              className="w-4 h-4 ml-2.5 transition-transform duration-200 group-hover:translate-x-1"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        <AnimatePresence>
+          {isCtaVisible && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="mt-14 sm:mt-16 text-center vsl-delayed-cta"
             >
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
-            </svg>
-          </button>
-          <p className="text-white/60 text-xs mt-3 font-medium">
-            Join high-growth DTC founders who scaled against MER and real profit.
-          </p>
-        </motion.div>
+              <button
+                onClick={onOpenAudit}
+                className="btn-magenta-glow group relative inline-flex items-center justify-center px-8 sm:px-12 py-4 rounded-full bg-brand-magenta text-white font-extrabold text-xs sm:text-sm tracking-wider uppercase transition-all duration-300 hover:bg-brand-magentaHover hover:scale-105 active:scale-95 shadow-xl cursor-pointer"
+              >
+                <span>GET YOUR FREE GROWTH AUDIT</span>
+                <svg
+                  className="w-4 h-4 ml-2.5 transition-transform duration-200 group-hover:translate-x-1"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </button>
+              <p className="text-white/60 text-xs mt-3 font-medium">
+                Join high-growth DTC founders who scaled against MER and real profit.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Lightbox Modal for Zooming Screenshots */}

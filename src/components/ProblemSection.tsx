@@ -1,12 +1,16 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ProblemSectionProps {
   onOpenAudit: () => void;
+  isCtaVisible?: boolean;
 }
 
-export default function ProblemSection({ onOpenAudit }: ProblemSectionProps) {
+export default function ProblemSection({
+  onOpenAudit,
+  isCtaVisible = true,
+}: ProblemSectionProps) {
   return (
     <section className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 border-t border-white/10 overflow-hidden">
       {/* Background radial accent */}
@@ -45,32 +49,36 @@ export default function ProblemSection({ onOpenAudit }: ProblemSectionProps) {
         </motion.p>
 
         {/* CTA Button */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-10 sm:mt-12"
-        >
-          <button
-            onClick={onOpenAudit}
-            className="btn-magenta-glow group relative inline-flex items-center justify-center px-8 sm:px-10 py-4 rounded-full bg-brand-magenta text-white font-extrabold text-xs sm:text-sm tracking-wider uppercase transition-all duration-300 hover:bg-brand-magentaHover hover:scale-105 active:scale-95 shadow-xl cursor-pointer"
-          >
-            <span>GET YOUR FREE GROWTH AUDIT</span>
-            <svg
-              className="w-4 h-4 ml-2.5 transition-transform duration-200 group-hover:translate-x-1"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        <AnimatePresence>
+          {isCtaVisible && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="mt-10 sm:mt-12 vsl-delayed-cta"
             >
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
-            </svg>
-          </button>
-        </motion.div>
+              <button
+                onClick={onOpenAudit}
+                className="btn-magenta-glow group relative inline-flex items-center justify-center px-8 sm:px-10 py-4 rounded-full bg-brand-magenta text-white font-extrabold text-xs sm:text-sm tracking-wider uppercase transition-all duration-300 hover:bg-brand-magentaHover hover:scale-105 active:scale-95 shadow-xl cursor-pointer"
+              >
+                <span>GET YOUR FREE GROWTH AUDIT</span>
+                <svg
+                  className="w-4 h-4 ml-2.5 transition-transform duration-200 group-hover:translate-x-1"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );
