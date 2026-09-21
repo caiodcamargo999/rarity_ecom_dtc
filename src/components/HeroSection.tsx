@@ -10,6 +10,7 @@ interface HeroSectionProps {
   onOpenVideo?: () => void;
   isCtaVisible?: boolean;
   onPlay?: () => void;
+  onPause?: () => void;
   onTimeUpdate?: (currentTime: number) => void;
   onUnlock?: () => void;
 }
@@ -18,6 +19,7 @@ export default function HeroSection({
   onOpenAudit,
   isCtaVisible = true,
   onPlay,
+  onPause,
   onTimeUpdate,
   onUnlock,
 }: HeroSectionProps) {
@@ -64,6 +66,7 @@ export default function HeroSection({
           <VturbPlayer
             delaySeconds={60}
             onPlay={onPlay}
+            onPause={onPause}
             onTimeUpdate={onTimeUpdate}
             onUnlock={onUnlock}
           />

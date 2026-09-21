@@ -18,8 +18,14 @@ export default function Home() {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
-  // 1-minute (60 seconds) delay from video play
-  const { isUnlocked, startPlayback, handleTimeUpdate, unlock } = useVslDelay({
+  // 1-minute (60 seconds) cumulative watch-time delay from video play (does not reset if paused)
+  const {
+    isUnlocked,
+    startPlayback,
+    pausePlayback,
+    handleTimeUpdate,
+    unlock,
+  } = useVslDelay({
     delaySeconds: 60,
   });
 
@@ -43,6 +49,7 @@ export default function Home() {
         onOpenVideo={handleOpenVideo}
         isCtaVisible={isUnlocked}
         onPlay={startPlayback}
+        onPause={pausePlayback}
         onTimeUpdate={handleTimeUpdate}
         onUnlock={unlock}
       />

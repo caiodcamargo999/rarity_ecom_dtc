@@ -7,6 +7,7 @@ interface VturbPlayerProps {
   className?: string;
   delaySeconds?: number;
   onPlay?: () => void;
+  onPause?: () => void;
   onTimeUpdate?: (currentTime: number) => void;
   onUnlock?: () => void;
 }
@@ -111,6 +112,7 @@ export default function VturbPlayer({
   className = "",
   delaySeconds = 60,
   onPlay,
+  onPause,
   onTimeUpdate,
   onUnlock,
 }: VturbPlayerProps) {
@@ -133,6 +135,21 @@ export default function VturbPlayer({
       window.dispatchEvent(new CustomEvent("rarity:video:play"));
     };
 
+    const triggerPause = () => {
+      onPause?.();
+      window.dispatchEvent(new CustomEvent("rarity:video:pause"));
+    };
+
+    const triggerTimeUpdate = (currentTime: number) => {
+      onTimeUpdate?.(currentTime);
+      window.dispatchEvent(
+        new CustomEvent("rarity:video:timeupdate", { detail: { currentTime } })
+      );
+      if (currentTime >= delaySeconds) {
+        triggerUnlock();
+      }
+    };
+
     const triggerUnlock = () => {
       onUnlock?.();
       window.dispatchEvent(new CustomEvent("rarity:video:unlock"));
@@ -150,18 +167,22 @@ export default function VturbPlayer({
       } catch (e) {}
     };
 
+    const onTimeUpdateListener = (e: any) => {
+      const time = e?.target?.currentTime || 0;
+      triggerTimeUpdate(time);
+    };
+
     if (playerEl) {
       playerEl.addEventListener("player:ready", handlePlayerReady);
       playerEl.addEventListener("play", triggerPlay);
       playerEl.addEventListener("playing", triggerPlay);
-      playerEl.addEventListener("timeupdate", (e: any) => {
-        const time = e?.target?.currentTime || 0;
-        onTimeUpdate?.(time);
-        if (time >= delaySeconds) triggerUnlock();
-      });
+      playerEl.addEventListener("pause", triggerPause);
+      playerEl.addEventListener("ended", triggerPause);
+      playerEl.addEventListener("waiting", triggerPause);
+      playerEl.addEventListener("timeupdate", onTimeUpdateListener);
     }
 
-    // 2. Poll window.smartplayer instances to attach timeupdate and play hooks
+    // 2. Poll window.smartplayer instances to attach timeupdate, play, and pause hooks
     let pollInterval = setInterval(() => {
       try {
         const sp = (window as any).smartplayer;
@@ -176,26 +197,50 @@ export default function VturbPlayer({
 
               if (typeof inst.on === "function") {
                 inst.on("play", triggerPlay);
+                inst.on("playing", triggerPlay);
+                inst.on("pause", triggerPause);
+                inst.on("ended", triggerPause);
                 inst.on("timeupdate", () => {
-                  const curr = inst?.video?.currentTime || 0;
-                  onTimeUpdate?.(curr);
-                  if (curr >= delaySeconds) triggerUnlock();
+                  const curr =
+                    inst?.video?.currentTime ??
+                    inst?.playback?.currentTime ??
+                    inst?.player?.currentTime ??
+                    0;
+                  triggerTimeUpdate(curr);
                 });
               }
 
               if (inst.video) {
                 inst.video.addEventListener("play", triggerPlay);
+                inst.video.addEventListener("playing", triggerPlay);
+                inst.video.addEventListener("pause", triggerPause);
+                inst.video.addEventListener("ended", triggerPause);
                 inst.video.addEventListener("timeupdate", () => {
                   const curr = inst.video.currentTime || 0;
-                  onTimeUpdate?.(curr);
-                  if (curr >= delaySeconds) triggerUnlock();
+                  triggerTimeUpdate(curr);
                 });
               }
             }
           });
         }
+
+        // Also check shadowRoot video elements directly
+        if (playerEl && (playerEl as any).shadowRoot) {
+          (playerEl as any).shadowRoot.querySelectorAll("video").forEach((v: HTMLVideoElement) => {
+            if (!(v as any).__hasDelayListeners) {
+              (v as any).__hasDelayListeners = true;
+              v.addEventListener("play", triggerPlay);
+              v.addEventListener("playing", triggerPlay);
+              v.addEventListener("pause", triggerPause);
+              v.addEventListener("ended", triggerPause);
+              v.addEventListener("timeupdate", () => {
+                triggerTimeUpdate(v.currentTime || 0);
+              });
+            }
+          });
+        }
       } catch (e) {}
-    }, 500);
+    }, 400);
 
     return () => {
       clearInterval(pollInterval);
@@ -203,9 +248,13 @@ export default function VturbPlayer({
         playerEl.removeEventListener("player:ready", handlePlayerReady);
         playerEl.removeEventListener("play", triggerPlay);
         playerEl.removeEventListener("playing", triggerPlay);
+        playerEl.removeEventListener("pause", triggerPause);
+        playerEl.removeEventListener("ended", triggerPause);
+        playerEl.removeEventListener("waiting", triggerPause);
+        playerEl.removeEventListener("timeupdate", onTimeUpdateListener);
       }
     };
-  }, [videoId, delaySeconds, onPlay, onTimeUpdate, onUnlock]);
+  }, [videoId, delaySeconds, onPlay, onPause, onTimeUpdate, onUnlock]);
 
   const handleContainerClick = () => {
     onPlay?.();
