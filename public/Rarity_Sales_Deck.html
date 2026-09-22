@@ -150,6 +150,22 @@
   .nav .count{font-family:var(--sans);font-size:13px;color:var(--muted);letter-spacing:.08em;min-width:52px;text-align:center}
   .hint{position:fixed;bottom:26px;right:24px;color:var(--faint);font-size:11px;font-family:var(--sans);letter-spacing:.05em;z-index:50}
 
+  /* creatives showcase slide */
+  .creatives-layout{display:grid;grid-template-columns:1.02fr .98fr;gap:3.5vw;align-items:center;margin-top:8px}
+  @media(max-width:900px){.creatives-layout{grid-template-columns:1fr;gap:20px}}
+  .creative-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .creative-card{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--card);transition:all .25s ease;display:flex;flex-direction:column}
+  .creative-card:hover{transform:translateY(-3px) scale(1.02);border-color:var(--teal);box-shadow:0 12px 28px rgba(0,0,0,.45)}
+  .creative-card img{width:100%;height:120px;object-fit:cover;display:block}
+  .creative-card-info{padding:8px 10px;background:rgba(10,19,39,.92);backdrop-blur:8px;border-top:1px solid var(--line)}
+  .creative-tag{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);font-weight:600;margin-bottom:2px}
+  .creative-title{font-family:var(--sans);font-size:11.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .creative-angle{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .caique-badge{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(53,224,193,.08),rgba(13,28,56,.6));border:1px solid rgba(53,224,193,.3);border-radius:14px;padding:14px 18px;margin-top:16px}
+  .caique-badge img{width:46px;height:46px;border-radius:50%;border:2px solid var(--teal);object-fit:cover;flex:none}
+  .caique-badge .quote{font-size:13px;color:var(--ink);line-height:1.4}
+  .caique-badge .author{font-size:11px;color:var(--teal);font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
+
   @media print{
     body{overflow:visible}
     .deck{height:auto}
@@ -260,7 +276,88 @@
     </div>
   </section>
 
-  <!-- 7 METHODOLOGY -->
+  <!-- 7 CREATIVE SHOWCASE -->
+  <section class="slide">
+    <div class="eyebrow">Creative Excellence · High-Converting Ad Engine</div>
+    <h2>Conversion-first creative. <em>Designed by Caique.</em></h2>
+    <div class="creatives-layout">
+      <div>
+        <p class="lead" style="margin-top:2px">Every ad asset is engineered for thumb-stopping attention, high CTR, and maximum contribution margin — tested in rapid feedback cycles across feeds, stories, and reels.</p>
+        
+        <div class="cols c2" style="gap:12px;margin-top:16px">
+          <div class="card" style="padding:14px 16px">
+            <div class="kn" style="font-size:11px;margin-bottom:3px">Direct-Response Hooks</div>
+            <p style="font-size:12.5px;line-height:1.45">Scarcity drops, offer bundles, and frictionless triggers tested across 1:1 and 9:16 formats.</p>
+          </div>
+          <div class="card" style="padding:14px 16px">
+            <div class="kn" style="font-size:11px;margin-bottom:3px">Volume &amp; Speed</div>
+            <p style="font-size:12.5px;line-height:1.45">Fast creative iteration to beat ad fatigue and aggressively scale proven winning angles.</p>
+          </div>
+        </div>
+
+        <div class="caique-badge">
+          <img src="/caique_ai.png" alt="Caique - Lead Conversion Designer">
+          <div>
+            <div class="quote">“We don’t design for design awards — we engineer direct-response assets that slash your CAC and scale profitably.”</div>
+            <div class="author">Caique · Lead Conversion Designer (10+ Years in DTC)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="creative-grid">
+        <div class="creative-card">
+          <img src="/images/creatives/feed/FEED-APPROVE-LIQUIDA.jpg" alt="Approve Liquida Drop">
+          <div class="creative-card-info">
+            <span class="creative-tag">1:1 Feed · Streetwear</span>
+            <div class="creative-title">Approve Official</div>
+            <div class="creative-angle">Scarcity &amp; Clearance Hook</div>
+          </div>
+        </div>
+        <div class="creative-card">
+          <img src="/images/creatives/story/story-boots-02.jpg" alt="West Coast Boots">
+          <div class="creative-card-info">
+            <span class="creative-tag">9:16 Story · Footwear</span>
+            <div class="creative-title">West Coast</div>
+            <div class="creative-angle">Sensory Product Motion</div>
+          </div>
+        </div>
+        <div class="creative-card">
+          <img src="/images/creatives/feed/feed-03.png" alt="Kings Sneakers Offer">
+          <div class="creative-card-info">
+            <span class="creative-tag">1:1 Feed · Bundle</span>
+            <div class="creative-title">Kings Sneakers</div>
+            <div class="creative-angle">Direct Bundle Offer Stack</div>
+          </div>
+        </div>
+        <div class="creative-card">
+          <img src="/images/creatives/story/STORY-NATAL.jpg" alt="Holiday Campaign">
+          <div class="creative-card-info">
+            <span class="creative-tag">9:16 Story · Seasonal</span>
+            <div class="creative-title">Holiday Promo Hook</div>
+            <div class="creative-angle">Urgency &amp; High-CTR Angle</div>
+          </div>
+        </div>
+        <div class="creative-card">
+          <img src="/images/creatives/feed/FEED-1-ANO.jpg" alt="West Coast Milestone">
+          <div class="creative-card-info">
+            <span class="creative-tag">1:1 Feed · Footwear</span>
+            <div class="creative-title">West Coast 1 Year</div>
+            <div class="creative-angle">Brand Milestone &amp; Offer</div>
+          </div>
+        </div>
+        <div class="creative-card">
+          <img src="/images/creatives/feed/feed-zudi.jpg" alt="Zudi Apparel">
+          <div class="creative-card-info">
+            <span class="creative-tag">1:1 Feed · Activewear</span>
+            <div class="creative-title">Zudi Apparel</div>
+            <div class="creative-angle">High-Contrast Lifestyle</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 METHODOLOGY -->
   <section class="slide">
     <div class="eyebrow">The 90-day activation</div>
     <h2>Why the first <em>90 days</em> matter.</h2>
@@ -268,7 +365,7 @@
     <div class="timeline"><div class="phase"><div class="days">Days 1–30</div><h3>Measurement</h3><p>Audit tracking, margins and the funnel. Set the allowable CAC.</p></div><div class="phase"><div class="days">Days 31–60</div><h3>Testing</h3><p>Launch creative batches, compare angles and repair conversion leaks.</p></div><div class="phase"><div class="days">Days 61–90</div><h3>Scaling</h3><p>Increase spend inside the agreed CAC and contribution margin limits.</p></div></div>
   </section>
 
-  <!-- 8 ANCHOR -->
+  <!-- 9 ANCHOR -->
   <section class="slide light">
     <div class="eyebrow">What this normally costs</div>
     <h2>Build this stack yourself,<br>and it adds up <em>fast</em>.</h2>
@@ -294,7 +391,7 @@
     </div>
   </section>
 
-  <!-- 9 INVESTMENT -->
+  <!-- 10 INVESTMENT -->
   <section class="slide">
     <div class="eyebrow">Your investment</div>
     <div class="pricehero">
@@ -309,7 +406,7 @@
     </div>
   </section>
 
-  <!-- 10 CLOSE OFFER -->
+  <!-- 11 CLOSE OFFER -->
   <section class="slide">
     <div class="eyebrow">Start on this call</div>
     <div class="pricehero">
@@ -321,7 +418,7 @@
     </div>
   </section>
 
-  <!-- 11 CTA -->
+  <!-- 12 CTA -->
   <section class="slide">
     <div class="eyebrow">Next step</div>
     <h1>Let's build your<br><em>profit engine</em>.</h1>
