@@ -293,9 +293,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <link rel="dns-prefetch" href="https://scripts.converteai.net" />
         <link rel="dns-prefetch" href="https://images.converteai.net" />
         <link rel="dns-prefetch" href="https://license.vturb.com" />
-        {/* Cal.com Fast Pre-Connect & DNS Prefetch */}
+        {/* Cal.com Fast Pre-Connect, DNS Prefetch & Script Preload */}
         <link rel="preconnect" href="https://app.cal.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://app.cal.com" />
+        <link rel="preload" href="https://app.cal.com/embed/embed.js" as="script" />
       </head>
       <body className="font-sans antialiased bg-[#001244] text-white selection:bg-[#D80064] selection:text-white">
         <UtmTracker />

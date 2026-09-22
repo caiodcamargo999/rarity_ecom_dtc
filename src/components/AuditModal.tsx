@@ -118,6 +118,18 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     }
   }, [isOpen]);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   const answersRef = useRef<QuizAnswers>(answers);
   answersRef.current = answers;
 
@@ -543,31 +555,34 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     });
   };
 
-  if (!isOpen) return null;
-
   const progressPercent =
     stage === "calendar" ? 100 : Math.round(((currentStep - 1) / TOTAL_STEPS) * 100);
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-[#000820]/90 backdrop-blur-md cursor-pointer"
-        />
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden transition-all duration-300 ${
+        isOpen
+          ? "opacity-100 pointer-events-auto visible"
+          : "opacity-0 pointer-events-none invisible"
+      }`}
+      aria-hidden={!isOpen}
+    >
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        className={`fixed inset-0 bg-[#000820]/90 backdrop-blur-md cursor-pointer transition-opacity duration-300 ${
+          isOpen ? "opacity-100" : "opacity-0"
+        }`}
+      />
 
-        {/* Modal Container */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ type: "spring", duration: 0.45, bounce: 0.1 }}
-          className="relative w-full max-w-4xl h-[92vh] max-h-[850px] bg-[#00103A] border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl z-10 my-auto flex flex-col overflow-hidden text-white"
-        >
+      {/* Modal Container */}
+      <div
+        className={`relative w-full max-w-4xl h-[92vh] max-h-[850px] bg-[#00103A] border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl z-10 my-auto flex flex-col overflow-hidden text-white transition-all duration-300 ease-out transform ${
+          isOpen
+            ? "scale-100 translate-y-0 opacity-100"
+            : "scale-95 translate-y-4 opacity-0"
+        }`}
+      >
           {/* Header Bar */}
           <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-white/10 shrink-0">
             <div className="flex items-center gap-3">
@@ -960,11 +975,22 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
 
             {/* Direct Cal.com Calendar Embed View */}
             <div
-              className={`flex-1 w-full h-full min-h-0 flex-col overflow-hidden ${
+              className={`flex-1 w-full h-full min-h-0 flex-col overflow-hidden relative ${
                 DIRECT_CALENDAR_MODE || stage === "calendar" ? "flex" : "hidden"
               }`}
             >
-              <div className="flex-1 w-full h-full min-h-0 overflow-hidden rounded-xl sm:rounded-2xl">
+              {/* Sleek branded fallback loader behind iframe */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-[#00103A] z-0 pointer-events-none">
+                <div className="w-10 h-10 border-2 border-[#0FE3B3]/20 border-t-[#0FE3B3] rounded-full animate-spin mb-3" />
+                <p className="text-sm font-semibold text-white/80 tracking-wide">
+                  Loading Growth Audit Calendar...
+                </p>
+                <p className="text-xs text-white/40 mt-1">
+                  Connecting to real-time available time slots
+                </p>
+              </div>
+
+              <div className="relative z-10 flex-1 w-full h-full min-h-0 overflow-hidden rounded-xl sm:rounded-2xl">
                 <Cal
                   namespace="free-growth-audit"
                   calLink={calLink}
@@ -974,8 +1000,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
-    </AnimatePresence>
   );
 }
