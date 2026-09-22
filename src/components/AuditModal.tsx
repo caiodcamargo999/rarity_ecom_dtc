@@ -11,6 +11,9 @@ interface AuditModalProps {
   onClose: () => void;
 }
 
+// Temporary mode: skip questionnaire questions and show the Cal.com embed directly
+const DIRECT_CALENDAR_MODE = true;
+
 interface QuizAnswers {
   brandOrStore: string;
   monthlyRevenue: string;
@@ -79,13 +82,13 @@ const TOTAL_STEPS = 6;
 
 export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
   const [utms, setUtms] = useState<UtmData>({});
-  const [stage, setStage] = useState<"quiz" | "calendar">("quiz");
+  const [stage, setStage] = useState<"quiz" | "calendar">(
+    DIRECT_CALENDAR_MODE ? "calendar" : "quiz"
+  );
   const [currentStep, setCurrentStep] = useState(1);
   const [answers, setAnswers] = useState<QuizAnswers>(INITIAL_ANSWERS);
   const [errorMsg, setErrorMsg] = useState("");
-  const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false);
-
-  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]); // US as default standard
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]);
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [phoneRaw, setPhoneRaw] = useState("");
   const countryDropdownRef = useRef<HTMLDivElement>(null);
@@ -126,7 +129,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
   // Reset modal state and pause videos when opened
   useEffect(() => {
     if (isOpen) {
-      setStage("quiz");
+      setStage(DIRECT_CALENDAR_MODE ? "calendar" : "quiz");
       setCurrentStep(1);
       setErrorMsg("");
       bookingHandledRef.current = false;
@@ -140,9 +143,9 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     }
   }, [isOpen]);
 
-  // Auto-focus input/textarea on step change
+  // Auto-focus input/textarea on step change (when quiz mode is active)
   useEffect(() => {
-    if (isOpen && stage === "quiz") {
+    if (isOpen && stage === "quiz" && !DIRECT_CALENDAR_MODE) {
       const timer = setTimeout(() => {
         if (currentStep === 4) {
           textareaRef.current?.focus();
@@ -168,7 +171,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     if (answers.bottleneck) params.set("bottleneck", answers.bottleneck);
     if (answers.role) params.set("role", answers.role);
 
-    // Build diagnostic summary for Cal notes
+    // Build diagnostic summary for Cal notes if available
     const notesSummary = [
       answers.brandOrStore ? `Brand/Store: ${answers.brandOrStore}` : "",
       answers.monthlyRevenue ? `Revenue: ${answers.monthlyRevenue}` : "",
@@ -209,7 +212,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
         answers.phone ? `Phone: ${answers.phone}` : "",
       ]
         .filter(Boolean)
-        .join(" | "),
+        .join(" | ") || undefined,
       store: answers.brandOrStore || undefined,
       revenue: answers.monthlyRevenue || undefined,
       spend: answers.monthlyAdSpend || undefined,
@@ -248,7 +251,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
       cal("on", {
         action: "bookingSuccessful",
         callback: (e: any) => {
-          const detail = e?.detail?.data || e?.data || {};
+          const detail = e?.detail?.data || e?.data || e?.detail || {};
           handleBookingComplete(detail);
         },
       });
@@ -262,13 +265,68 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
       const latestAnswers = answersRef.current;
       const latestUtms = utmsRef.current;
 
-      const fullName = detail.name || detail.booking?.name || latestAnswers.fullName || "";
+      const booking = detail.booking || detail;
+      const attendees = Array.isArray(booking.attendees)
+        ? booking.attendees
+        : Array.isArray(detail.attendees)
+        ? detail.attendees
+        : [];
+      const primaryAttendee = attendees[0] || {};
+      const responses =
+        booking.responses ||
+        detail.responses ||
+        booking.userFieldsResponses ||
+        detail.userFieldsResponses ||
+        {};
+
+      const fullName =
+        detail.name ||
+        booking.name ||
+        primaryAttendee.name ||
+        responses.name?.value ||
+        responses.name ||
+        latestAnswers.fullName ||
+        "";
+
       const nameParts = fullName.trim().split(" ");
       const firstName = nameParts[0] || "";
       const lastName = nameParts.slice(1).join(" ") || "";
-      const email = detail.email || detail.booking?.email || latestAnswers.email || "";
+
+      const email =
+        detail.email ||
+        booking.email ||
+        primaryAttendee.email ||
+        responses.email?.value ||
+        responses.email ||
+        latestAnswers.email ||
+        "";
+
       const phone =
-        detail.phone || detail.phoneNumber || detail.booking?.phone || latestAnswers.phone || "";
+        detail.phone ||
+        detail.phoneNumber ||
+        booking.phone ||
+        booking.phoneNumber ||
+        primaryAttendee.phoneNumber ||
+        primaryAttendee.phone ||
+        responses.phone?.value ||
+        responses.phone ||
+        responses.phoneNumber?.value ||
+        responses.phoneNumber ||
+        latestAnswers.phone ||
+        "";
+
+      const meetingDate =
+        detail.date ||
+        detail.startTime ||
+        booking.startTime ||
+        booking.date ||
+        "";
+
+      const timeZone =
+        primaryAttendee.timeZone ||
+        detail.timeZone ||
+        booking.timeZone ||
+        "America/Sao_Paulo";
 
       if (!email && !phone && !fullName) return;
 
@@ -282,13 +340,14 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
           last_name: lastName,
           email: email,
           phone: phone,
-          store: latestAnswers.brandOrStore,
+          store: latestAnswers.brandOrStore || "Ecom Brand",
           revenue: latestAnswers.monthlyRevenue,
           ad_spend: latestAnswers.monthlyAdSpend,
           bottleneck: latestAnswers.bottleneck,
           role: latestAnswers.role,
           eventType: detail.eventType || "free-growth-audit",
-          date: detail.date,
+          date: meetingDate,
+          timeZone,
           utm_source: latestUtms.utm_source || "",
           utm_medium: latestUtms.utm_medium || "",
           utm_campaign: latestUtms.utm_campaign || "",
@@ -296,22 +355,22 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
           utm_term: latestUtms.utm_term || "",
           fbclid: latestUtms.fbclid || "",
         });
-        console.log("✅ [GTM] Dispatched bookingSuccessful event with quiz data & UTMs:", {
+        console.log("✅ [GTM] Dispatched bookingSuccessful event with Cal.com data & UTMs:", {
           name: fullName,
           email,
           phone,
-          brand: latestAnswers.brandOrStore,
+          meetingDate,
           utms: latestUtms,
         });
       }
 
-      // Immediately update Google Sheets: mark scheduledOnCal as "Yes" and overwrite name/email/phone with verified Cal.com data
+      // Immediately sync to Quo CRM & Google Sheets: mark scheduledOnCal as "Yes" and write Name, Email, Phone, Meeting Date
       fetch("/api/audit-diagnostic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "update_booking_status",
-          brandOrStore: latestAnswers.brandOrStore,
+          brandOrStore: latestAnswers.brandOrStore || "Ecom Brand",
           monthlyRevenue: latestAnswers.monthlyRevenue,
           monthlyAdSpend: latestAnswers.monthlyAdSpend,
           bottleneck: latestAnswers.bottleneck,
@@ -320,12 +379,13 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
           email,
           phone,
           scheduledOnCal: "Yes",
-          meetingDate: detail.date || detail.startTime || "",
+          meetingDate,
+          timeZone,
           utms: latestUtms,
         }),
         keepalive: true,
       }).catch((err) => {
-        console.error("Background error updating Google Sheets booking status:", err);
+        console.error("Background error syncing booking status to Quo & Sheets:", err);
       });
     };
 
@@ -350,7 +410,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  // Handle keyboard shortcuts (A, B, C, D, Enter, Escape)
+  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -360,7 +420,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
         return;
       }
 
-      if (stage === "quiz") {
+      if (stage === "quiz" && !DIRECT_CALENDAR_MODE) {
         const key = e.key.toUpperCase();
 
         if (currentStep === 2) {
@@ -388,7 +448,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, stage, currentStep, answers]);
 
-  // Step Validation & Navigation
+  // Step Validation & Navigation (for quiz mode)
   const validateCurrentStep = (): boolean => {
     setErrorMsg("");
 
@@ -443,7 +503,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
       setCurrentStep((prev) => prev + 1);
     } else {
       // Step 6 completed: Submit quiz & Transition to Calendar
-      await handleSubmitQuiz();
+      handleSubmitQuiz();
     }
   };
 
@@ -461,7 +521,6 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     setAnswers((prev) => ({ ...prev, [field]: value }));
     setErrorMsg("");
 
-    // Auto advance after slight delay for smooth visual feedback
     setTimeout(() => {
       if (currentStep < TOTAL_STEPS) {
         setCurrentStep((prev) => prev + 1);
@@ -470,10 +529,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
   };
 
   const handleSubmitQuiz = () => {
-    // 1. Instantly switch to Calendar stage without any blocking network wait
     setStage("calendar");
-
-    // 2. Dispatch diagnostic sync in the background
     fetch("/api/audit-diagnostic", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -489,7 +545,8 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
 
   if (!isOpen) return null;
 
-  const progressPercent = stage === "calendar" ? 100 : Math.round(((currentStep - 1) / TOTAL_STEPS) * 100);
+  const progressPercent =
+    stage === "calendar" ? 100 : Math.round(((currentStep - 1) / TOTAL_STEPS) * 100);
 
   return (
     <AnimatePresence>
@@ -514,7 +571,7 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
           {/* Header Bar */}
           <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-white/10 shrink-0">
             <div className="flex items-center gap-3">
-              {(currentStep > 1 || stage === "calendar") && (
+              {!DIRECT_CALENDAR_MODE && (currentStep > 1 || stage === "calendar") && (
                 <button
                   onClick={handleBack}
                   className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
@@ -525,13 +582,21 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
                   Back
                 </button>
               )}
-              <h3 className="text-base sm:text-xl font-extrabold text-white tracking-tight">
-                Free DTC <span className="text-[#0FE3B3] italic font-serif font-normal">Growth Diagnostic</span>
-              </h3>
+              <div className="flex flex-col">
+                <h3 className="text-base sm:text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
+                  <span>Free DTC</span>
+                  <span className="text-[#0FE3B3] italic font-serif font-normal">Growth Audit</span>
+                </h3>
+                {DIRECT_CALENDAR_MODE && (
+                  <p className="text-xs text-white/60 hidden sm:block">
+                    Select your preferred date & time for our 1-on-1 strategy session
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-3">
-              {stage === "quiz" && (
+              {!DIRECT_CALENDAR_MODE && stage === "quiz" && (
                 <span className="text-xs font-mono text-white/50 hidden sm:inline-block">
                   Step {currentStep} of {TOTAL_STEPS}
                 </span>
@@ -548,507 +613,357 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="w-full h-1 bg-white/10 shrink-0 relative overflow-hidden rounded-full my-2">
-            <motion.div
-              className="h-full bg-gradient-to-r from-[#0FE3B3] to-[#D80064]"
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPercent}%` }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
-            />
-          </div>
+          {/* Progress Bar (Visible only in multi-step quiz mode) */}
+          {!DIRECT_CALENDAR_MODE && (
+            <div className="w-full h-1 bg-white/10 shrink-0 relative overflow-hidden rounded-full my-2">
+              <motion.div
+                className="h-full bg-gradient-to-r from-[#0FE3B3] to-[#D80064]"
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPercent}%` }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+              />
+            </div>
+          )}
 
           {/* Body Content Area */}
           <div className="flex-1 w-full h-full min-h-0 overflow-y-auto pt-2 flex flex-col">
-            {/* Stage 1: Diagnostic Quiz */}
-            <div
-              className={`flex-1 flex-col justify-between max-w-2xl mx-auto w-full py-4 sm:py-6 px-1 ${
-                stage === "quiz" ? "flex" : "hidden"
-              }`}
-            >
-              <AnimatePresence mode="wait">
-                {/* Step 1: Brand & Store URL */}
-                {currentStep === 1 && (
-                  <motion.div
-                    key="step1"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.25 }}
-                    className="flex-1 flex flex-col justify-center"
-                  >
-                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
-                      <span>01</span>
-                      <span>•</span>
-                      <span>Brand Information</span>
-                    </div>
-                    <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-3">
-                      What is your Brand Name & Store URL?
-                    </h4>
-                    <p className="text-sm sm:text-base text-white/70 mb-6">
-                      We perform a forensic analysis of your store, ads, and allowable CPA prior to our call.
-                    </p>
-
-                    <div className="relative">
-                      <input
-                        ref={inputRef}
-                        type="text"
-                        value={answers.brandOrStore}
-                        onChange={(e) => {
-                          setAnswers({ ...answers, brandOrStore: e.target.value });
-                          setErrorMsg("");
-                        }}
-                        placeholder="e.g., LuxeAura • luxeaura.com"
-                        className="w-full bg-white/[0.05] border-2 border-white/20 focus:border-[#0FE3B3] rounded-xl px-4 py-3.5 text-base sm:text-lg text-white placeholder-white/40 outline-none transition-all duration-200 shadow-inner"
-                      />
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Step 2: Monthly Revenue */}
-                {currentStep === 2 && (
-                  <motion.div
-                    key="step2"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.25 }}
-                    className="flex-1 flex flex-col justify-center"
-                  >
-                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
-                      <span>02</span>
-                      <span>•</span>
-                      <span>Current Scale</span>
-                    </div>
-                    <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
-                      What is your current monthly revenue?
-                    </h4>
-                    <p className="text-sm text-white/70 mb-5">
-                      Select one option (or press A, B, C, D on keyboard)
-                    </p>
-
-                    <div className="grid grid-cols-1 gap-2.5">
-                      {REVENUE_OPTIONS.map((opt) => {
-                        const isSelected = answers.monthlyRevenue === opt.label;
-                        return (
-                          <button
-                            key={opt.key}
-                            type="button"
-                            onClick={() => handleSelectOption("monthlyRevenue", opt.label)}
-                            className={`flex items-center justify-between p-3.5 sm:p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
-                              isSelected
-                                ? "bg-[#0FE3B3]/15 border-[#0FE3B3] text-white shadow-[0_0_20px_rgba(15,227,179,0.2)]"
-                                : "bg-white/[0.04] border-white/15 hover:border-white/40 hover:bg-white/[0.07] text-white/90"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span
-                                className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center border transition-colors ${
-                                  isSelected
-                                    ? "bg-[#0FE3B3] text-[#00103A] border-[#0FE3B3]"
-                                    : "bg-white/10 text-white/70 border-white/20"
-                                }`}
-                              >
-                                {opt.key}
-                              </span>
-                              <div>
-                                <div className="text-sm sm:text-base font-bold text-white">{opt.label}</div>
-                                <div className="text-xs text-white/60">{opt.sub}</div>
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <svg className="w-5 h-5 text-[#0FE3B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                <path d="M20 6L9 17l-5-5" />
-                              </svg>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Step 3: Monthly Ad Spend */}
-                {currentStep === 3 && (
-                  <motion.div
-                    key="step3"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.25 }}
-                    className="flex-1 flex flex-col justify-center"
-                  >
-                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
-                      <span>03</span>
-                      <span>•</span>
-                      <span>Paid Media Investment</span>
-                    </div>
-                    <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
-                      How much do you invest in paid ads monthly?
-                    </h4>
-                    <p className="text-sm text-white/70 mb-5">
-                      Combined Meta, Google PMax, TikTok & other channels.
-                    </p>
-
-                    <div className="grid grid-cols-1 gap-2.5">
-                      {AD_SPEND_OPTIONS.map((opt) => {
-                        const isSelected = answers.monthlyAdSpend === opt.label;
-                        return (
-                          <button
-                            key={opt.key}
-                            type="button"
-                            onClick={() => handleSelectOption("monthlyAdSpend", opt.label)}
-                            className={`flex items-center justify-between p-3.5 sm:p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
-                              isSelected
-                                ? "bg-[#0FE3B3]/15 border-[#0FE3B3] text-white shadow-[0_0_20px_rgba(15,227,179,0.2)]"
-                                : "bg-white/[0.04] border-white/15 hover:border-white/40 hover:bg-white/[0.07] text-white/90"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span
-                                className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center border transition-colors ${
-                                  isSelected
-                                    ? "bg-[#0FE3B3] text-[#00103A] border-[#0FE3B3]"
-                                    : "bg-white/10 text-white/70 border-white/20"
-                                }`}
-                              >
-                                {opt.key}
-                              </span>
-                              <div>
-                                <div className="text-sm sm:text-base font-bold text-white">{opt.label}</div>
-                                <div className="text-xs text-white/60">{opt.sub}</div>
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <svg className="w-5 h-5 text-[#0FE3B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                <path d="M20 6L9 17l-5-5" />
-                              </svg>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Step 4: Primary Bottleneck (Open Text Field) */}
-                {currentStep === 4 && (
-                  <motion.div
-                    key="step4"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.25 }}
-                    className="flex-1 flex flex-col justify-center"
-                  >
-                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
-                      <span>04</span>
-                      <span>•</span>
-                      <span>Scaling Challenge</span>
-                    </div>
-                    <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
-                      What is your #1 growth bottleneck?
-                    </h4>
-                    <p className="text-sm text-white/70 mb-5">
-                      Tell us what is currently holding back your brand from scaling profitably.
-                    </p>
-
-                    <div className="relative">
-                      <textarea
-                        ref={textareaRef}
-                        rows={4}
-                        value={answers.bottleneck}
-                        onChange={(e) => {
-                          setAnswers({ ...answers, bottleneck: e.target.value });
-                          setErrorMsg("");
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            handleNext();
-                          }
-                        }}
-                        placeholder="e.g., Creative fatigue on Meta, rising customer acquisition costs (CAC), plateauing at $80k/mo, attribution clarity, or need for senior media buyers..."
-                        className="w-full bg-white/[0.05] border-2 border-white/20 focus:border-[#0FE3B3] focus:shadow-[0_0_20px_rgba(15,227,179,0.15)] rounded-xl p-4 text-base sm:text-lg text-white placeholder-white/35 outline-none transition-all duration-200 resize-none"
-                      />
-                      <div className="text-[11px] text-white/40 mt-2 flex items-center justify-between">
-                        <span>Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 font-mono text-[10px]">Enter ↵</kbd> to continue (or Shift + Enter for new line)</span>
+            {/* Stage 1: Diagnostic Quiz (rendered only if DIRECT_CALENDAR_MODE is false) */}
+            {!DIRECT_CALENDAR_MODE && (
+              <div
+                className={`flex-1 flex-col justify-between max-w-2xl mx-auto w-full py-4 sm:py-6 px-1 ${
+                  stage === "quiz" ? "flex" : "hidden"
+                }`}
+              >
+                <AnimatePresence mode="wait">
+                  {/* Step 1: Brand & Store URL */}
+                  {currentStep === 1 && (
+                    <motion.div
+                      key="step1"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.25 }}
+                      className="flex-1 flex flex-col justify-center"
+                    >
+                      <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
+                        <span>01</span>
+                        <span>•</span>
+                        <span>Brand Information</span>
                       </div>
-                    </div>
-                  </motion.div>
-                )}
+                      <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-3">
+                        What is your Brand Name & Store URL?
+                      </h4>
+                      <p className="text-sm sm:text-base text-white/70 mb-6">
+                        We perform a forensic analysis of your store, ads, and allowable CPA prior to our call.
+                      </p>
 
-                {/* Step 5: Role */}
-                {currentStep === 5 && (
-                  <motion.div
-                    key="step5"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.25 }}
-                    className="flex-1 flex flex-col justify-center"
-                  >
-                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
-                      <span>05</span>
-                      <span>•</span>
-                      <span>Your Role</span>
-                    </div>
-                    <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
-                      What is your role at the brand?
-                    </h4>
-                    <p className="text-sm text-white/70 mb-5">
-                      We tailor the call agenda to your specific decision-making level.
-                    </p>
-
-                    <div className="grid grid-cols-1 gap-2.5">
-                      {ROLE_OPTIONS.map((opt) => {
-                        const isSelected = answers.role === opt.label;
-                        return (
-                          <button
-                            key={opt.key}
-                            type="button"
-                            onClick={() => handleSelectOption("role", opt.label)}
-                            className={`flex items-center justify-between p-3.5 sm:p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
-                              isSelected
-                                ? "bg-[#0FE3B3]/15 border-[#0FE3B3] text-white shadow-[0_0_20px_rgba(15,227,179,0.2)]"
-                                : "bg-white/[0.04] border-white/15 hover:border-white/40 hover:bg-white/[0.07] text-white/90"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span
-                                className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center border transition-colors ${
-                                  isSelected
-                                    ? "bg-[#0FE3B3] text-[#00103A] border-[#0FE3B3]"
-                                    : "bg-white/10 text-white/70 border-white/20"
-                                }`}
-                              >
-                                {opt.key}
-                              </span>
-                              <div>
-                                <div className="text-sm sm:text-base font-bold text-white">{opt.label}</div>
-                                <div className="text-xs text-white/60">{opt.sub}</div>
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <svg className="w-5 h-5 text-[#0FE3B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                <path d="M20 6L9 17l-5-5" />
-                              </svg>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Step 6: Contact Information */}
-                {currentStep === 6 && (
-                  <motion.div
-                    key="step6"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.25 }}
-                    className="flex-1 flex flex-col justify-center"
-                  >
-                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
-                      <span>06</span>
-                      <span>•</span>
-                      <span>Final Step</span>
-                    </div>
-                    <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-2">
-                      Where should we send your Diagnostic?
-                    </h4>
-                    <p className="text-sm text-white/70 mb-5">
-                      Enter your contact details to unlock calendar slots with our senior operators.
-                    </p>
-
-                    <div className="space-y-3.5">
-                      <div>
-                        <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">
-                          Full Name *
-                        </label>
+                      <div className="relative">
                         <input
                           ref={inputRef}
                           type="text"
-                          value={answers.fullName}
-                          onChange={(e) => setAnswers({ ...answers, fullName: e.target.value })}
-                          placeholder="e.g., Alex Johnson"
-                          className="w-full bg-white/[0.05] border-2 border-white/20 focus:border-[#0FE3B3] rounded-xl px-4 py-3 text-sm sm:text-base text-white placeholder-white/40 outline-none transition-all duration-200"
+                          value={answers.brandOrStore}
+                          onChange={(e) => {
+                            setAnswers({ ...answers, brandOrStore: e.target.value });
+                            setErrorMsg("");
+                          }}
+                          placeholder="e.g. MyBrand.com"
+                          className="w-full px-5 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-[#0FE3B3] transition-colors text-base sm:text-lg"
                         />
                       </div>
+                    </motion.div>
+                  )}
 
-                      <div>
-                        <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">
-                          Work Email *
-                        </label>
-                        <input
-                          type="email"
-                          value={answers.email}
-                          onChange={(e) => setAnswers({ ...answers, email: e.target.value })}
-                          placeholder="alex@brandname.com"
-                          className="w-full bg-white/[0.05] border-2 border-white/20 focus:border-[#0FE3B3] rounded-xl px-4 py-3 text-sm sm:text-base text-white placeholder-white/40 outline-none transition-all duration-200"
+                  {/* Step 2: Monthly Revenue */}
+                  {currentStep === 2 && (
+                    <motion.div
+                      key="step2"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.25 }}
+                      className="flex-1 flex flex-col justify-center"
+                    >
+                      <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
+                        <span>02</span>
+                        <span>•</span>
+                        <span>Revenue Scale</span>
+                      </div>
+                      <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-3">
+                        What is your current monthly online revenue?
+                      </h4>
+                      <div className="grid grid-cols-1 gap-3 mt-2">
+                        {REVENUE_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.key}
+                            onClick={() => handleSelectOption("monthlyRevenue", opt.label)}
+                            className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                              answers.monthlyRevenue === opt.label
+                                ? "bg-[#0FE3B3]/20 border-[#0FE3B3] text-white"
+                                : "bg-white/5 border-white/10 hover:border-white/30 text-white/90 hover:bg-white/10"
+                            }`}
+                          >
+                            <div>
+                              <div className="font-bold text-base sm:text-lg">{opt.label}</div>
+                              <div className="text-xs sm:text-sm text-white/60">{opt.sub}</div>
+                            </div>
+                            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center font-mono font-bold text-xs">
+                              {opt.key}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Step 3: Monthly Ad Spend */}
+                  {currentStep === 3 && (
+                    <motion.div
+                      key="step3"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.25 }}
+                      className="flex-1 flex flex-col justify-center"
+                    >
+                      <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
+                        <span>03</span>
+                        <span>•</span>
+                        <span>Paid Media Spend</span>
+                      </div>
+                      <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-3">
+                        What is your monthly paid media spend?
+                      </h4>
+                      <div className="grid grid-cols-1 gap-3 mt-2">
+                        {AD_SPEND_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.key}
+                            onClick={() => handleSelectOption("monthlyAdSpend", opt.label)}
+                            className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                              answers.monthlyAdSpend === opt.label
+                                ? "bg-[#0FE3B3]/20 border-[#0FE3B3] text-white"
+                                : "bg-white/5 border-white/10 hover:border-white/30 text-white/90 hover:bg-white/10"
+                            }`}
+                          >
+                            <div>
+                              <div className="font-bold text-base sm:text-lg">{opt.label}</div>
+                              <div className="text-xs sm:text-sm text-white/60">{opt.sub}</div>
+                            </div>
+                            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center font-mono font-bold text-xs">
+                              {opt.key}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Step 4: Primary Bottleneck */}
+                  {currentStep === 4 && (
+                    <motion.div
+                      key="step4"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.25 }}
+                      className="flex-1 flex flex-col justify-center"
+                    >
+                      <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
+                        <span>04</span>
+                        <span>•</span>
+                        <span>Current Bottleneck</span>
+                      </div>
+                      <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-3">
+                        What is the #1 bottleneck preventing you from scaling?
+                      </h4>
+                      <div className="relative">
+                        <textarea
+                          ref={textareaRef}
+                          rows={4}
+                          value={answers.bottleneck}
+                          onChange={(e) => {
+                            setAnswers({ ...answers, bottleneck: e.target.value });
+                            setErrorMsg("");
+                          }}
+                          placeholder="e.g. Ad fatigue, high CPA, low creative velocity, poor ROAS on Meta..."
+                          className="w-full px-5 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-[#0FE3B3] transition-colors text-base resize-none"
                         />
                       </div>
+                    </motion.div>
+                  )}
 
-                      <div>
-                        <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">
-                          Phone / WhatsApp *
-                        </label>
-                        <div className="relative" ref={countryDropdownRef}>
-                          <div className="flex items-center w-full bg-white/[0.05] border-2 border-white/20 focus-within:border-[#0FE3B3] focus-within:shadow-[0_0_20px_rgba(15,227,179,0.15)] rounded-xl transition-all duration-200">
-                            {/* Country Code Toggle Button (US default) */}
+                  {/* Step 5: Role in Brand */}
+                  {currentStep === 5 && (
+                    <motion.div
+                      key="step5"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.25 }}
+                      className="flex-1 flex flex-col justify-center"
+                    >
+                      <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
+                        <span>05</span>
+                        <span>•</span>
+                        <span>Your Role</span>
+                      </div>
+                      <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-3">
+                        What is your role in the brand?
+                      </h4>
+                      <div className="grid grid-cols-1 gap-3 mt-2">
+                        {ROLE_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.key}
+                            onClick={() => handleSelectOption("role", opt.label)}
+                            className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                              answers.role === opt.label
+                                ? "bg-[#0FE3B3]/20 border-[#0FE3B3] text-white"
+                                : "bg-white/5 border-white/10 hover:border-white/30 text-white/90 hover:bg-white/10"
+                            }`}
+                          >
+                            <div>
+                              <div className="font-bold text-base sm:text-lg">{opt.label}</div>
+                              <div className="text-xs sm:text-sm text-white/60">{opt.sub}</div>
+                            </div>
+                            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center font-mono font-bold text-xs">
+                              {opt.key}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Step 6: Contact Information */}
+                  {currentStep === 6 && (
+                    <motion.div
+                      key="step6"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.25 }}
+                      className="flex-1 flex flex-col justify-center"
+                    >
+                      <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0FE3B3] uppercase tracking-wider mb-2">
+                        <span>06</span>
+                        <span>•</span>
+                        <span>Your Contact Details</span>
+                      </div>
+                      <h4 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug mb-4">
+                        Where should we send your growth analysis?
+                      </h4>
+
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-white/70 mb-1">Full Name</label>
+                          <input
+                            ref={inputRef}
+                            type="text"
+                            value={answers.fullName}
+                            onChange={(e) => {
+                              setAnswers({ ...answers, fullName: e.target.value });
+                              setErrorMsg("");
+                            }}
+                            placeholder="John Doe"
+                            className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-[#0FE3B3] transition-colors text-sm sm:text-base"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-white/70 mb-1">Work Email</label>
+                          <input
+                            type="email"
+                            value={answers.email}
+                            onChange={(e) => {
+                              setAnswers({ ...answers, email: e.target.value });
+                              setErrorMsg("");
+                            }}
+                            placeholder="john@yourbrand.com"
+                            className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-[#0FE3B3] transition-colors text-sm sm:text-base"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-white/70 mb-1">Phone / WhatsApp</label>
+                          <div className="flex gap-2 relative" ref={countryDropdownRef}>
                             <button
                               type="button"
                               onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
-                              className="h-[46px] sm:h-[50px] px-3.5 bg-white/[0.06] hover:bg-white/[0.12] border-r border-white/15 rounded-l-[10px] flex items-center gap-2 text-white transition-colors cursor-pointer shrink-0 select-none"
-                              aria-label="Select Country Code"
+                              className="px-3 py-3 bg-white/5 border border-white/20 rounded-xl text-white flex items-center gap-1.5 shrink-0 hover:bg-white/10 transition-colors cursor-pointer text-sm"
                             >
-                              <span className="text-xl leading-none">{selectedCountry.flag}</span>
-                              <span className="text-xs sm:text-sm font-bold text-white tracking-tight">
-                                {selectedCountry.code}
-                              </span>
-                              <svg
-                                className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 ${
-                                  isCountryDropdownOpen ? "rotate-180 text-[#0FE3B3]" : ""
-                                }`}
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.5"
-                              >
-                                <path d="M6 9l6 6 6-6" />
-                              </svg>
+                              <span>{selectedCountry.flag}</span>
+                              <span className="font-mono text-xs text-white/80">{selectedCountry.code}</span>
                             </button>
-
-                            {/* Phone Text Input */}
+                            {isCountryDropdownOpen && (
+                              <div className="absolute top-full left-0 mt-1 w-64 max-h-48 overflow-y-auto bg-[#00103A] border border-white/20 rounded-xl shadow-xl z-50 p-1">
+                                {COUNTRY_CODES.map((c) => (
+                                  <button
+                                    key={c.name}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedCountry(c);
+                                      setIsCountryDropdownOpen(false);
+                                      setAnswers({ ...answers, phone: `${c.code} ${phoneRaw}`.trim() });
+                                    }}
+                                    className="w-full px-3 py-2 text-left text-xs text-white hover:bg-white/10 rounded-lg flex items-center justify-between"
+                                  >
+                                    <span>
+                                      {c.flag} {c.name}
+                                    </span>
+                                    <span className="font-mono text-white/60">{c.code}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                             <input
                               type="tel"
                               value={phoneRaw}
                               onChange={(e) => {
-                                let val = e.target.value;
-                                // Clean leading dial code if pasted
-                                if (val.startsWith(selectedCountry.code)) {
-                                  val = val.slice(selectedCountry.code.length).trim();
-                                } else if (val.startsWith("+1") && selectedCountry.code === "+1") {
-                                  val = val.slice(2).trim();
-                                }
-                                setPhoneRaw(val);
-                                const fullNumber = val.trim() ? `${selectedCountry.code} ${val.trim()}` : "";
-                                setAnswers((prev) => ({ ...prev, phone: fullNumber }));
+                                setPhoneRaw(e.target.value);
+                                setAnswers({
+                                  ...answers,
+                                  phone: `${selectedCountry.code} ${e.target.value}`.trim(),
+                                });
                                 setErrorMsg("");
                               }}
-                              placeholder="(555) 000-0000"
-                              className="w-full h-[46px] sm:h-[50px] bg-transparent px-3.5 text-sm sm:text-base text-white placeholder-white/35 outline-none rounded-r-[10px]"
+                              placeholder="Phone or WhatsApp"
+                              className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-[#0FE3B3] transition-colors text-sm sm:text-base"
                             />
                           </div>
-
-                          {/* Country Dropdown Menu */}
-                          {isCountryDropdownOpen && (
-                            <div className="absolute top-full left-0 mt-1.5 w-72 max-h-60 bg-[#000e2e] border border-white/20 rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.85)] overflow-y-auto z-50 p-1.5 divide-y divide-white/5 backdrop-blur-2xl">
-                              <div className="px-2 py-1 text-[11px] font-semibold text-white/40 uppercase tracking-wider">
-                                Select Country Code
-                              </div>
-                              {COUNTRY_CODES.map((c) => (
-                                <button
-                                  key={c.iso + c.code}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedCountry(c);
-                                    setIsCountryDropdownOpen(false);
-                                    const fullNumber = phoneRaw.trim() ? `${c.code} ${phoneRaw.trim()}` : "";
-                                    setAnswers((prev) => ({ ...prev, phone: fullNumber }));
-                                  }}
-                                  className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg text-left transition-colors cursor-pointer ${
-                                    selectedCountry.iso === c.iso && selectedCountry.code === c.code
-                                      ? "bg-[#0FE3B3]/20 text-[#0FE3B3] font-bold"
-                                      : "hover:bg-white/10 text-white/85"
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-2.5">
-                                    <span className="text-lg leading-none">{c.flag}</span>
-                                    <span className="font-medium text-white">{c.name}</span>
-                                  </div>
-                                  <span className="font-mono text-xs text-white/60 font-semibold">{c.code}</span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Error Message */}
-              {errorMsg && (
-                <div className="mt-3 text-xs sm:text-sm font-semibold text-[#D80064] flex items-center gap-1.5">
-                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                  {errorMsg}
-                </div>
-              )}
-
-              {/* Bottom Navigation CTA */}
-              <div className="pt-5 border-t border-white/10 flex items-center justify-between mt-auto">
-                <div className="text-xs text-white/50 hidden sm:block">
-                  Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 font-mono text-[11px]">Enter ↵</kbd> to continue
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-[#D80064] to-[#BF0058] hover:from-[#BF0058] hover:to-[#9F0048] text-white text-sm sm:text-base font-bold tracking-wide shadow-[0_0_25px_rgba(216,0,100,0.35)] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer ml-auto"
-                >
-                  {currentStep === TOTAL_STEPS ? (
-                    <>
-                      <span>Select Date & Time</span>
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
-                    </>
-                  ) : (
-                    <>
-                      <span>Continue</span>
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
-                    </>
+                    </motion.div>
                   )}
-                </button>
-              </div>
-            </div>
+                </AnimatePresence>
 
-            {/* Stage 2: Cal.com Calendar Embed (Preloaded in DOM) */}
+                {/* Error Banner */}
+                {errorMsg && (
+                  <div className="mt-3 p-3 rounded-xl bg-red-500/20 border border-red-500/40 text-red-200 text-xs sm:text-sm font-medium">
+                    {errorMsg}
+                  </div>
+                )}
+
+                {/* Footer Next Button */}
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="px-7 py-3 rounded-xl bg-gradient-to-r from-[#D80064] to-[#BF0058] hover:from-[#BF0058] hover:to-[#9F0048] text-white text-sm sm:text-base font-bold shadow-[0_0_25px_rgba(216,0,100,0.35)] transition-all duration-200 hover:scale-[1.02] flex items-center gap-2 cursor-pointer"
+                  >
+                    <span>{currentStep === TOTAL_STEPS ? "Select Date & Time" : "Continue"}</span>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Direct Cal.com Calendar Embed View */}
             <div
               className={`flex-1 w-full h-full min-h-0 flex-col overflow-hidden ${
-                stage === "calendar" ? "flex" : "hidden"
+                DIRECT_CALENDAR_MODE || stage === "calendar" ? "flex" : "hidden"
               }`}
             >
-              <div className="bg-white/[0.04] border border-[#0FE3B3]/30 rounded-xl p-3 mb-2 flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-full bg-[#0FE3B3]/20 text-[#0FE3B3] flex items-center justify-center font-bold text-xs">
-                    ✓
-                  </div>
-                  <div className="text-xs sm:text-sm text-white/90">
-                    <span className="font-bold text-white">Diagnostic saved for {answers.fullName || "you"}!</span> Pick your time slot below:
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setStage("quiz");
-                    setCurrentStep(TOTAL_STEPS);
-                  }}
-                  className="text-xs text-[#0FE3B3] hover:underline font-semibold cursor-pointer hidden sm:inline"
-                >
-                  Edit Info
-                </button>
-              </div>
-
               <div className="flex-1 w-full h-full min-h-0 overflow-hidden rounded-xl sm:rounded-2xl">
                 <Cal
                   namespace="free-growth-audit"

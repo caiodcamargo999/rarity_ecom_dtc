@@ -119,6 +119,7 @@ function doPost(e) {
       if (data.utm_content) sheet.getRange(matchedRowIndex, colMap.utmContent).setValue(data.utm_content);
       if (data.utm_term) sheet.getRange(matchedRowIndex, colMap.utmTerm).setValue(data.utm_term);
       if (data.fbclid) sheet.getRange(matchedRowIndex, colMap.fbclid).setValue(data.fbclid);
+      if (data.meetingDate && colMap.meetingDate) sheet.getRange(matchedRowIndex, colMap.meetingDate).setValue(data.meetingDate);
 
       // Atualiza Status de Agendamento:
       if (isBookingConfirmed) {
@@ -155,6 +156,7 @@ function doPost(e) {
     newRow[colMap.bottleneck - 1] = data.bottleneck || "";
     newRow[colMap.role - 1] = data.role || "";
     newRow[colMap.scheduled - 1] = scheduledStatus;
+    if (colMap.meetingDate) newRow[colMap.meetingDate - 1] = data.meetingDate || "";
     newRow[colMap.utmSource - 1] = data.utm_source || "";
     newRow[colMap.utmMedium - 1] = data.utm_medium || "";
     newRow[colMap.utmCampaign - 1] = data.utm_campaign || "";
@@ -211,6 +213,7 @@ function getColumnMapping(headers) {
     else if (h.indexOf("spend") !== -1 || h.indexOf("investimento") !== -1) map.adSpend = idx;
     else if (h.indexOf("bottleneck") !== -1 || h.indexOf("gargalo") !== -1) map.bottleneck = idx;
     else if (h.indexOf("role") !== -1 || h.indexOf("cargo") !== -1) map.role = idx;
+    else if (h.indexOf("meeting") !== -1 || h.indexOf("call date") !== -1 || h.indexOf("reuniao") !== -1 || h.indexOf("agendada") !== -1) map.meetingDate = idx;
     else if (h.indexOf("scheduled") !== -1 || h.indexOf("cal.com") !== -1 || h.indexOf("agendou") !== -1) map.scheduled = idx;
     else if (h.indexOf("source") !== -1) map.utmSource = idx;
     else if (h.indexOf("medium") !== -1) map.utmMedium = idx;

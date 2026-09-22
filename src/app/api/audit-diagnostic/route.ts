@@ -99,6 +99,7 @@ export async function POST(req: NextRequest) {
       bottleneck,
       role,
       meetingDate: data.meetingDate || undefined,
+      timeZone: data.timeZone || "America/Sao_Paulo",
       scheduledOnCal,
       utms,
       source: "Growth Diagnostic Website",
