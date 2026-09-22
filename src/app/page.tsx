@@ -12,22 +12,9 @@ import Footer from "@/components/Footer";
 import AuditModal from "@/components/AuditModal";
 import VideoModal from "@/components/VideoModal";
 import { pauseAllVturbVideos } from "@/components/VturbPlayer";
-import { useVslDelay } from "@/hooks/useVslDelay";
-
 export default function Home() {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-
-  // 1-minute (60 seconds) cumulative watch-time delay from video play (does not reset if paused)
-  const {
-    isUnlocked,
-    startPlayback,
-    pausePlayback,
-    handleTimeUpdate,
-    unlock,
-  } = useVslDelay({
-    delaySeconds: 60,
-  });
 
   const handleOpenAudit = () => {
     pauseAllVturbVideos();
@@ -43,21 +30,17 @@ export default function Home() {
       {/* Top Navigation Bar */}
       <Header />
 
-      {/* Hero Section with VTurb Video & Delayed CTA Button */}
+      {/* Hero Section with VTurb Video & CTA Button */}
       <HeroSection
         onOpenAudit={handleOpenAudit}
         onOpenVideo={handleOpenVideo}
-        isCtaVisible={isUnlocked}
-        onPlay={startPlayback}
-        onPause={pausePlayback}
-        onTimeUpdate={handleTimeUpdate}
-        onUnlock={unlock}
+        isCtaVisible={true}
       />
 
       {/* The Problem Section */}
       <ProblemSection
         onOpenAudit={handleOpenAudit}
-        isCtaVisible={isUnlocked}
+        isCtaVisible={true}
       />
 
       {/* One Team. One Number. Three Levers. */}
@@ -66,19 +49,19 @@ export default function Home() {
       {/* Case Studies & Testimonials */}
       <CaseStudiesSection
         onOpenAudit={handleOpenAudit}
-        isCtaVisible={isUnlocked}
+        isCtaVisible={true}
       />
 
       {/* Real Client Ad Creatives 3D Showcase */}
       <CreativeShowcaseSection
         onOpenAudit={handleOpenAudit}
-        isCtaVisible={isUnlocked}
+        isCtaVisible={true}
       />
 
       {/* The Free Growth Audit (What Actually Happens) */}
       <AuditProcessSection
         onOpenAudit={handleOpenAudit}
-        isCtaVisible={isUnlocked}
+        isCtaVisible={true}
       />
 
       {/* Footer */}

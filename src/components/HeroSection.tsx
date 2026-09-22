@@ -64,7 +64,7 @@ export default function HeroSection({
           className="w-full max-w-3xl mt-8 sm:mt-12"
         >
           <VturbPlayer
-            delaySeconds={60}
+            delaySeconds={0}
             onPlay={onPlay}
             onPause={onPause}
             onTimeUpdate={onTimeUpdate}
@@ -83,7 +83,7 @@ export default function HeroSection({
           ROAS. Built for DTC brands doing $1M–$10M/year who are done being burned by agencies.
         </motion.p>
 
-        {/* Primary CTA Button (Appears 1 min after video play or if unlocked) */}
+        {/* Primary CTA Button (Visible from the beginning) */}
         <AnimatePresence>
           {isCtaVisible && (
             <motion.div

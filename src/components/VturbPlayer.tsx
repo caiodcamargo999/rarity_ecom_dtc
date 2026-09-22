@@ -110,7 +110,7 @@ export function pauseAllVturbVideos() {
 export default function VturbPlayer({
   videoId = "vid-6aad51ea85641ef58dd2f744",
   className = "",
-  delaySeconds = 60,
+  delaySeconds = 0,
   onPlay,
   onPause,
   onTimeUpdate,
@@ -145,7 +145,7 @@ export default function VturbPlayer({
       window.dispatchEvent(
         new CustomEvent("rarity:video:timeupdate", { detail: { currentTime } })
       );
-      if (currentTime >= delaySeconds) {
+      if (delaySeconds > 0 && currentTime >= delaySeconds) {
         triggerUnlock();
       }
     };
@@ -156,10 +156,10 @@ export default function VturbPlayer({
     };
 
     const handlePlayerReady = () => {
-      // Use VTurb's native displayHiddenElements method if supported
+      // Use VTurb's native displayHiddenElements method if supported and delaySeconds is positive
       try {
         const el: any = document.getElementById(videoId);
-        if (el && typeof el.displayHiddenElements === "function") {
+        if (el && typeof el.displayHiddenElements === "function" && delaySeconds > 0) {
           el.displayHiddenElements(delaySeconds, [".vsl-delayed-cta", ".esconder"], {
             persist: true,
           });
