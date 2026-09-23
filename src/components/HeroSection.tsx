@@ -66,7 +66,6 @@ export default function HeroSection({
           <VturbPlayer
             delaySeconds={0}
             enableFloatingOnScroll={true}
-            floatingTitle="Rarity Growth VSL"
             onPlay={onPlay}
             onPause={onPause}
             onTimeUpdate={onTimeUpdate}

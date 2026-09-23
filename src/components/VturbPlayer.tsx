@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Maximize2, X, ArrowUpRight } from "lucide-react";
+import { Maximize2, X } from "lucide-react";
 
 interface VturbPlayerProps {
   videoId?: string;
@@ -326,18 +326,9 @@ export default function VturbPlayer({
       {/* Stationary placeholder when floating to eliminate layout shift (CLS) */}
       {isActuallyFloating && (
         <div
-          className="w-full pb-[56.25%] rounded-2xl sm:rounded-3xl border border-dashed border-white/15 bg-white/[0.02] flex items-center justify-center cursor-pointer transition-all hover:border-brand-teal/40"
+          className="w-full pb-[56.25%] rounded-2xl sm:rounded-3xl border border-dashed border-white/10 bg-white/[0.01] flex items-center justify-center cursor-pointer transition-all hover:border-brand-teal/30"
           onClick={handleScrollToHero}
-        >
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-white/50 hover:text-brand-teal gap-2 transition-colors">
-            <span className="text-xs font-mono uppercase tracking-wider">
-              Video Playing in Floating Corner
-            </span>
-            <span className="text-xs text-brand-teal font-semibold flex items-center gap-1">
-              Click to return here <ArrowUpRight className="w-3.5 h-3.5" />
-            </span>
-          </div>
-        </div>
+        />
       )}
 
       {/* Main Player Container (switches to fixed in floating mode without unmounting DOM) */}
@@ -345,48 +336,32 @@ export default function VturbPlayer({
         onClick={handleContainerClick}
         className={
           isActuallyFloating
-            ? `fixed ${positionClasses} z-40 w-[230px] xs:w-[270px] sm:w-[360px] md:w-[400px] max-w-[calc(100vw-2rem)] rounded-2xl overflow-hidden shadow-[0_15px_50px_rgba(0,0,0,0.9),0_0_35px_rgba(15,227,179,0.35)] border-2 border-brand-teal bg-[#000c2e] backdrop-blur-xl transition-all duration-300 ease-out animate-in fade-in slide-in-from-bottom-6 group`
+            ? `fixed ${positionClasses} z-40 w-[230px] xs:w-[270px] sm:w-[360px] md:w-[400px] max-w-[calc(100vw-2rem)] rounded-2xl overflow-hidden shadow-[0_15px_50px_rgba(0,0,0,0.9),0_0_35px_rgba(15,227,179,0.35)] border-2 border-brand-teal bg-black backdrop-blur-xl transition-all duration-300 ease-out animate-in fade-in slide-in-from-bottom-6 group`
             : `relative w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-black transition-all duration-300 hover:border-[#0FE3B3]/60 hover:shadow-[0_0_40px_rgba(15,227,179,0.25)]`
         }
       >
-        {/* Floating Mini-Player Header */}
+        {/* Floating Mini-Player Overlay Controls (Sleek minimalist buttons) */}
         {isActuallyFloating && (
-          <div className="flex items-center justify-between px-3 py-2 bg-[#00103A]/95 border-b border-brand-teal/30 select-none text-white text-xs">
+          <div className="absolute top-2.5 right-2.5 z-30 flex items-center gap-1.5 pointer-events-auto">
+            {/* Expand button / Return to top */}
             <button
               onClick={handleScrollToHero}
-              className="flex items-center gap-2 hover:text-brand-teal transition-colors font-semibold truncate max-w-[70%] text-left"
-              title="Click to scroll back to video"
+              className="w-7 h-7 rounded-full bg-black/75 hover:bg-brand-teal hover:text-black text-white flex items-center justify-center backdrop-blur-md shadow-lg transition-all cursor-pointer border border-white/20 hover:border-brand-teal"
+              aria-label="Expand video / Scroll to top"
+              title="Expand / Scroll to top"
             >
-              <span className="relative flex h-2 w-2 flex-shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-teal opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-teal"></span>
-              </span>
-              <span className="truncate text-[11px] sm:text-xs font-mono tracking-tight text-white/95">
-                {floatingTitle}
-              </span>
+              <Maximize2 className="w-3.5 h-3.5" />
             </button>
 
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              {/* Expand button */}
-              <button
-                onClick={handleScrollToHero}
-                className="p-1 rounded-md bg-white/10 hover:bg-brand-teal hover:text-black text-white/90 transition-all cursor-pointer"
-                aria-label="Expand video / Scroll to top"
-                title="Scroll back to video"
-              >
-                <Maximize2 className="w-3.5 h-3.5" />
-              </button>
-
-              {/* Close button */}
-              <button
-                onClick={handleDismiss}
-                className="p-1 rounded-md bg-white/10 hover:bg-red-500/80 hover:text-white text-white/90 transition-all cursor-pointer"
-                aria-label="Close floating video"
-                title="Dismiss mini player"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            {/* Close button */}
+            <button
+              onClick={handleDismiss}
+              className="w-7 h-7 rounded-full bg-black/75 hover:bg-red-500 hover:text-white text-white flex items-center justify-center backdrop-blur-md shadow-lg transition-all cursor-pointer border border-white/20 hover:border-red-500"
+              aria-label="Close floating video"
+              title="Dismiss mini player"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
 
@@ -407,19 +382,6 @@ export default function VturbPlayer({
           />
         {/* @ts-ignore */}
         </vturb-smartplayer>
-
-        {/* Floating Mini-Player Bottom Bar */}
-        {isActuallyFloating && (
-          <div
-            onClick={handleScrollToHero}
-            className="px-3 py-1.5 bg-[#000820]/95 hover:bg-brand-teal/20 text-center cursor-pointer border-t border-white/10 transition-colors flex items-center justify-center gap-1.5 select-none"
-          >
-            <span className="text-[10px] sm:text-[11px] font-extrabold text-brand-teal tracking-wider uppercase flex items-center gap-1">
-              <span>Back to Top View</span>
-              <ArrowUpRight className="w-3 h-3" />
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
