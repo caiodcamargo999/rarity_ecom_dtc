@@ -24,7 +24,7 @@ async function sendToMetaCAPI(payload: any, utms: any, req: NextRequest) {
   const fbc = utms?.fbc || (payload.fbclid ? `fb.1.${eventTime * 1000}.${payload.fbclid}` : undefined);
   const fbp = utms?.fbp;
 
-  const eventData = {
+  const eventData: any = {
     data: [
       {
         event_name: "Schedule",
@@ -48,6 +48,10 @@ async function sendToMetaCAPI(payload: any, utms: any, req: NextRequest) {
       },
     ],
   };
+
+  if (process.env.META_TEST_EVENT_CODE) {
+    eventData.test_event_code = process.env.META_TEST_EVENT_CODE;
+  }
 
   try {
     const url = `https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${accessToken}`;
