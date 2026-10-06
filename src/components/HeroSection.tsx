@@ -13,6 +13,7 @@ interface HeroSectionProps {
   onPause?: () => void;
   onTimeUpdate?: (currentTime: number) => void;
   onUnlock?: () => void;
+  headlineVariant?: "default" | "growth-team";
 }
 
 export default function HeroSection({
@@ -22,6 +23,7 @@ export default function HeroSection({
   onPause,
   onTimeUpdate,
   onUnlock,
+  headlineVariant = "default",
 }: HeroSectionProps) {
   return (
     <section className="relative pt-12 pb-16 sm:pt-16 sm:pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -45,15 +47,27 @@ export default function HeroSection({
           transition={{ duration: 0.6 }}
           className="w-full"
         >
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.08]">
-            <span className="block">Get Off The</span>
-            <span className="block mt-1">
-              Meta{" "}
-              <span className="font-serif italic font-normal text-brand-teal text-[1.12em] tracking-normal drop-shadow-[0_2px_15px_rgba(15,227,179,0.3)]">
-                Rollercoaster
+          {headlineVariant === "growth-team" ? (
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.08]">
+              <span className="block">A Full Growth Team For</span>
+              <span className="block mt-1">
+                Less Than One{" "}
+                <span className="font-serif italic font-normal text-brand-teal text-[1.08em] tracking-normal drop-shadow-[0_2px_15px_rgba(15,227,179,0.3)]">
+                  Media Buyer
+                </span>
               </span>
-            </span>
-          </h1>
+            </h1>
+          ) : (
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.08]">
+              <span className="block">Get Off The</span>
+              <span className="block mt-1">
+                Meta{" "}
+                <span className="font-serif italic font-normal text-brand-teal text-[1.12em] tracking-normal drop-shadow-[0_2px_15px_rgba(15,227,179,0.3)]">
+                  Rollercoaster
+                </span>
+              </span>
+            </h1>
+          )}
         </motion.div>
 
         {/* VTurb Video Player */}

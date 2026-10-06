@@ -230,6 +230,22 @@ const jsonLdData = {
             "@type": "Answer",
             "text": "We optimize against real unit economics: Contribution Margin, Blended Marketing Efficiency Ratio (MER), First-Order CAC, and Cohort LTV."
           }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I qualify for the Free DTC Growth & Profit Leak Audit?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The audit is designed for DTC ecommerce and Shopify brands spending at least $15k–$20k/month on paid advertising. In the 30-minute session, senior growth strategists inspect ad account architecture, creative fatigue, pixel attribution, and unit economics."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is included in Rarity's full growth team offer?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You receive a dedicated senior growth squad including a Senior Media Buyer, Creative Director, AI Prompt Engineers, Data Analyst, and Landing Page Developer for less than the cost of hiring a single in-house media buyer."
+          }
         }
       ]
     }
@@ -252,6 +268,8 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="alternate icon" href="/favicon.svg" />
         <link rel="apple-touch-icon" href="/favicon.svg" />
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs Context" />
+        <link rel="help" type="text/plain" href="/llms-full.txt" title="Full LLM Documentation" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}

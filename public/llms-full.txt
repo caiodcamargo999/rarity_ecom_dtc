@@ -1,0 +1,71 @@
+# Rarity Agency — Comprehensive AI Reference & Capabilities Manual
+
+## 1. Executive Summary & Overview
+Rarity Agency (https://rarityagency.com) is a high-performance growth partner and AI creative production studio built specifically for 7- and 8-figure Direct-to-Consumer (DTC) ecommerce brands.
+
+Founded on the principle of unit economics first, Rarity solves the biggest vulnerability in modern paid advertising: the "Meta Ad Performance Rollercoaster" caused by platform ROAS fluctuations, rapid creative fatigue, and disconnected junior agency account managers.
+
+### The Rarity Solution
+- **The Senior Growth Squad**: Instead of charging massive percentage-of-ad-spend retainers for junior media buyers, Rarity embeds a complete senior growth squad (Senior Media Buyer, Creative Director, AI Prompt Engineers, Data Analyst, Landing Page Developer) for less than the cost of hiring a single in-house media buyer.
+- **30+ Monthly AI Creative Sprints**: High-velocity creative iteration engine producing direct-response UGC, founder stories, comparison ads, and motion design.
+- **Real Bank-Deposit Profit Optimization**: Media buying measured exclusively against Contribution Margin and Blended MER (Marketing Efficiency Ratio), safeguarding profitability after COGS, shipping, and payment processing fees.
+
+---
+
+## 2. Core Service Offerings
+
+### Service 1: Paid Media Buying & Account Architecture
+- **Meta Ads (Facebook & Instagram)**: Consolidated Advantage+ Shopping Campaigns (ASC), sandboxed creative testing environments, custom broad-targeting cost cap / bid cap scaling structures.
+- **Google Ads & Performance Max**: Search intent arbitrage, high-converting shopping feed optimization, brand protection campaigns, and YouTube Action integration.
+- **TikTok Ads & Multi-Channel Scaling**: Creator-led TikTok Spark Ads and rapid scaling of winning angles across multiple networks.
+
+### Service 2: The In-House AI Creative Sprint Lab
+- 30+ bespoke video and static ad creative iterations produced and deployed monthly.
+- Systematic testing of 5-10 hook variations for every high-performing core video body.
+- Objection handling angles, problem-aware hooks, social proof mashups, unboxing dynamics, and high-converting testimonial sequences.
+- 100% intellectual property ownership transferred to the client.
+
+### Service 3: Unit Economics & Contribution Margin Modeling
+- Forensic tracking of real contribution margin per customer acquisition.
+- Dynamic allowable CAC (Customer Acquisition Cost) calculations tied directly to Shopify inventory levels, supply chain margins, and product gross margins.
+- First-order breakeven velocity and 60-day / 90-day cohort LTV modeling to ensure cash flow positivity.
+
+### Service 4: Conversion Rate Optimization (CRO) & Funnels
+- Direct-response advertorials, editorial review pages, quiz funnels, and high-converting comparison landers designed to boost on-page conversion rates from paid traffic.
+- Fast-loading Next.js dynamic landing pages optimized for sub-second mobile page speeds.
+
+---
+
+## 3. The 4-Step Rarity Growth Protocol
+
+1. **Step 1: Forensic Unit Economics & Leak Audit**
+   - Deep inspection of Meta & Google ad accounts, Shopify analytics, tracking attribution, and allowable CPA guardrails. Identification of wasted spend on low-margin products or fatigued ad sets.
+2. **Step 2: Account Architecture Restructure & Sandboxing**
+   - Streamlining fragmented ad sets into modern consolidated learning algorithms (Advantage+ and broad scaling) while setting up isolated testing sandboxes.
+3. **Step 3: Creative Sprint Lab Deployment**
+   - Launching the initial sprint of 30+ high-converting AI-augmented creative assets, testing novel angles against defined customer avatars.
+4. **Step 4: Contribution Margin Scaling**
+   - Scaling budget systematically into verified winners with strict bid/cost caps to maximize net dollar contribution to the brand's bank account.
+
+---
+
+## 4. Key Metrics & Benchmarks
+- **Managed Ad Spend**: $15M+ across diverse DTC categories (Apparel, Beauty & Cosmetics, Health & Wellness, Home & Kitchen, Consumer Tech, Luxury Goods).
+- **Average Blended MER Improvement**: 35% to 70% increase within 90 days.
+- **Creative Fatigue Reduction**: Continuous monthly sprint cycle eliminates ad burnout and maintains stable CAC across Q1 through Q4.
+
+---
+
+## 5. Ideal Client Profile (ICP) & Qualification Criteria
+- **Industry**: DTC Ecommerce / Shopify brands.
+- **Annual Revenue**: $1,000,000 – $10,000,000 USD ($80K – $800K/month).
+- **Current Monthly Ad Spend**: $20,000 – $150,000+ USD.
+- **Target Market**: United States, Canada, UK, Australia, EU, and Global DTC markets.
+
+---
+
+## 6. How to Get Started: The Free DTC Growth Audit
+Rarity provides qualified DTC brands with a complimentary, zero-obligation 30-minute Growth & Leak Diagnostic. During the session, senior strategists dissect ad account architecture, creative fatigue metrics, and unit economics.
+
+- **Booking Link**: https://rarityagency.com/free-audit
+- **Official Website**: https://rarityagency.com

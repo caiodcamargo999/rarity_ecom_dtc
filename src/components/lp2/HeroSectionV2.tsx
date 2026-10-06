@@ -6,6 +6,7 @@ import Image from "next/image";
 
 interface HeroSectionV2Props {
   onOpenAudit: () => void;
+  headlineVariant?: "default" | "growth-team";
 }
 
 const rarityGuarantees = [
@@ -31,7 +32,10 @@ const rarityGuarantees = [
   },
 ];
 
-export default function HeroSectionV2({ onOpenAudit }: HeroSectionV2Props) {
+export default function HeroSectionV2({
+  onOpenAudit,
+  headlineVariant = "default",
+}: HeroSectionV2Props) {
   return (
     <section className="relative pt-16 pb-20 sm:pt-24 sm:pb-28 px-4 sm:px-6 lg:px-8 bg-[#00103A] overflow-hidden text-center">
       {/* Dynamic Cybernetic Dot Grid Mesh */}
@@ -59,27 +63,47 @@ export default function HeroSectionV2({ onOpenAudit }: HeroSectionV2Props) {
 
       <div className="relative z-10 max-w-5xl mx-auto flex flex-col items-center">
         {/* Main Headline (Authentic Rarity Value Proposition with Non-Condensed Serif & Brand Palette) */}
-        <motion.h1
-          initial={{ opacity: 0, y: 25 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-[1.15]"
-        >
-          <span className="block">
-            Get Off The Ad Performance{" "}
-            <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-tealLight drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
-              Rollercoaster
+        {headlineVariant === "growth-team" ? (
+          <motion.h1
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-[1.15]"
+          >
+            <span className="block">
+              A Full Growth Team For
             </span>
-            .
-          </span>
-          <span className="block mt-2 sm:mt-3 text-white">
-            Scale What Actually Drives{" "}
-            <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-tealLight via-white to-brand-teal drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
-              Real Profit
+            <span className="block mt-2 sm:mt-3 text-white">
+              Less Than One{" "}
+              <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-tealLight via-white to-brand-teal drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
+                Media Buyer
+              </span>
+              .
             </span>
-            .
-          </span>
-        </motion.h1>
+          </motion.h1>
+        ) : (
+          <motion.h1
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-[1.15]"
+          >
+            <span className="block">
+              Get Off The Ad Performance{" "}
+              <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-tealLight drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
+                Rollercoaster
+              </span>
+              .
+            </span>
+            <span className="block mt-2 sm:mt-3 text-white">
+              Scale What Actually Drives{" "}
+              <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-tealLight via-white to-brand-teal drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
+                Real Profit
+              </span>
+              .
+            </span>
+          </motion.h1>
+        )}
 
         {/* Subtitle Paragraph with Clean Bold & Teal Keywords */}
         <motion.p
