@@ -1666,147 +1666,140 @@ export default function AdminAnalyticsDashboard() {
 
             {/* Two Column Setup Guides */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Box 1: Claude Desktop & Cursor IDE Setup */}
-              <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 sm:p-6 space-y-4 flex flex-col justify-between">
-                <div className="space-y-3">
+              {/* Box 1: Claude Remote MCP Link (Sem Arquivo de Configuração) */}
+              <div className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-orange-950/20 border border-orange-500/30 rounded-xl p-5 sm:p-6 space-y-4 flex flex-col justify-between shadow-lg">
+                <div className="space-y-3.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 font-bold text-sm">
+                      <div className="w-9 h-9 rounded-xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400 font-bold text-sm shadow-sm">
                         C
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-zinc-100 font-mono">
-                          Claude Desktop & Cursor MCP
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-zinc-100 font-mono">
+                            Claude Custom MCP (1-Click URL)
+                          </h3>
+                          <span className="px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/30 text-[10px] font-mono font-medium">
+                            Direto • Sem arquivo
+                          </span>
+                        </div>
                         <p className="text-[11px] text-zinc-400">
-                          JSON-RPC Stdio Server Transport via Node.js
+                          Basta colar o link na sessão Custom MCP do Claude / Connectors
                         </p>
                       </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono text-[10px]">
-                      stdio / npx
-                    </span>
                   </div>
 
-                  <p className="text-xs text-zinc-400">
-                    Adicione o servidor no seu arquivo <code className="text-cyan-400 bg-zinc-900 px-1 py-0.5 rounded text-[11px]">claude_desktop_config.json</code>:
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    Copie o link abaixo e cole no campo <strong className="text-white">Custom MCP Server URL</strong> no Claude:
                   </p>
 
-                  <div className="bg-zinc-950 border border-zinc-850 rounded-lg p-3 relative group">
-                    <button
-                      onClick={() =>
-                        handleCopyText(
-                          "claude_config",
-                          `{\n  "mcpServers": {\n    "rarity-analytics": {\n      "command": "node",\n      "args": [\n        "/Users/lenovo/Desktop/DIGITAL MARKETING/03_SOFTWARE, AI AND APP DEVELOPMENT/Claude Cowork/Rarity USA Client Aquisition/rarity_ecom_landing_page/mcp/server.mjs"\n      ],\n      "env": {\n        "RARITY_API_URL": "https://ecom.rarityagency.io",\n        "RARITY_API_KEY": "rarity2025"\n      }\n    }\n  }\n}`
-                        )
-                      }
-                      className="absolute right-2.5 top-2.5 p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-xs transition-colors cursor-pointer flex items-center gap-1"
-                    >
-                      {copiedKey === "claude_config" ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          <span className="text-[10px] text-emerald-400">Copiado</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                          <span className="text-[10px]">Copiar JSON</span>
-                        </>
-                      )}
-                    </button>
-                    <pre className="text-[11px] font-mono text-zinc-300 overflow-x-auto pr-20 pt-1 leading-relaxed">
-{`{
-  "mcpServers": {
-    "rarity-analytics": {
-      "command": "node",
-      "args": [
-        ".../rarity_ecom_landing_page/mcp/server.mjs"
-      ],
-      "env": {
-        "RARITY_API_URL": "https://ecom.rarityagency.io",
-        "RARITY_API_KEY": "rarity2025"
-      }
-    }
-  }
-}`}
-                    </pre>
+                  <div className="bg-zinc-950 border border-orange-500/30 rounded-xl p-3.5 space-y-2">
+                    <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono">
+                      <span className="flex items-center gap-1.5 text-orange-400 font-semibold">
+                        <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
+                        URL Direta do Servidor MCP:
+                      </span>
+                      <span className="text-[10px] text-zinc-500 font-mono">SSE / HTTP</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value="https://ecom.rarityagency.io/api/mcp"
+                        className="w-full bg-zinc-900 border border-zinc-700/80 rounded-lg px-3 py-2 text-xs font-mono text-cyan-300 select-all focus:outline-none focus:border-cyan-500"
+                      />
+                      <button
+                        onClick={() => handleCopyText("claude_link", "https://ecom.rarityagency.io/api/mcp")}
+                        className="px-3.5 py-2 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 shadow-sm"
+                      >
+                        {copiedKey === "claude_link" ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedKey === "claude_link" ? "Copiado!" : "Copiar Link"}</span>
+                      </button>
+                    </div>
+
+                    <div className="pt-1 text-[11px] text-zinc-400 flex items-center gap-2">
+                      <span>Link alternativo SSE:</span>
+                      <code className="text-zinc-300 font-mono text-[10px] bg-zinc-900 px-1.5 py-0.5 rounded select-all">
+                        https://ecom.rarityagency.io/api/mcp/sse
+                      </code>
+                    </div>
                   </div>
 
-                  <div className="space-y-1 text-[11px] text-zinc-400">
-                    <div className="flex items-center gap-1.5">
-                      <Terminal className="w-3.5 h-3.5 text-zinc-500" />
-                      <span><strong>macOS:</strong> <code className="text-zinc-300">~/Library/Application Support/Claude/claude_desktop_config.json</code></span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Terminal className="w-3.5 h-3.5 text-zinc-500" />
-                      <span><strong>Windows:</strong> <code className="text-zinc-300">%APPDATA%\\Claude\\claude_desktop_config.json</code></span>
-                    </div>
+                  <div className="bg-zinc-950/60 border border-zinc-850 rounded-lg p-3 text-xs text-zinc-400 space-y-1">
+                    <div className="text-zinc-200 font-medium text-[11px]">Como usar no Claude:</div>
+                    <div className="text-[11px] text-zinc-400">1. No Claude, clique em <strong>Add Custom MCP</strong> ou <strong>Connectors</strong>.</div>
+                    <div className="text-[11px] text-zinc-400">2. Cole a URL: <code className="text-orange-400 font-mono">https://ecom.rarityagency.io/api/mcp</code></div>
+                    <div className="text-[11px] text-zinc-400">3. Pronto! As 7 ferramentas de analytics ficam disponíveis automaticamente.</div>
                   </div>
                 </div>
 
                 <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs text-zinc-400">
                   <span className="flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> 7 ferramentas integradas
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> 7 ferramentas ativas
                   </span>
-                  <span className="font-mono text-[11px] text-cyan-400">@modelcontextprotocol/sdk</span>
+                  <span className="font-mono text-[11px] text-orange-400">Remote MCP Protocol</span>
                 </div>
               </div>
 
               {/* Box 2: ChatGPT Custom GPT Actions Setup */}
-              <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 sm:p-6 space-y-4 flex flex-col justify-between">
-                <div className="space-y-3">
+              <div className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-emerald-950/20 border border-emerald-500/30 rounded-xl p-5 sm:p-6 space-y-4 flex flex-col justify-between shadow-lg">
+                <div className="space-y-3.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-sm">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-sm shadow-sm">
                         GPT
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-zinc-100 font-mono">
-                          ChatGPT Custom GPT Action
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-zinc-100 font-mono">
+                            ChatGPT Custom GPT Action
+                          </h3>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-medium">
+                            OpenAPI 3.1
+                          </span>
+                        </div>
                         <p className="text-[11px] text-zinc-400">
-                          OpenAPI 3.1 Schema & Custom API Key Auth
+                          Importação automática via URL no GPT Builder
                         </p>
                       </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono text-[10px]">
-                      OpenAPI 3.1
-                    </span>
                   </div>
 
-                  <p className="text-xs text-zinc-400">
-                    No editor do seu Custom GPT, configure uma nova <strong>Action</strong>:
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    No editor do Custom GPT (<strong>Actions ➔ Import from URL</strong>), cole:
                   </p>
 
                   <div className="space-y-2.5">
-                    <div className="bg-zinc-950 border border-zinc-850 rounded-lg p-3 space-y-1.5">
+                    <div className="bg-zinc-950 border border-emerald-500/30 rounded-xl p-3 space-y-1.5">
                       <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono">
-                        <span>1. Schema URL (Import from URL):</span>
+                        <span className="text-emerald-400 font-semibold">1. Schema URL (Import from URL):</span>
                         <button
                           onClick={() => handleCopyText("gpt_url", "https://ecom.rarityagency.io/api/openapi.json")}
-                          className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer"
+                          className="text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer font-mono text-[11px]"
                         >
-                          {copiedKey === "gpt_url" ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                          <span>{copiedKey === "gpt_url" ? "Copiado" : "Copiar"}</span>
+                          {copiedKey === "gpt_url" ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedKey === "gpt_url" ? "Copiado" : "Copiar URL"}</span>
                         </button>
                       </div>
-                      <div className="font-mono text-xs text-cyan-300 bg-zinc-900 px-2 py-1 rounded select-all break-all">
+                      <div className="font-mono text-xs text-emerald-300 bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-lg select-all break-all">
                         https://ecom.rarityagency.io/api/openapi.json
                       </div>
                     </div>
 
-                    <div className="bg-zinc-950 border border-zinc-850 rounded-lg p-3 space-y-1.5">
+                    <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 space-y-1.5">
                       <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono">
-                        <span>2. Authentication Settings:</span>
+                        <span>2. Autenticação (API Key):</span>
                         <button
                           onClick={() => handleCopyText("gpt_key", "rarity2025")}
-                          className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer"
+                          className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer font-mono text-[11px]"
                         >
                           {copiedKey === "gpt_key" ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                           <span>{copiedKey === "gpt_key" ? "Copiado" : "Copiar Chave"}</span>
                         </button>
                       </div>
-                      <div className="text-[11px] text-zinc-300 space-y-0.5">
+                      <div className="text-[11px] text-zinc-300 space-y-0.5 font-sans">
                         <div>• Auth Type: <strong className="text-zinc-100">API Key</strong></div>
                         <div>• Header Name: <strong className="text-cyan-400 font-mono">x-api-key</strong></div>
                         <div>• Key Value: <strong className="text-zinc-100 font-mono">rarity2025</strong></div>
@@ -1817,7 +1810,7 @@ export default function AdminAnalyticsDashboard() {
 
                 <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs text-zinc-400">
                   <span className="flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Compatível com GPT-4o & o1
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> GPT-4o, o1 e GPT-4 Turbo
                   </span>
                   <span className="font-mono text-[11px] text-emerald-400">REST API v1</span>
                 </div>
