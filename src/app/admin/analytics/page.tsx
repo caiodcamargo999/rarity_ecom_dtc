@@ -221,6 +221,7 @@ export default function AdminAnalyticsDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
 
   const handleCopyText = (key: string, text: string) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -514,6 +515,16 @@ export default function AdminAnalyticsDashboard() {
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-cyan-400" : ""}`} />
             <span className="hidden md:inline">{autoRefresh ? "Live Sync ON" : "Paused"}</span>
+          </button>
+
+          {/* Connect to Claude & AI Modal Button */}
+          <button
+            onClick={() => setIsConnectModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-orange-500/15 via-amber-500/10 to-orange-500/20 hover:from-orange-500/25 hover:to-orange-500/35 text-orange-300 hover:text-white border border-orange-500/40 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer shadow-sm group"
+          >
+            <Bot className="w-3.5 h-3.5 text-orange-400 group-hover:scale-110 transition-transform" />
+            <span>Connect to Claude</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           </button>
 
           {/* Export CSV */}
@@ -2051,6 +2062,171 @@ export default function AdminAnalyticsDashboard() {
                 >
                   Close Trail
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* CONNECT TO CLAUDE & CHATGPT POPUP MODAL (EXACT MATCH TO DESIGN) */}
+        {isConnectModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsConnectModalOpen(false)}
+              className="fixed inset-0 bg-black/80 backdrop-blur-md cursor-pointer"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-xl bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl p-6 sm:p-7 space-y-5 text-zinc-200 z-10 max-h-[92vh] overflow-y-auto"
+            >
+              {/* Modal Header */}
+              <div className="flex items-start justify-between border-b border-zinc-850 pb-4">
+                <div>
+                  <h3 className="text-sm font-semibold tracking-wider text-zinc-100 font-mono uppercase">
+                    CONNECT TO CLAUDE
+                  </h3>
+                  <div className="text-xs text-zinc-500 font-sans mt-0.5">
+                    Rarity Analytics · read-only
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsConnectModalOpen(false)}
+                  className="p-1.5 text-zinc-400 hover:text-zinc-100 bg-zinc-900 hover:bg-zinc-850 rounded-lg transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* CONNECTOR URL */}
+              <div className="space-y-1.5">
+                <div className="text-[11px] font-mono font-medium text-zinc-400 uppercase tracking-wider">
+                  CONNECTOR URL
+                </div>
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    readOnly
+                    value="https://ecom.rarityagency.io/api/mcp"
+                    className="w-full bg-zinc-900/80 border border-zinc-800 rounded-lg pl-3.5 pr-11 py-2.5 text-xs font-mono text-zinc-100 select-all focus:outline-none focus:border-zinc-700"
+                  />
+                  <button
+                    onClick={() => handleCopyText("modal_url", "https://ecom.rarityagency.io/api/mcp")}
+                    className="absolute right-2 p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+                    title="Copy connector URL"
+                  >
+                    {copiedKey === "modal_url" ? (
+                      <Check className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* IN CLAUDE.AI OR THE CLAUDE APP */}
+              <div className="space-y-2 text-xs">
+                <div className="text-[11px] font-mono font-semibold text-zinc-400 uppercase tracking-wider">
+                  IN CLAUDE.AI OR THE CLAUDE APP
+                </div>
+                <ol className="space-y-1.5 text-zinc-300 font-sans leading-relaxed">
+                  <li className="flex items-start gap-1.5">
+                    <span className="font-semibold text-zinc-400">1.</span>
+                    <span>Open <strong>Customize → Connectors</strong> and choose <strong>Add custom connector</strong>.</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="font-semibold text-zinc-400">2.</span>
+                    <span>Name it <strong>Rarity Analytics</strong> and paste the URL above. Leave the advanced settings empty.</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="font-semibold text-zinc-400">3.</span>
+                    <span>Click <strong>Add</strong>, then <strong>Connect</strong>.</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="font-semibold text-zinc-400">4.</span>
+                    <span>Claude connects to Rarity Analytics: sign in if asked and click <strong>Authorize</strong>.</span>
+                  </li>
+                </ol>
+                <p className="text-[11px] text-zinc-500 italic pt-1 leading-normal">
+                  On a Team or Enterprise plan, an Owner adds it once in Organization settings → Connectors; everyone else only clicks Connect and signs in with their own account.
+                </p>
+              </div>
+
+              {/* IN CLAUDE CODE */}
+              <div className="space-y-2">
+                <div className="text-[11px] font-mono font-semibold text-zinc-400 uppercase tracking-wider">
+                  IN CLAUDE CODE
+                </div>
+                <div className="relative flex items-center bg-zinc-900/90 border border-zinc-800 rounded-lg p-2.5">
+                  <code className="text-[11px] font-mono text-zinc-300 select-all pr-8 overflow-x-auto whitespace-nowrap">
+                    claude mcp add --transport sse rarity https://ecom.rarityagency.io/api/mcp
+                  </code>
+                  <button
+                    onClick={() =>
+                      handleCopyText("modal_cli", "claude mcp add --transport sse rarity https://ecom.rarityagency.io/api/mcp")
+                    }
+                    className="absolute right-2 p-1 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+                  >
+                    {copiedKey === "modal_cli" ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+                <p className="text-[11px] text-zinc-500 font-sans">
+                  Then run <code className="text-zinc-400 font-mono">/mcp</code> inside Claude Code to inspect available tools.
+                </p>
+              </div>
+
+              {/* YOUR ACTIVE CONNECTIONS */}
+              <div className="space-y-2">
+                <div className="text-[11px] font-mono font-semibold text-zinc-400 uppercase tracking-wider">
+                  YOUR ACTIVE CONNECTIONS
+                </div>
+                <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/30 flex items-center justify-center text-orange-400 font-bold text-xs">
+                      C
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-zinc-200 font-sans flex items-center gap-1.5">
+                        <span>Claude · claude.ai</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      </div>
+                      <div className="text-[10px] text-zinc-500 font-mono">
+                        Connected · SSE Remote Telemetry · rarity_telemetry_live
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 px-2.5 py-1 rounded-md">
+                    Active
+                  </span>
+                </div>
+              </div>
+
+              {/* WHAT CLAUDE CAN READ */}
+              <div className="space-y-2 pt-1 border-t border-zinc-850">
+                <div className="text-[11px] font-mono font-semibold text-zinc-400 uppercase tracking-wider">
+                  WHAT CLAUDE CAN READ
+                </div>
+                <div className="grid grid-cols-1 gap-1.5 text-xs text-zinc-300 font-sans">
+                  {[
+                    "Funnel, KPIs, pageviews, dwell time and conversion rates",
+                    "Granular Landing Page metrics (/growth-team, /lp2, /free-audit)",
+                    "Traffic channel attribution (ChatGPT, Meta Ads, Google Ads, Organic)",
+                    "Geolocation & US State breakdown (California, Florida, Texas, etc.)",
+                    "Active live visitors radar in real time (last 5 minutes)",
+                    "Lead journeys, contact details and Cal.com booked strategy calls",
+                    "VTurb Video player retention milestones and CTA pitch unlock rate",
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />
+                      <span className="text-zinc-300">{item}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </motion.div>
           </div>
