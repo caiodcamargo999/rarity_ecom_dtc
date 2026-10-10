@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { syncLeadToQuoCrm } from "@/lib/quoCrm";
+import { supabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
 import crypto from "crypto";
 
 // Helper function to hash user data as required by Meta CAPI
@@ -181,6 +182,63 @@ export async function POST(req: NextRequest) {
 
     // 3. Send to Meta Conversions API (Server-Side Tracking)
     await sendToMetaCAPI(leadPayload, utms, req);
+
+    // 4. Sync directly to Supabase Analytics & Lead Database
+    if (isSupabaseConfigured && supabaseAdmin) {
+      const nowIso = new Date().toISOString();
+      const visitorId = data.visitorId || utms?.visitorId || null;
+      const sessionId = data.sessionId || utms?.sessionId || null;
+
+      try {
+        // Record Lead
+        await supabaseAdmin.from("analytics_leads").insert({
+          visitor_id: visitorId,
+          session_id: sessionId,
+          full_name: fullName,
+          email,
+          phone: formattedPhone,
+          brand_or_store: brandOrStore,
+          monthly_revenue: monthlyRevenue,
+          monthly_ad_spend: monthlyAdSpend,
+          bottleneck,
+          role,
+          scheduled_on_cal: scheduledOnCal,
+          meeting_date: data.meetingDate || "",
+          source: req.headers.get("referer") || "Landing Page",
+          utm_source: utms?.utm_source || null,
+          utm_medium: utms?.utm_medium || null,
+          utm_campaign: utms?.utm_campaign || null,
+          created_at: nowIso,
+        });
+
+        // If visitorId is present, stitch visitor profile and add event
+        if (visitorId) {
+          await supabaseAdmin
+            .from("analytics_visitors")
+            .update({
+              email: email || undefined,
+              phone: formattedPhone || undefined,
+              full_name: fullName || undefined,
+              company_name: brandOrStore || undefined,
+              last_seen_at: nowIso,
+            })
+            .eq("visitor_id", visitorId);
+
+          await supabaseAdmin.from("analytics_events").insert({
+            session_id: sessionId || "unknown",
+            visitor_id: visitorId,
+            pathname: req.headers.get("referer") || "/",
+            event_type: scheduledOnCal === "Yes" ? "cal_booked" : "form_step",
+            event_name: scheduledOnCal === "Yes" ? "Cal.com Call Booked" : "Audit Diagnostic Submitted",
+            event_data: { fullName, email, brandOrStore, monthlyRevenue, monthlyAdSpend, scheduledOnCal },
+            created_at: nowIso,
+          });
+        }
+        console.log("✅ [Supabase] Lead successfully stored and stitched in analytics");
+      } catch (sbErr) {
+        console.error("Error syncing lead to Supabase:", sbErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,

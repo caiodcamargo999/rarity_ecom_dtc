@@ -183,7 +183,7 @@ export default function GrowthProtocolSectionV2({ onOpenAudit }: GrowthProtocolS
           })}
         </div>
 
-        {/* Why Brands Switch: Traditional Agency vs Rarity Matrix */}
+        {/* Why Brands Switch: Traditional Agency vs Rarity Model */}
         <div className="bg-[#000c2e] border border-white/15 rounded-3xl p-5 sm:p-10 shadow-2xl overflow-hidden relative">
           <div className="text-center mb-8 sm:mb-10">
             <span className="text-xs font-extrabold tracking-widest text-brand-magenta uppercase block mb-1">

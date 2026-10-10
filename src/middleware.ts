@@ -6,10 +6,11 @@ export function middleware(request: NextRequest) {
   const hostname = request.headers.get("host") || "";
   const pathname = url.pathname;
 
-  // 1. Skip Next.js internals, static assets, APIs, and image files
+  // 1. Skip Next.js internals, static assets, APIs, admin dashboard, and image files
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
+    pathname.startsWith("/admin") ||
     pathname.startsWith("/images") ||
     pathname.startsWith("/videos") ||
     pathname.startsWith("/favicon") ||

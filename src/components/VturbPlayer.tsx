@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Maximize2, X } from "lucide-react";
+import { getTracker } from "@/lib/tracker";
 
 interface VturbPlayerProps {
   videoId?: string;
@@ -141,14 +142,49 @@ export default function VturbPlayer({
 
     const playerEl = document.getElementById(videoId);
 
+    const reportedMilestones = new Set<number>();
+    let hasTrackedPlay = false;
+    let hasTrackedImpression = false;
+    let maxSecondsWatched = 0;
+
+    const triggerImpression = () => {
+      if (!hasTrackedImpression) {
+        hasTrackedImpression = true;
+        getTracker().trackEvent("vturb_impression", "VTurb Player Loaded", {
+          videoId,
+          title: floatingTitle || "VSL Video",
+        });
+      }
+    };
+
     const triggerPlay = () => {
       onPlay?.();
       window.dispatchEvent(new CustomEvent("rarity:video:play"));
+      if (!hasTrackedPlay) {
+        hasTrackedPlay = true;
+        getTracker().trackEvent("vturb_play", "VTurb Video Started", {
+          videoId,
+          title: floatingTitle || "VSL Video",
+        });
+      }
     };
 
     const triggerPause = () => {
       onPause?.();
       window.dispatchEvent(new CustomEvent("rarity:video:pause"));
+      getTracker().trackEvent("vturb_pause", "VTurb Video Paused", {
+        videoId,
+        secondsWatched: Math.round(maxSecondsWatched),
+      });
+    };
+
+    const triggerEnded = () => {
+      onPause?.();
+      window.dispatchEvent(new CustomEvent("rarity:video:ended"));
+      getTracker().trackEvent("vturb_completed", "VTurb Video Completed", {
+        videoId,
+        totalSecondsWatched: Math.round(maxSecondsWatched),
+      });
     };
 
     const triggerTimeUpdate = (currentTime: number) => {
@@ -156,17 +192,43 @@ export default function VturbPlayer({
       window.dispatchEvent(
         new CustomEvent("rarity:video:timeupdate", { detail: { currentTime } })
       );
+
+      if (currentTime > maxSecondsWatched) {
+        maxSecondsWatched = currentTime;
+      }
+
+      // Milestones: 10s, 30s, 60s (1m), 120s (2m), 180s (3m), 300s (5m), 480s (8m), 600s (10m), 900s (15m)
+      const milestones = [10, 30, 60, 120, 180, 300, 480, 600, 900];
+      for (const m of milestones) {
+        if (currentTime >= m && !reportedMilestones.has(m)) {
+          reportedMilestones.add(m);
+          getTracker().trackEvent("vturb_milestone", `VTurb Watched ${m}s`, {
+            videoId,
+            secondsWatched: m,
+          });
+        }
+      }
+
       if (delaySeconds > 0 && currentTime >= delaySeconds) {
         triggerUnlock();
       }
     };
 
+    let hasTrackedUnlock = false;
     const triggerUnlock = () => {
       onUnlock?.();
       window.dispatchEvent(new CustomEvent("rarity:video:unlock"));
+      if (!hasTrackedUnlock) {
+        hasTrackedUnlock = true;
+        getTracker().trackEvent("vturb_unlock", "VTurb Offer / Pitch Unlocked", {
+          videoId,
+          delaySeconds,
+        });
+      }
     };
 
     const handlePlayerReady = () => {
+      triggerImpression();
       // Use VTurb's native displayHiddenElements method if supported and delaySeconds is positive
       try {
         const el: any = document.getElementById(videoId);
@@ -188,7 +250,7 @@ export default function VturbPlayer({
       playerEl.addEventListener("play", triggerPlay);
       playerEl.addEventListener("playing", triggerPlay);
       playerEl.addEventListener("pause", triggerPause);
-      playerEl.addEventListener("ended", triggerPause);
+      playerEl.addEventListener("ended", triggerEnded);
       playerEl.addEventListener("waiting", triggerPause);
       playerEl.addEventListener("timeupdate", onTimeUpdateListener);
     }

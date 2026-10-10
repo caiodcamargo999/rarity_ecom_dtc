@@ -254,6 +254,7 @@ const jsonLdData = {
 
 import Script from "next/script";
 import UtmTracker from "@/components/UtmTracker";
+import TrackingProvider from "@/components/TrackingProvider";
 
 export default function RootLayout({
   children,
@@ -317,18 +318,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <link rel="preload" href="https://app.cal.com/embed/embed.js" as="script" />
       </head>
       <body className="font-sans antialiased bg-[#001244] text-white selection:bg-[#D80064] selection:text-white">
-        <UtmTracker />
-        {/* Google Tag Manager (noscript) */}
-        <noscript>
-          <iframe
-            src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
-            height="0"
-            width="0"
-            style={{ display: "none", visibility: "hidden" }}
-          />
-        </noscript>
-        {children}
-        <Analytics />
+        <TrackingProvider>
+          <UtmTracker />
+          {/* Google Tag Manager (noscript) */}
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
+              height="0"
+              width="0"
+              style={{ display: "none", visibility: "hidden" }}
+            />
+          </noscript>
+          {children}
+          <Analytics />
+        </TrackingProvider>
       </body>
     </html>
   );

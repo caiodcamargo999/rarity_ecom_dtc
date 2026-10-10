@@ -12,6 +12,7 @@
     "@calcom/embed-react": "^1.5.3",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-slot": "^1.1.0",
+    "@supabase/supabase-js": "^2.117.3",
     "@vercel/analytics": "^2.0.1",
     "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.0",

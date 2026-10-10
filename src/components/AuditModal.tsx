@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Cal, { getCalApi } from "@calcom/embed-react";
 import { getStoredUtms, UtmData } from "@/components/UtmTracker";
 import { pauseAllVturbVideos } from "@/components/VturbPlayer";
+import { getTracker, getVisitorInfo } from "@/lib/tracker";
 
 interface AuditModalProps {
   isOpen: boolean;
@@ -110,11 +111,16 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Capture UTMs on mount and when modal opens
+  // Capture UTMs and track modal open
   useEffect(() => {
     if (typeof window !== "undefined") {
       const captured = getStoredUtms();
       setUtms(captured);
+      if (isOpen) {
+        getTracker().trackEvent("modal_open", "Audit Modal Opened", {
+          stage: DIRECT_CALENDAR_MODE ? "calendar" : "quiz",
+        });
+      }
     }
   }, [isOpen]);
 
@@ -376,7 +382,21 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
         });
       }
 
-      // Immediately sync to Quo CRM & Google Sheets: mark scheduledOnCal as "Yes" and write Name, Email, Phone, Meeting Date
+      // Immediately sync to Quo CRM, Google Sheets & Supabase Analytics
+      const visitorInfo = getVisitorInfo();
+      getTracker().identifyLead({
+        fullName,
+        email,
+        phone,
+        brandOrStore: latestAnswers.brandOrStore || "Ecom Brand",
+        monthlyRevenue: latestAnswers.monthlyRevenue,
+        monthlyAdSpend: latestAnswers.monthlyAdSpend,
+        bottleneck: latestAnswers.bottleneck,
+        role: latestAnswers.role,
+        scheduledOnCal: "Yes",
+        meetingDate,
+      });
+
       fetch("/api/audit-diagnostic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -394,6 +414,8 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
           meetingDate,
           timeZone,
           utms: latestUtms,
+          visitorId: visitorInfo.visitorId,
+          sessionId: visitorInfo.sessionId,
         }),
         keepalive: true,
       }).catch((err) => {
@@ -542,12 +564,20 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
 
   const handleSubmitQuiz = () => {
     setStage("calendar");
+    const visitorInfo = getVisitorInfo();
+    getTracker().identifyLead({
+      ...answers,
+      scheduledOnCal: "No",
+    });
+
     fetch("/api/audit-diagnostic", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...answers,
         utms,
+        visitorId: visitorInfo.visitorId,
+        sessionId: visitorInfo.sessionId,
       }),
       keepalive: true,
     }).catch((err) => {
