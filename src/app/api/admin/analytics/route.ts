@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
 import crypto from "crypto";
 
-const ADMIN_PASSWORD = process.env.ADMIN_DASHBOARD_PASSWORD || "rarity2025";
+const ADMIN_PASSWORD = (process.env.ADMIN_DASHBOARD_PASSWORD || "rarity2025").trim();
 const AUTH_COOKIE_NAME = "rarity_analytics_auth";
 const LEGACY_COOKIE_NAME = "rarity_matrix_auth";
 
@@ -20,7 +20,6 @@ const US_STATES_MAP: Record<string, string> = {
   DC: "District of Columbia",
 };
 
-// Reverse map for full state names to code
 const STATE_NAME_TO_CODE: Record<string, string> = {};
 Object.entries(US_STATES_MAP).forEach(([code, name]) => {
   STATE_NAME_TO_CODE[name.toLowerCase()] = code;
@@ -40,6 +39,103 @@ function normalizeState(rawState?: string): { state: string; stateCode: string }
     return { state: US_STATES_MAP[code] || clean, stateCode: code };
   }
   return { state: clean, stateCode: upper.substring(0, 2) };
+}
+
+function classifyChannel(source?: string, medium?: string, referrer?: string): { channel: string; category: string } {
+  const s = (source || "").toLowerCase();
+  const m = (medium || "").toLowerCase();
+  const r = (referrer || "").toLowerCase();
+
+  // 1. ChatGPT / AI Search
+  if (
+    s.includes("chatgpt") ||
+    r.includes("chatgpt") ||
+    r.includes("openai") ||
+    s.includes("claude") ||
+    r.includes("claude") ||
+    s.includes("perplexity") ||
+    r.includes("perplexity") ||
+    s.includes("gemini") ||
+    r.includes("gemini") ||
+    m === "ai_search"
+  ) {
+    let name = "ChatGPT / AI Search";
+    if (s.includes("claude") || r.includes("claude")) name = "Claude AI";
+    else if (s.includes("perplexity") || r.includes("perplexity")) name = "Perplexity AI";
+    else if (s.includes("gemini") || r.includes("gemini")) name = "Google Gemini";
+    return { channel: name, category: "AI Search & LLMs" };
+  }
+
+  // 2. Meta Ads
+  if (
+    s.includes("meta") ||
+    s.includes("facebook") ||
+    (s.includes("instagram") && (m.includes("cpc") || m.includes("paid") || m.includes("ad"))) ||
+    s.includes("fb_") ||
+    s.includes("ig_") ||
+    m.includes("paid_social")
+  ) {
+    return { channel: "Meta Ads (FB & IG)", category: "Paid Social" };
+  }
+
+  // 3. Google Ads
+  if (
+    s.includes("google") &&
+    (m.includes("cpc") || m.includes("ppc") || m.includes("ad") || m.includes("search") || m.includes("pmax"))
+  ) {
+    return { channel: "Google Ads (PMax/Search)", category: "Paid Search" };
+  }
+
+  // 4. Instagram Organic
+  if (s.includes("instagram") || r.includes("instagram.com") || m.includes("instagram")) {
+    return { channel: "Instagram Organic", category: "Organic Social" };
+  }
+
+  // 5. TikTok
+  if (s.includes("tiktok") || r.includes("tiktok.com")) {
+    return {
+      channel: m.includes("cpc") || m.includes("paid") ? "TikTok Ads" : "TikTok Organic",
+      category: m.includes("cpc") ? "Paid Social" : "Organic Social",
+    };
+  }
+
+  // 6. YouTube
+  if (s.includes("youtube") || r.includes("youtube.com") || r.includes("youtu.be")) {
+    return {
+      channel: m.includes("cpc") || m.includes("ad") ? "YouTube Ads" : "YouTube Organic",
+      category: "Video Social",
+    };
+  }
+
+  // 7. LinkedIn
+  if (s.includes("linkedin") || r.includes("linkedin.com") || r.includes("lnkd.in")) {
+    return {
+      channel: m.includes("cpc") || m.includes("paid") ? "LinkedIn Ads" : "LinkedIn Organic",
+      category: "B2B Social",
+    };
+  }
+
+  // 8. X / Twitter
+  if (s.includes("twitter") || s.includes("x.com") || r.includes("t.co") || r.includes("twitter.com") || r.includes("x.com")) {
+    return { channel: "X / Twitter", category: "Organic Social" };
+  }
+
+  // 9. Google SEO Search
+  if (r.includes("google.com") || r.includes("google.") || m === "organic_search" || s === "google") {
+    return { channel: "Google Organic Search", category: "SEO Search" };
+  }
+
+  // 10. Email Marketing
+  if (m.includes("email") || s.includes("klaviyo") || s.includes("newsletter") || s.includes("mailchimp")) {
+    return { channel: "Email Marketing", category: "Direct Marketing" };
+  }
+
+  // 11. Direct
+  if (!s || s === "direct" || s === "none" || !r || r === "direct") {
+    return { channel: "Direct / Typed URL", category: "Direct" };
+  }
+
+  return { channel: s.charAt(0).toUpperCase() + s.slice(1), category: "Referral / Other" };
 }
 
 function isAuthenticated(req: NextRequest): boolean {
@@ -161,6 +257,7 @@ export async function GET(req: NextRequest) {
       liveVisitors: [],
       recentJourneys: [],
       utmPerformance: [],
+      channelStats: [],
       geoStats: { countries: [], states: [], cities: [] },
       vturbStats: {
         totalPlays: 0,
@@ -179,7 +276,7 @@ export async function GET(req: NextRequest) {
     // 1. Fetch live visitors
     const { data: liveData } = await supabaseAdmin
       .from("analytics_visitors")
-      .select("visitor_id, full_name, email, phone, company_name, device_type, os, browser, country, city, last_touch_landing_page, last_seen_at")
+      .select("visitor_id, full_name, email, phone, company_name, device_type, os, browser, country, city, first_touch_utm_source, first_touch_utm_medium, last_touch_landing_page, last_seen_at")
       .gte("last_seen_at", fiveMinutesAgoIso)
       .order("last_seen_at", { ascending: false })
       .limit(50);
@@ -218,7 +315,7 @@ export async function GET(req: NextRequest) {
 
     if (search) {
       visitorsQuery = visitorsQuery.or(
-        `email.ilike.%${search}%,phone.ilike.%${search}%,full_name.ilike.%${search}%,company_name.ilike.%${search}%,visitor_id.ilike.%${search}%,last_touch_landing_page.ilike.%${search}%`
+        `email.ilike.%${search}%,phone.ilike.%${search}%,full_name.ilike.%${search}%,company_name.ilike.%${search}%,visitor_id.ilike.%${search}%,first_touch_utm_source.ilike.%${search}%,last_touch_landing_page.ilike.%${search}%`
       );
     }
     const { data: visitorsList } = await visitorsQuery;
@@ -345,7 +442,6 @@ export async function GET(req: NextRequest) {
     const stateMap: Record<string, { state: string; stateCode: string; country: string; visitors: number; leads: number; bookings: number }> = {};
     const cityMap: Record<string, { city: string; state: string; country: string; visitors: number; leads: number }> = {};
 
-    // Map leads by visitor_id for geo stitching
     const leadByVisitor = new Map<string, any>();
     allLeads.forEach((l) => {
       if (l.visitor_id) leadByVisitor.set(l.visitor_id, l);
@@ -359,7 +455,6 @@ export async function GET(req: NextRequest) {
       const hasLead = leadByVisitor.has(visitor.visitor_id);
       const isBooking = hasLead && leadByVisitor.get(visitor.visitor_id)?.scheduled_on_cal === "Yes";
 
-      // 1. Country
       if (!countryMap[countryName]) {
         countryMap[countryName] = {
           country: countryName,
@@ -373,8 +468,7 @@ export async function GET(req: NextRequest) {
       if (hasLead) countryMap[countryName].leads += 1;
       if (isBooking) countryMap[countryName].bookings += 1;
 
-      // 2. States / Regions (US States Axis)
-      const rawState = visitor.city || ""; // in current visitors table city/state is stored
+      const rawState = visitor.city || "";
       const { state, stateCode } = normalizeState(rawState);
       const stateKey = `${countryName}___${state}`;
 
@@ -392,7 +486,6 @@ export async function GET(req: NextRequest) {
       if (hasLead) stateMap[stateKey].leads += 1;
       if (isBooking) stateMap[stateKey].bookings += 1;
 
-      // 3. City
       if (visitor.city) {
         const cityKey = `${visitor.city}___${state}___${countryName}`;
         if (!cityMap[cityKey]) {
@@ -428,27 +521,72 @@ export async function GET(req: NextRequest) {
     const citiesList = Object.values(cityMap);
     citiesList.sort((a, b) => b.visitors - a.visitors);
 
-    // Group UTM Sources
+    // ==========================================
+    // CHANNELS & TRAFFIC SOURCE ATTRIBUTION
+    // ==========================================
+    const channelMap: Record<string, { channel: string; category: string; sessions: number; leads: number; bookings: number }> = {};
     const utmMap: Record<string, any> = {};
+
     for (const s of allSessions) {
-      const key = `${s.utm_source || "direct"}___${s.utm_campaign || "none"}`;
-      if (!utmMap[key]) {
-        utmMap[key] = {
-          source: s.utm_source || "direct",
+      const detected = classifyChannel(s.utm_source, s.utm_medium, s.referrer);
+      const chKey = detected.channel;
+
+      if (!channelMap[chKey]) {
+        channelMap[chKey] = {
+          channel: detected.channel,
+          category: detected.category,
+          sessions: 0,
+          leads: 0,
+          bookings: 0,
+        };
+      }
+      channelMap[chKey].sessions += 1;
+
+      // UTM Campaigns
+      const utmKey = `${s.utm_source || detected.channel}___${s.utm_campaign || "none"}`;
+      if (!utmMap[utmKey]) {
+        utmMap[utmKey] = {
+          source: s.utm_source || detected.channel,
           campaign: s.utm_campaign || "none",
+          medium: s.utm_medium || detected.category,
           sessions: 0,
           leads: 0,
         };
       }
-      utmMap[key].sessions += 1;
+      utmMap[utmKey].sessions += 1;
     }
 
     for (const l of allLeads) {
-      const key = `${l.utm_source || "direct"}___${l.utm_campaign || "none"}`;
-      if (utmMap[key]) {
-        utmMap[key].leads += 1;
+      const detected = classifyChannel(l.utm_source, l.utm_medium, l.source);
+      const chKey = detected.channel;
+
+      if (!channelMap[chKey]) {
+        channelMap[chKey] = {
+          channel: detected.channel,
+          category: detected.category,
+          sessions: 0,
+          leads: 0,
+          bookings: 0,
+        };
+      }
+      channelMap[chKey].leads += 1;
+      if (l.scheduled_on_cal === "Yes") {
+        channelMap[chKey].bookings += 1;
+      }
+
+      const utmKey = `${l.utm_source || detected.channel}___${l.utm_campaign || "none"}`;
+      if (utmMap[utmKey]) {
+        utmMap[utmKey].leads += 1;
       }
     }
+
+    const totalChannelSessions = allSessions.length || 1;
+    const channelStats = Object.values(channelMap).map((c) => ({
+      ...c,
+      conversionRate: c.sessions ? Number(((c.leads / c.sessions) * 100).toFixed(1)) : 0,
+      pct: Number(((c.sessions / totalChannelSessions) * 100).toFixed(1)),
+    }));
+    channelStats.sort((a, b) => b.sessions - a.sessions);
 
     const utmPerformance = Object.values(utmMap).map((u: any) => ({
       ...u,
@@ -541,9 +679,14 @@ export async function GET(req: NextRequest) {
       liveVisitors: (liveData || []).map((v) => ({
         ...v,
         current_page: v.last_touch_landing_page,
+        channel: classifyChannel(v.first_touch_utm_source, v.first_touch_utm_medium).channel,
       })),
-      recentJourneys: allVisitors,
+      recentJourneys: allVisitors.map((v) => ({
+        ...v,
+        detectedChannel: classifyChannel(v.first_touch_utm_source, v.first_touch_utm_medium, v.first_touch_referrer).channel,
+      })),
       utmPerformance,
+      channelStats,
       geoStats: {
         countries: countriesList,
         states: statesList,

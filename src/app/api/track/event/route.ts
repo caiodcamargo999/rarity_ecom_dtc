@@ -1,6 +1,115 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
 
+function detectChannelServer(referrer = "", utms: Record<string, string> = {}, channelOverride?: string): {
+  channel: string;
+  source: string;
+  medium: string;
+} {
+  if (channelOverride) {
+    return {
+      channel: channelOverride,
+      source: utms.utm_source || channelOverride,
+      medium: utms.utm_medium || "tracked",
+    };
+  }
+
+  const ref = (referrer || "").toLowerCase();
+  const utmSource = (utms.utm_source || "").toLowerCase();
+  const utmMedium = (utms.utm_medium || "").toLowerCase();
+  const hasFbclid = Boolean(utms.fbclid || utms.fbc || utms.fbp);
+  const hasGclid = Boolean(utms.gclid);
+  const hasTtclid = Boolean(utms.ttclid);
+
+  // ChatGPT & AI Search
+  if (
+    ref.includes("chatgpt.com") ||
+    ref.includes("chat.openai.com") ||
+    ref.includes("openai.com") ||
+    ref.includes("claude.ai") ||
+    ref.includes("perplexity.ai") ||
+    ref.includes("gemini.google.com") ||
+    ref.includes("copilot.microsoft.com") ||
+    utmSource.includes("chatgpt") ||
+    utmSource.includes("openai") ||
+    utmSource.includes("claude") ||
+    utmSource.includes("perplexity")
+  ) {
+    let source = "ChatGPT";
+    if (ref.includes("claude") || utmSource.includes("claude")) source = "Claude AI";
+    else if (ref.includes("perplexity") || utmSource.includes("perplexity")) source = "Perplexity AI";
+    else if (ref.includes("gemini") || utmSource.includes("gemini")) source = "Google Gemini";
+    else if (ref.includes("copilot") || utmSource.includes("copilot")) source = "Microsoft Copilot";
+    return { channel: "ChatGPT / AI Search", source, medium: "ai_search" };
+  }
+
+  // Meta Ads
+  if (
+    hasFbclid ||
+    ((utmSource.includes("meta") || utmSource.includes("facebook") || utmSource.includes("instagram") || utmSource.includes("fb") || utmSource.includes("ig")) &&
+      (utmMedium.includes("cpc") || utmMedium.includes("paid") || utmMedium.includes("ad") || utmMedium.includes("feed") || utmMedium.includes("story") || utmMedium.includes("reels")))
+  ) {
+    return {
+      channel: "Meta Ads",
+      source: utmSource || (ref.includes("instagram") ? "Instagram Ads" : "Facebook Ads"),
+      medium: utmMedium || "paid_social",
+    };
+  }
+
+  // Google Ads
+  if (
+    hasGclid ||
+    ((utmSource.includes("google") || utmSource.includes("adwords") || utmSource.includes("pmax")) &&
+      (utmMedium.includes("cpc") || utmMedium.includes("ppc") || utmMedium.includes("ad") || utmMedium.includes("search") || utmMedium.includes("display")))
+  ) {
+    return { channel: "Google Ads", source: "Google Ads", medium: utmMedium || "cpc" };
+  }
+
+  // Instagram Organic
+  if (ref.includes("instagram.com") || ref.includes("l.instagram.com") || utmSource === "instagram" || utmSource === "ig") {
+    return { channel: "Instagram Organic", source: "Instagram", medium: utmMedium || "social_organic" };
+  }
+
+  // TikTok
+  if (hasTtclid || ref.includes("tiktok.com") || utmSource.includes("tiktok")) {
+    const isPaid = hasTtclid || utmMedium.includes("cpc") || utmMedium.includes("paid");
+    return { channel: isPaid ? "TikTok Ads" : "TikTok Organic", source: "TikTok", medium: isPaid ? "paid_social" : "social_organic" };
+  }
+
+  // YouTube
+  if (ref.includes("youtube.com") || ref.includes("youtu.be") || utmSource.includes("youtube")) {
+    const isPaid = utmMedium.includes("cpc") || utmMedium.includes("paid") || utmMedium.includes("video_ad");
+    return { channel: isPaid ? "YouTube Ads" : "YouTube Organic", source: "YouTube", medium: isPaid ? "video_ad" : "social_organic" };
+  }
+
+  // LinkedIn
+  if (ref.includes("linkedin.com") || ref.includes("lnkd.in") || utmSource.includes("linkedin")) {
+    const isPaid = utmMedium.includes("cpc") || utmMedium.includes("paid");
+    return { channel: isPaid ? "LinkedIn Ads" : "LinkedIn Organic", source: "LinkedIn", medium: isPaid ? "paid_social" : "social_organic" };
+  }
+
+  // X / Twitter
+  if (ref.includes("t.co") || ref.includes("twitter.com") || ref.includes("x.com") || utmSource.includes("twitter")) {
+    return { channel: "X / Twitter", source: "X (Twitter)", medium: utmMedium || "social_organic" };
+  }
+
+  // Google Organic
+  if (ref.includes("google.") || ref.includes("google.com")) {
+    return { channel: "Google Organic", source: "Google Search", medium: "organic_search" };
+  }
+
+  // Email
+  if (utmMedium.includes("email") || utmMedium.includes("newsletter") || utmSource.includes("klaviyo") || utmSource.includes("mailchimp")) {
+    return { channel: "Email Marketing", source: utmSource || "Newsletter", medium: "email" };
+  }
+
+  if (!ref || ref === "direct") {
+    return { channel: utmSource ? `Campaign (${utmSource})` : "Direct / Bookmarks", source: utmSource || "Direct", medium: utmMedium || "none" };
+  }
+
+  return { channel: utmSource || "Referral", source: utmSource || "Web Referral", medium: utmMedium || "referral" };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -22,6 +131,10 @@ export async function POST(req: NextRequest) {
       eventData = {},
       durationSeconds = 0,
       maxScrollDepth = 0,
+      channel,
+      source,
+      medium,
+      campaign,
     } = body;
 
     // Ignore admin or internal pages
@@ -33,7 +146,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing visitor or session id" }, { status: 400 });
     }
 
-    // Geolocation Resolution (Header or Client Payload)
+    // Geolocation Resolution
     const country =
       body.country ||
       req.headers.get("x-vercel-ip-country") ||
@@ -54,7 +167,9 @@ export async function POST(req: NextRequest) {
       req.headers.get("cf-ipcity") ||
       "";
 
-    // If Supabase is not yet configured, gracefully acknowledge
+    // Channel Detection
+    const detected = detectChannelServer(referrer, utms, channel);
+
     if (!isSupabaseConfigured || !supabaseAdmin) {
       return NextResponse.json({ success: true, warning: "Supabase credentials not configured in env" });
     }
@@ -64,13 +179,13 @@ export async function POST(req: NextRequest) {
 
     // 1. Handle PAGEVIEW event
     if (type === "pageview") {
-      // Upsert Visitor
+      // Upsert Visitor with detected channel & source
       await supabaseAdmin.from("analytics_visitors").upsert(
         {
           visitor_id: visitorId,
-          first_touch_utm_source: utms?.utm_source || null,
-          first_touch_utm_medium: utms?.utm_medium || null,
-          first_touch_utm_campaign: utms?.utm_campaign || null,
+          first_touch_utm_source: detected.channel || utms?.utm_source || null,
+          first_touch_utm_medium: detected.medium || utms?.utm_medium || null,
+          first_touch_utm_campaign: campaign || utms?.utm_campaign || null,
           first_touch_utm_content: utms?.utm_content || null,
           first_touch_utm_term: utms?.utm_term || null,
           first_touch_referrer: referrer || null,
@@ -96,9 +211,9 @@ export async function POST(req: NextRequest) {
           ended_at: nowIso,
           entry_path: pathname,
           exit_path: pathname,
-          utm_source: utms?.utm_source || null,
-          utm_medium: utms?.utm_medium || null,
-          utm_campaign: utms?.utm_campaign || null,
+          utm_source: detected.channel || utms?.utm_source || null,
+          utm_medium: detected.medium || utms?.utm_medium || null,
+          utm_campaign: campaign || utms?.utm_campaign || null,
           utm_content: utms?.utm_content || null,
           utm_term: utms?.utm_term || null,
           referrer,
@@ -128,7 +243,18 @@ export async function POST(req: NextRequest) {
         pathname,
         event_type: "pageview",
         event_name: `Viewed ${pathname}`,
-        event_data: { title, searchParams, utms, device, country, state: stateOrRegion, city },
+        event_data: {
+          title,
+          searchParams,
+          utms,
+          device,
+          country,
+          state: stateOrRegion,
+          city,
+          channel: detected.channel,
+          source: detected.source,
+          medium: detected.medium,
+        },
         created_at: nowIso,
       });
     }
@@ -173,7 +299,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. Handle CUSTOM_EVENT (Clicks, Milestones, VTurb plays)
+    // 3. Handle CUSTOM_EVENT
     else if (type === "custom_event") {
       await supabaseAdmin.from("analytics_events").insert({
         session_id: sessionId,
@@ -181,7 +307,14 @@ export async function POST(req: NextRequest) {
         pathname,
         event_type: eventType || "custom",
         event_name: eventName || "Unnamed Event",
-        event_data: { ...eventData, country, state: stateOrRegion, city },
+        event_data: {
+          ...eventData,
+          country,
+          state: stateOrRegion,
+          city,
+          channel: detected.channel,
+          source: detected.source,
+        },
         created_at: nowIso,
       });
 

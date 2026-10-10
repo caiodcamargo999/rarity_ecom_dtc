@@ -43,6 +43,9 @@ import {
   ShieldCheck,
   BarChart3,
   Percent,
+  Bot,
+  Share2,
+  Megaphone,
 } from "lucide-react";
 
 interface OverviewStats {
@@ -102,6 +105,16 @@ interface CityMetric {
   leads: number;
 }
 
+interface ChannelMetric {
+  channel: string;
+  category: string;
+  sessions: number;
+  leads: number;
+  bookings: number;
+  conversionRate: number;
+  pct: number;
+}
+
 interface LiveVisitor {
   visitor_id: string;
   current_page: string;
@@ -110,6 +123,7 @@ interface LiveVisitor {
   browser?: string;
   city?: string;
   country?: string;
+  channel?: string;
   dwellSeconds?: number;
   email?: string | null;
   full_name?: string | null;
@@ -129,6 +143,7 @@ interface VisitorJourney {
   os?: string;
   country?: string;
   city?: string;
+  detectedChannel?: string;
   first_touch_utm_source?: string;
   first_touch_utm_campaign?: string;
   first_touch_landing_page?: string;
@@ -142,6 +157,7 @@ interface VisitorJourney {
 interface UtmMetric {
   source: string;
   campaign: string;
+  medium?: string;
   sessions: number;
   leads: number;
   conversionRate: number;
@@ -187,7 +203,7 @@ interface HeatmapData {
   };
 }
 
-type TabType = "pages" | "geo" | "heatmap" | "live" | "vturb" | "journeys" | "utms";
+type TabType = "pages" | "channels" | "geo" | "heatmap" | "live" | "vturb" | "journeys";
 
 export default function AdminAnalyticsDashboard() {
   const router = useRouter();
@@ -222,6 +238,7 @@ export default function AdminAnalyticsDashboard() {
   const [liveVisitors, setLiveVisitors] = useState<LiveVisitor[]>([]);
   const [recentJourneys, setRecentJourneys] = useState<VisitorJourney[]>([]);
   const [utmPerformance, setUtmPerformance] = useState<UtmMetric[]>([]);
+  const [channelStats, setChannelStats] = useState<ChannelMetric[]>([]);
   const [geoStats, setGeoStats] = useState<{
     countries: CountryMetric[];
     states: StateMetric[];
@@ -270,6 +287,7 @@ export default function AdminAnalyticsDashboard() {
           setLiveVisitors(data.liveVisitors || []);
           setRecentJourneys(data.recentJourneys || []);
           setUtmPerformance(data.utmPerformance || []);
+          setChannelStats(data.channelStats || []);
           if (data.geoStats) {
             setGeoStats(data.geoStats);
           }
@@ -346,15 +364,20 @@ export default function AdminAnalyticsDashboard() {
       pagesPerformance.forEach((p) => {
         csvContent += `"${p.pathname}","${p.title}",${p.pageviews},${p.uniqueVisitors},${p.avgDuration},${p.avgScrollDepth}%,${p.ctaClicks},${p.videoPlays || 0},${p.leadsCount},${p.bookingsCount},${p.conversionRate}%,${p.bounceRate}%\n`;
       });
+    } else if (activeTab === "channels") {
+      csvContent += "Traffic Channel,Category,Sessions,Traffic Share %,Leads,Bookings,Conversion Rate %\n";
+      channelStats.forEach((c) => {
+        csvContent += `"${c.channel}","${c.category}",${c.sessions},${c.pct}%,${c.leads},${c.bookings},${c.conversionRate}%\n`;
+      });
     } else if (activeTab === "geo") {
       csvContent += "State/Region,State Code,Country,Visitors,Leads,Bookings,Conversion Rate %\n";
       geoStats.states.forEach((s) => {
         csvContent += `"${s.state}","${s.stateCode}","${s.country}",${s.visitors},${s.leads},${s.bookings},${s.conversionRate}%\n`;
       });
     } else {
-      csvContent += "Visitor ID,Full Name,Email,Phone,Company,Country,State/City,Source,Campaign,Entry Page,Last Page,Pageviews,Scheduled On Cal,Last Seen\n";
+      csvContent += "Visitor ID,Full Name,Email,Phone,Company,Country,State/City,Channel,Source,Campaign,Entry Page,Last Page,Pageviews,Scheduled On Cal,Last Seen\n";
       recentJourneys.forEach((j) => {
-        csvContent += `"${j.visitor_id}","${j.full_name || ""}","${j.email || ""}","${j.phone || ""}","${j.company_name || ""}","${j.country || ""}","${j.city || ""}","${j.first_touch_utm_source || ""}","${j.first_touch_utm_campaign || ""}","${j.first_touch_landing_page || ""}","${j.last_touch_landing_page || ""}",${j.total_pageviews || 1},"${j.scheduled_on_cal || "No"}","${j.last_seen_at || ""}"\n`;
+        csvContent += `"${j.visitor_id}","${j.full_name || ""}","${j.email || ""}","${j.phone || ""}","${j.company_name || ""}","${j.country || ""}","${j.city || ""}","${j.detectedChannel || ""}","${j.first_touch_utm_source || ""}","${j.first_touch_utm_campaign || ""}","${j.first_touch_landing_page || ""}","${j.last_touch_landing_page || ""}",${j.total_pageviews || 1},"${j.scheduled_on_cal || "No"}","${j.last_seen_at || ""}"\n`;
       });
     }
 
@@ -399,6 +422,7 @@ export default function AdminAnalyticsDashboard() {
         j.visitor_id?.toLowerCase().includes(q) ||
         j.country?.toLowerCase().includes(q) ||
         j.city?.toLowerCase().includes(q) ||
+        j.detectedChannel?.toLowerCase().includes(q) ||
         j.first_touch_utm_campaign?.toLowerCase().includes(q)
     );
   }, [recentJourneys, searchQuery]);
@@ -599,12 +623,12 @@ export default function AdminAnalyticsDashboard() {
           <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
             {[
               { id: "pages", label: "Landing Pages", icon: Layers },
+              { id: "channels", label: "Channels & Ads", icon: Target },
               { id: "geo", label: "Geo & US States", icon: Globe },
               { id: "heatmap", label: "Visual Heatmap", icon: Flame },
               { id: "live", label: `Live Radar (${liveVisitors.length})`, icon: Activity },
               { id: "vturb", label: "VTurb Retention", icon: PlayCircle },
               { id: "journeys", label: "Lead Journeys", icon: Compass },
-              { id: "utms", label: "UTM Attribution", icon: Target },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -632,7 +656,7 @@ export default function AdminAnalyticsDashboard() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search lead, page, state, UTM..."
+              placeholder="Search lead, channel, page, state..."
               className="w-full pl-8 pr-4 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition-colors font-sans"
             />
             {searchQuery && (
@@ -747,10 +771,156 @@ export default function AdminAnalyticsDashboard() {
           </div>
         )}
 
-        {/* TAB 2: GEOLOCATION & US STATES BREAKDOWN */}
+        {/* TAB 2: CHANNELS & TRAFFIC SOURCES ATTRIBUTION */}
+        {activeTab === "channels" && (
+          <div className="space-y-6">
+            {/* Top Channels Grid */}
+            <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="p-4 sm:p-5 border-b border-zinc-800 flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2 font-mono">
+                    <Target className="w-4 h-4 text-cyan-400" strokeWidth={1.75} />
+                    Traffic Channels & AI Search Attribution
+                  </h2>
+                  <p className="text-xs text-zinc-400">
+                    Auto-classified channels (ChatGPT & AI Search, Meta Ads, Google Ads, Instagram Organic, TikTok, SEO)
+                  </p>
+                </div>
+                <span className="text-xs font-mono text-zinc-400">{channelStats.length} channels tracked</span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs sm:text-sm">
+                  <thead>
+                    <tr className="bg-zinc-950/60 text-zinc-400 uppercase font-mono text-[11px] border-b border-zinc-800">
+                      <th className="py-3 px-4 sm:px-6 font-medium">Traffic Channel</th>
+                      <th className="py-3 px-3 font-medium">Category</th>
+                      <th className="py-3 px-3 font-medium">Traffic Share</th>
+                      <th className="py-3 px-3 font-medium">Total Sessions</th>
+                      <th className="py-3 px-3 font-medium">Leads Captured</th>
+                      <th className="py-3 px-3 font-medium">Cal Bookings</th>
+                      <th className="py-3 px-4 text-right font-medium">Conversion Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/50">
+                    {channelStats.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-12 text-center text-zinc-400 text-xs font-mono">
+                          No channel traffic recorded yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      channelStats.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-zinc-850/40 transition-colors">
+                          <td className="py-3.5 px-4 sm:px-6">
+                            <div className="flex items-center gap-2">
+                              {item.category.includes("AI") ? (
+                                <Bot className="w-4 h-4 text-cyan-400" />
+                              ) : item.category.includes("Paid") ? (
+                                <Megaphone className="w-4 h-4 text-emerald-400" />
+                              ) : (
+                                <Share2 className="w-4 h-4 text-zinc-400" />
+                              )}
+                              <span className="font-semibold text-zinc-100">{item.channel}</span>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-3">
+                            <span className="px-2 py-0.5 rounded bg-zinc-800 text-[11px] font-mono text-zinc-300 border border-zinc-700">
+                              {item.category}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-3 w-40">
+                            <div className="flex items-center gap-2">
+                              <div className="w-24 bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className="bg-cyan-400 h-full rounded-full transition-all duration-300"
+                                  style={{ width: `${Math.max(5, item.pct)}%` }}
+                                />
+                              </div>
+                              <span className="font-mono text-xs text-zinc-400">{item.pct}%</span>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-3 font-mono font-medium text-zinc-200">{item.sessions.toLocaleString()}</td>
+                          <td className="py-3.5 px-3 font-mono font-semibold text-cyan-400">{item.leads}</td>
+                          <td className="py-3.5 px-3 font-mono font-semibold text-emerald-400">{item.bookings}</td>
+                          <td className="py-3.5 px-4 text-right">
+                            <span
+                              className={`inline-block px-2.5 py-0.5 rounded text-xs font-mono font-semibold ${
+                                item.conversionRate > 0
+                                  ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/60"
+                                  : "text-zinc-400"
+                              }`}
+                            >
+                              {item.conversionRate}%
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Granular UTM Campaigns Table */}
+            <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="p-4 sm:p-5 border-b border-zinc-800">
+                <h3 className="text-xs font-semibold text-zinc-200 uppercase font-mono tracking-wider">
+                  Granular UTM Campaigns & Ad Tracking
+                </h3>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs sm:text-sm">
+                  <thead>
+                    <tr className="bg-zinc-950/60 text-zinc-400 uppercase font-mono text-[11px] border-b border-zinc-800">
+                      <th className="py-2.5 px-4 sm:px-6 font-medium">UTM Source</th>
+                      <th className="py-2.5 px-3 font-medium">UTM Campaign</th>
+                      <th className="py-2.5 px-3 font-medium">Sessions</th>
+                      <th className="py-2.5 px-3 font-medium">Leads Captured</th>
+                      <th className="py-2.5 px-4 text-right font-medium">Conversion Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/50">
+                    {utmPerformance.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-8 text-center text-zinc-400 text-xs font-mono">
+                          No UTM parameters recorded yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      utmPerformance.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-zinc-850/40 transition-colors">
+                          <td className="py-3 px-4 sm:px-6 font-mono font-medium text-zinc-200">
+                            {item.source}
+                          </td>
+                          <td className="py-3 px-3 font-mono text-zinc-400">{item.campaign}</td>
+                          <td className="py-3 px-3 font-mono font-medium text-zinc-200">{item.sessions.toLocaleString()}</td>
+                          <td className="py-3 px-3 font-mono font-semibold text-zinc-100">{item.leads}</td>
+                          <td className="py-3 px-4 text-right">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded text-xs font-mono font-semibold ${
+                                item.conversionRate > 0
+                                  ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/60"
+                                  : "text-zinc-400"
+                              }`}
+                            >
+                              {item.conversionRate}%
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: GEOLOCATION & US STATES */}
         {activeTab === "geo" && (
           <div className="space-y-6">
-            {/* Geo Controls Header */}
             <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2 font-mono">
@@ -762,7 +932,6 @@ export default function AdminAnalyticsDashboard() {
                 </p>
               </div>
 
-              {/* State Filter Buttons */}
               <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-lg p-0.5 text-xs">
                 {(
                   [
@@ -786,9 +955,7 @@ export default function AdminAnalyticsDashboard() {
               </div>
             </div>
 
-            {/* States & Country Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Left Column: Detailed US States Table */}
               <div className="lg:col-span-8 bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden">
                 <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
                   <span className="text-xs font-semibold text-zinc-200 uppercase font-mono tracking-wider flex items-center gap-1.5">
@@ -865,9 +1032,7 @@ export default function AdminAnalyticsDashboard() {
                 </div>
               </div>
 
-              {/* Right Column: Country Breakdown & Top Cities */}
               <div className="lg:col-span-4 space-y-6">
-                {/* Top Countries Card */}
                 <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between text-xs font-semibold text-zinc-200 uppercase font-mono">
                     <span className="flex items-center gap-1.5">
@@ -890,7 +1055,7 @@ export default function AdminAnalyticsDashboard() {
                           <span className="font-medium text-zinc-200">{c.country}</span>
                         </div>
                         <div className="text-right flex items-center gap-2 font-mono">
-                          <span className="text-zinc-400">{c.visitors} visitors</span>
+                          <span className="text-zinc-400">{c.visitors} visits</span>
                           <span className="text-cyan-400 font-semibold">{c.pct}%</span>
                         </div>
                       </div>
@@ -898,7 +1063,6 @@ export default function AdminAnalyticsDashboard() {
                   </div>
                 </div>
 
-                {/* Top Cities Card */}
                 <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between text-xs font-semibold text-zinc-200 uppercase font-mono">
                     <span className="flex items-center gap-1.5">
@@ -934,10 +1098,9 @@ export default function AdminAnalyticsDashboard() {
           </div>
         )}
 
-        {/* TAB 3: VISUAL HEATMAP & CLICK RADAR */}
+        {/* TAB 4: VISUAL HEATMAP */}
         {activeTab === "heatmap" && (
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 sm:p-6 space-y-6">
-            {/* Header & Controls */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
               <div>
                 <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2 font-mono">
@@ -950,7 +1113,6 @@ export default function AdminAnalyticsDashboard() {
               </div>
 
               <div className="flex items-center flex-wrap gap-3">
-                {/* Page Dropdown */}
                 <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded-lg text-xs">
                   <Globe className="w-3.5 h-3.5 text-zinc-400" />
                   <span className="text-zinc-400 font-mono">Page:</span>
@@ -975,7 +1137,6 @@ export default function AdminAnalyticsDashboard() {
                   </select>
                 </div>
 
-                {/* View Mode Toggle */}
                 <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-lg p-0.5 text-xs">
                   <button
                     onClick={() => setHeatmapViewMode("clicks")}
@@ -1003,11 +1164,8 @@ export default function AdminAnalyticsDashboard() {
               </div>
             </div>
 
-            {/* Heatmap Main Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Left Column: Retention & Leaderboard */}
               <div className="lg:col-span-4 space-y-4">
-                {/* Scroll Retention */}
                 <div className="bg-zinc-950/60 border border-zinc-800 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between text-xs font-semibold text-zinc-200 uppercase font-mono">
                     <span className="flex items-center gap-1.5">
@@ -1075,7 +1233,6 @@ export default function AdminAnalyticsDashboard() {
                   </div>
                 </div>
 
-                {/* Warm Clicks Leaderboard */}
                 <div className="bg-zinc-950/60 border border-zinc-800 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between text-xs font-semibold text-zinc-200 uppercase font-mono">
                     <span className="flex items-center gap-1.5">
@@ -1116,7 +1273,6 @@ export default function AdminAnalyticsDashboard() {
                 </div>
               </div>
 
-              {/* Right Column: Live Embedded Preview Canvas */}
               <div className="lg:col-span-8 bg-zinc-950 border border-zinc-800 rounded-xl p-3 flex flex-col space-y-2 relative overflow-hidden">
                 <div className="flex items-center justify-between text-xs font-mono text-zinc-400 px-1">
                   <span className="flex items-center gap-2">
@@ -1140,7 +1296,6 @@ export default function AdminAnalyticsDashboard() {
                     className="w-full h-full border-0 pointer-events-auto"
                   />
 
-                  {/* Beacon Radar Overlay */}
                   {heatmapViewMode === "clicks" && (
                     <div className="absolute inset-0 pointer-events-none z-20">
                       {currentHeatmap.clicks.map((click, idx) => (
@@ -1170,7 +1325,6 @@ export default function AdminAnalyticsDashboard() {
                     </div>
                   )}
 
-                  {/* Scroll Depth Side Bar */}
                   {heatmapViewMode === "scroll" && (
                     <div className="absolute inset-0 pointer-events-none z-20 flex">
                       <div className="w-10 h-full bg-zinc-950/70 border-r border-zinc-800 flex flex-col justify-between py-4 text-[10px] font-mono text-center text-zinc-300 font-semibold backdrop-blur-[2px]">
@@ -1188,7 +1342,7 @@ export default function AdminAnalyticsDashboard() {
           </div>
         )}
 
-        {/* TAB 4: LIVE RADAR */}
+        {/* TAB 5: LIVE RADAR */}
         {activeTab === "live" && (
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 sm:p-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-4">
@@ -1255,7 +1409,7 @@ export default function AdminAnalyticsDashboard() {
                     </div>
 
                     <div className="mt-3 pt-3 border-t border-zinc-850 flex items-center justify-between text-[11px] text-zinc-400 font-mono">
-                      <span>{visitor.city ? `${visitor.city}, ${visitor.country}` : visitor.country || "Global"}</span>
+                      <span>{visitor.channel || "Direct"} • {visitor.city || visitor.country || "Global"}</span>
                       <span className="group-hover:text-zinc-200 flex items-center gap-1 transition-colors">
                         View Trail <ChevronRight className="w-3 h-3" />
                       </span>
@@ -1267,7 +1421,7 @@ export default function AdminAnalyticsDashboard() {
           </div>
         )}
 
-        {/* TAB 5: VTURB VIDEO ANALYTICS */}
+        {/* TAB 6: VTURB VIDEO RETENTION */}
         {activeTab === "vturb" && (
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 sm:p-6 space-y-6">
             <div className="border-b border-zinc-800 pb-4">
@@ -1280,7 +1434,6 @@ export default function AdminAnalyticsDashboard() {
               </p>
             </div>
 
-            {/* Video KPI Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4">
                 <span className="text-xs text-zinc-400 block font-medium">Total Video Plays</span>
@@ -1319,7 +1472,6 @@ export default function AdminAnalyticsDashboard() {
               </div>
             </div>
 
-            {/* Milestones Bar Breakdown */}
             <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 sm:p-5 space-y-3">
               <h3 className="text-xs font-semibold text-zinc-200 uppercase font-mono tracking-wider">
                 Watch Time Milestones
@@ -1359,7 +1511,7 @@ export default function AdminAnalyticsDashboard() {
           </div>
         )}
 
-        {/* TAB 6: LEAD JOURNEYS */}
+        {/* TAB 7: LEAD JOURNEYS */}
         {activeTab === "journeys" && (
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden">
             <div className="p-4 sm:p-5 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1380,8 +1532,8 @@ export default function AdminAnalyticsDashboard() {
                 <thead>
                   <tr className="bg-zinc-950/60 text-zinc-400 uppercase font-mono text-[11px] border-b border-zinc-800">
                     <th className="py-3 px-4 sm:px-6 font-medium">Lead / Visitor</th>
+                    <th className="py-3 px-3 font-medium">Detected Channel</th>
                     <th className="py-3 px-3 font-medium">Location</th>
-                    <th className="py-3 px-3 font-medium">Source / Campaign</th>
                     <th className="py-3 px-3 font-medium">Entry Page</th>
                     <th className="py-3 px-3 font-medium">Last Route</th>
                     <th className="py-3 px-3 font-medium">Cal Booked</th>
@@ -1413,13 +1565,13 @@ export default function AdminAnalyticsDashboard() {
                           </div>
                           <div className="text-[11px] text-zinc-400 font-mono">{journey.email || journey.visitor_id}</div>
                         </td>
+                        <td className="py-3.5 px-3">
+                          <span className="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-xs font-mono text-zinc-300">
+                            {journey.detectedChannel || journey.first_touch_utm_source || "Direct"}
+                          </span>
+                        </td>
                         <td className="py-3.5 px-3 font-mono text-xs text-zinc-400">
                           {journey.city ? `${journey.city}, ${journey.country}` : journey.country || "Global"}
-                        </td>
-                        <td className="py-3.5 px-3">
-                          <span className="px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-xs font-mono text-zinc-300">
-                            {journey.first_touch_utm_source || "direct"}
-                          </span>
                         </td>
                         <td className="py-3.5 px-3 font-mono text-xs text-zinc-400">
                           {journey.first_touch_landing_page || "/"}
@@ -1449,69 +1601,9 @@ export default function AdminAnalyticsDashboard() {
             </div>
           </div>
         )}
-
-        {/* TAB 7: UTM ATTRIBUTION */}
-        {activeTab === "utms" && (
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden">
-            <div className="p-4 sm:p-5 border-b border-zinc-800">
-              <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2 font-mono">
-                <Target className="w-4 h-4 text-cyan-400" strokeWidth={1.75} />
-                Marketing & Ad Campaign Attribution
-              </h2>
-              <p className="text-xs text-zinc-400">
-                Track Meta Ads, Google PMax, and referral channels driving highest converting traffic
-              </p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs sm:text-sm">
-                <thead>
-                  <tr className="bg-zinc-950/60 text-zinc-400 uppercase font-mono text-[11px] border-b border-zinc-800">
-                    <th className="py-3 px-4 sm:px-6 font-medium">UTM Source</th>
-                    <th className="py-3 px-3 font-medium">UTM Campaign</th>
-                    <th className="py-3 px-3 font-medium">Total Sessions</th>
-                    <th className="py-3 px-3 font-medium">Leads Captured</th>
-                    <th className="py-3 px-4 text-right font-medium">Conversion Rate</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-800/50">
-                  {utmPerformance.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-zinc-400 text-xs font-mono">
-                        No UTM campaigns recorded yet.
-                      </td>
-                    </tr>
-                  ) : (
-                    utmPerformance.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-zinc-850/40 transition-colors">
-                        <td className="py-3 px-4 sm:px-6 font-mono font-medium text-zinc-200">
-                          {item.source}
-                        </td>
-                        <td className="py-3 px-3 font-mono text-zinc-400">{item.campaign}</td>
-                        <td className="py-3 px-3 font-mono font-medium text-zinc-200">{item.sessions.toLocaleString()}</td>
-                        <td className="py-3 px-3 font-mono font-semibold text-zinc-100">{item.leads}</td>
-                        <td className="py-3 px-4 text-right">
-                          <span
-                            className={`inline-block px-2 py-0.5 rounded text-xs font-mono font-semibold ${
-                              item.conversionRate > 0
-                                ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/60"
-                                : "text-zinc-400"
-                            }`}
-                          >
-                            {item.conversionRate}%
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
       </main>
 
-      {/* VISITOR TRAIL INSPECTOR DRAWER (SLIDE-OVER MODAL) */}
+      {/* VISITOR TRAIL INSPECTOR DRAWER */}
       <AnimatePresence>
         {selectedVisitorId && (
           <div className="fixed inset-0 z-50 flex justify-end">

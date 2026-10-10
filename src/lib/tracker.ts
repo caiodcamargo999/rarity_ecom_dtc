@@ -6,6 +6,13 @@ export const SESSION_TIME_KEY = "rarity_sid_time";
 export const UTM_STORAGE_KEY = "rarity_utms";
 export const GEO_STORAGE_KEY = "rarity_geo";
 
+export interface ChannelAttribution {
+  channel: string;
+  source: string;
+  medium: string;
+  campaign: string;
+}
+
 export interface VisitorInfo {
   visitorId: string;
   sessionId: string;
@@ -19,6 +26,7 @@ export interface VisitorInfo {
   countryCode?: string;
   region?: string;
   city?: string;
+  channelInfo: ChannelAttribution;
 }
 
 export interface LeadIdentificationPayload {
@@ -126,7 +134,7 @@ async function resolveGeoAsync() {
       cachedGeo = {
         country: data.country || "United States",
         countryCode: data.country_code || "US",
-        region: data.region || "", // State or Region
+        region: data.region || "",
         city: data.city || "",
       };
       try {
@@ -134,8 +142,180 @@ async function resolveGeoAsync() {
         localStorage.setItem(GEO_STORAGE_KEY, JSON.stringify(cachedGeo));
       } catch (e) {}
     }
-  } catch (err) {
-    // Silently continue with request headers on server
+  } catch (err) {}
+}
+
+// Channel Detection Algorithm
+export function detectTrafficChannel(referrer = "", utms: Record<string, string> = {}): ChannelAttribution {
+  const ref = (referrer || "").toLowerCase();
+  const utmSource = (utms.utm_source || "").toLowerCase();
+  const utmMedium = (utms.utm_medium || "").toLowerCase();
+  const utmCampaign = utms.utm_campaign || "none";
+  const hasFbclid = Boolean(utms.fbclid || utms.fbc || utms.fbp);
+  const hasGclid = Boolean(utms.gclid);
+  const hasTtclid = Boolean(utms.ttclid);
+
+  // 1. ChatGPT & AI Search (OpenAI, Claude, Perplexity, Gemini, Copilot)
+  if (
+    ref.includes("chatgpt.com") ||
+    ref.includes("chat.openai.com") ||
+    ref.includes("openai.com") ||
+    ref.includes("claude.ai") ||
+    ref.includes("perplexity.ai") ||
+    ref.includes("gemini.google.com") ||
+    ref.includes("bard.google.com") ||
+    ref.includes("copilot.microsoft.com") ||
+    utmSource.includes("chatgpt") ||
+    utmSource.includes("openai") ||
+    utmSource.includes("claude") ||
+    utmSource.includes("perplexity")
+  ) {
+    let source = "ChatGPT";
+    if (ref.includes("claude") || utmSource.includes("claude")) source = "Claude AI";
+    else if (ref.includes("perplexity") || utmSource.includes("perplexity")) source = "Perplexity AI";
+    else if (ref.includes("gemini") || utmSource.includes("gemini")) source = "Google Gemini";
+    else if (ref.includes("copilot") || utmSource.includes("copilot")) source = "Microsoft Copilot";
+
+    return {
+      channel: "ChatGPT / AI Search",
+      source,
+      medium: "ai_search",
+      campaign: utmCampaign,
+    };
+  }
+
+  // 2. Meta Ads (Facebook & Instagram Paid Ads)
+  if (
+    hasFbclid ||
+    ((utmSource.includes("meta") || utmSource.includes("facebook") || utmSource.includes("instagram") || utmSource.includes("fb") || utmSource.includes("ig")) &&
+      (utmMedium.includes("cpc") || utmMedium.includes("paid") || utmMedium.includes("ad") || utmMedium.includes("feed") || utmMedium.includes("story") || utmMedium.includes("reels")))
+  ) {
+    return {
+      channel: "Meta Ads",
+      source: utmSource || (ref.includes("instagram") ? "Instagram Ads" : "Facebook Ads"),
+      medium: utmMedium || "paid_social",
+      campaign: utmCampaign,
+    };
+  }
+
+  // 3. Google Ads (Search, PMax, Display)
+  if (
+    hasGclid ||
+    ((utmSource.includes("google") || utmSource.includes("adwords") || utmSource.includes("pmax")) &&
+      (utmMedium.includes("cpc") || utmMedium.includes("ppc") || utmMedium.includes("ad") || utmMedium.includes("search") || utmMedium.includes("display")))
+  ) {
+    return {
+      channel: "Google Ads",
+      source: "Google Ads",
+      medium: utmMedium || "cpc",
+      campaign: utmCampaign,
+    };
+  }
+
+  // 4. Instagram Organic
+  if (
+    ref.includes("instagram.com") ||
+    ref.includes("l.instagram.com") ||
+    utmSource === "instagram" ||
+    utmSource === "ig"
+  ) {
+    return {
+      channel: "Instagram Organic",
+      source: "Instagram",
+      medium: utmMedium || "social_organic",
+      campaign: utmCampaign,
+    };
+  }
+
+  // 5. TikTok (Ads or Organic)
+  if (hasTtclid || ref.includes("tiktok.com") || utmSource.includes("tiktok")) {
+    const isPaid = hasTtclid || utmMedium.includes("cpc") || utmMedium.includes("paid");
+    return {
+      channel: isPaid ? "TikTok Ads" : "TikTok Organic",
+      source: "TikTok",
+      medium: isPaid ? "paid_social" : "social_organic",
+      campaign: utmCampaign,
+    };
+  }
+
+  // 6. YouTube (Organic or Ads)
+  if (ref.includes("youtube.com") || ref.includes("youtu.be") || utmSource.includes("youtube")) {
+    const isPaid = utmMedium.includes("cpc") || utmMedium.includes("paid") || utmMedium.includes("video_ad");
+    return {
+      channel: isPaid ? "YouTube Ads" : "YouTube Organic",
+      source: "YouTube",
+      medium: isPaid ? "video_ad" : "social_organic",
+      campaign: utmCampaign,
+    };
+  }
+
+  // 7. LinkedIn (Organic or Ads)
+  if (ref.includes("linkedin.com") || ref.includes("lnkd.in") || utmSource.includes("linkedin")) {
+    const isPaid = utmMedium.includes("cpc") || utmMedium.includes("paid");
+    return {
+      channel: isPaid ? "LinkedIn Ads" : "LinkedIn Organic",
+      source: "LinkedIn",
+      medium: isPaid ? "paid_social" : "social_organic",
+      campaign: utmCampaign,
+    };
+  }
+
+  // 8. Twitter / X
+  if (ref.includes("t.co") || ref.includes("twitter.com") || ref.includes("x.com") || utmSource.includes("twitter")) {
+    return {
+      channel: "X / Twitter",
+      source: "X (Twitter)",
+      medium: utmMedium || "social_organic",
+      campaign: utmCampaign,
+    };
+  }
+
+  // 9. Google Organic Search
+  if (ref.includes("google.") || ref.includes("google.com")) {
+    return {
+      channel: "Google Organic",
+      source: "Google Search",
+      medium: "organic_search",
+      campaign: "seo",
+    };
+  }
+
+  // 10. Email Marketing
+  if (utmMedium.includes("email") || utmMedium.includes("newsletter") || utmSource.includes("klaviyo") || utmSource.includes("mailchimp")) {
+    return {
+      channel: "Email Marketing",
+      source: utmSource || "Newsletter",
+      medium: "email",
+      campaign: utmCampaign,
+    };
+  }
+
+  // 11. Direct
+  if (!ref || ref === "direct" || (typeof window !== "undefined" && ref.includes(window.location.hostname))) {
+    return {
+      channel: utmSource ? `Campaign (${utmSource})` : "Direct / Bookmarks",
+      source: utmSource || "Direct",
+      medium: utmMedium || "none",
+      campaign: utmCampaign,
+    };
+  }
+
+  // Fallback referral
+  try {
+    const urlObj = new URL(ref);
+    return {
+      channel: `Referral (${urlObj.hostname})`,
+      source: urlObj.hostname,
+      medium: "referral",
+      campaign: utmCampaign,
+    };
+  } catch (e) {
+    return {
+      channel: utmSource || "Direct / Unknown",
+      source: utmSource || "Direct",
+      medium: utmMedium || "none",
+      campaign: utmCampaign,
+    };
   }
 }
 
@@ -162,7 +342,6 @@ export function getOrCreateSessionId(): string {
   const lastTime = parseInt(sessionStorage.getItem(SESSION_TIME_KEY) || "0", 10);
   let sid = sessionStorage.getItem(SESSION_ID_KEY);
 
-  // If no session or > 30 minutes of inactivity, start fresh session
   if (!sid || (lastTime && now - lastTime > 30 * 60 * 1000)) {
     sid = generateId("sid");
     try {
@@ -190,6 +369,7 @@ export function captureAndGetUtms(): Record<string, string> {
     "utm_term",
     "fbclid",
     "gclid",
+    "ttclid",
     "fbc",
     "fbp",
   ];
@@ -209,7 +389,6 @@ export function captureAndGetUtms(): Record<string, string> {
     }
   }
 
-  // Check cookies for fbc/fbp
   const fbc = getCookie("_fbc");
   if (fbc && !stored.fbc) {
     stored.fbc = fbc;
@@ -238,6 +417,8 @@ export function getVisitorInfo(): VisitorInfo {
     typeof window !== "undefined" ? `${window.screen.width}x${window.screen.height}` : "unknown";
   const referrer = typeof document !== "undefined" ? document.referrer || "direct" : "direct";
   const geo = getCachedGeo();
+  const utms = captureAndGetUtms();
+  const channelInfo = detectTrafficChannel(referrer, utms);
 
   return {
     visitorId: getOrCreateVisitorId(),
@@ -247,11 +428,12 @@ export function getVisitorInfo(): VisitorInfo {
     browser,
     screenResolution,
     referrer,
-    utms: captureAndGetUtms(),
+    utms,
     country: geo.country,
     countryCode: geo.countryCode,
     region: geo.region,
     city: geo.city,
+    channelInfo,
   };
 }
 
@@ -275,9 +457,7 @@ async function sendPayload(endpoint: string, payload: any) {
       body: data,
       keepalive: true,
     });
-  } catch (err) {
-    // Fail silently
-  }
+  } catch (err) {}
 }
 
 // Master Tracker Class
@@ -298,16 +478,11 @@ export class RarityTracker {
     this.currentPathname = window.location.pathname;
     this.pageStartTime = Date.now();
 
-    // Trigger async geo resolution in background
     resolveGeoAsync();
 
-    // Setup global click listener
     document.addEventListener("click", this.handleClick.bind(this), { capture: true });
-
-    // Setup scroll listener
     window.addEventListener("scroll", this.handleScroll.bind(this), { passive: true });
 
-    // Setup visibility and unload listeners
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") {
         this.flushCurrentPageMetrics();
@@ -316,20 +491,14 @@ export class RarityTracker {
     window.addEventListener("pagehide", () => this.flushCurrentPageMetrics());
     window.addEventListener("beforeunload", () => this.flushCurrentPageMetrics());
 
-    // Setup periodic heartbeat (every 15s)
     this.startHeartbeat();
-
-    // Listen for VTurb / Video messages
     window.addEventListener("message", this.handleVideoMessage.bind(this));
   }
 
   public trackPageView(pathname: string, title?: string) {
     if (typeof window === "undefined") return;
-
-    // Do NOT track admin or API routes
     if (isIgnoredPath(pathname)) return;
 
-    // Flush previous page metrics if navigating client-side
     if (this.currentPathname && this.currentPathname !== pathname && !isIgnoredPath(this.currentPathname)) {
       this.flushCurrentPageMetrics();
     }
@@ -359,6 +528,10 @@ export class RarityTracker {
       countryCode: info.countryCode,
       region: info.region,
       city: info.city,
+      channel: info.channelInfo.channel,
+      source: info.channelInfo.source,
+      medium: info.channelInfo.medium,
+      campaign: info.channelInfo.campaign,
       timestamp: new Date().toISOString(),
     });
   }
@@ -379,6 +552,8 @@ export class RarityTracker {
       countryCode: info.countryCode,
       region: info.region,
       city: info.city,
+      channel: info.channelInfo.channel,
+      source: info.channelInfo.source,
       eventData,
       timestamp: new Date().toISOString(),
     });
@@ -397,6 +572,10 @@ export class RarityTracker {
       countryCode: info.countryCode,
       region: info.region,
       city: info.city,
+      channel: info.channelInfo.channel,
+      source: info.channelInfo.source,
+      medium: info.channelInfo.medium,
+      campaign: info.channelInfo.campaign,
       ...lead,
       utms: info.utms,
     });
@@ -448,7 +627,6 @@ export class RarityTracker {
           classes: clickable.className?.toString().substring(0, 100),
         });
       } else {
-        // Track general non-button click for warmth heatmap
         this.trackEvent("warm_click", `Click in ${sectionName}`, {
           xPct,
           yPct,
@@ -489,7 +667,6 @@ export class RarityTracker {
       if (!event.data) return;
       const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
 
-      // Check for VTurb / Smartplayer events
       if (data.type?.includes("smartplayer") || data.event?.includes("vturb") || data.event === "play" || data.event === "timeupdate") {
         if (data.event === "play" || data.status === "play") {
           this.trackEvent("vturb_play", "VTurb Video Started", { time: data.currentTime || 0 });
@@ -543,7 +720,6 @@ export class RarityTracker {
   }
 }
 
-// Global singleton instance
 let globalTracker: RarityTracker | null = null;
 
 export function getTracker(): RarityTracker {
