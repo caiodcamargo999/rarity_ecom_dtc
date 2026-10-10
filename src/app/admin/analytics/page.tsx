@@ -46,6 +46,13 @@ import {
   Bot,
   Share2,
   Megaphone,
+  Terminal,
+  Copy,
+  Check,
+  Key,
+  Code2,
+  Server,
+  Cpu,
 } from "lucide-react";
 
 interface OverviewStats {
@@ -203,7 +210,7 @@ interface HeatmapData {
   };
 }
 
-type TabType = "pages" | "channels" | "geo" | "heatmap" | "live" | "vturb" | "journeys";
+type TabType = "pages" | "channels" | "geo" | "heatmap" | "live" | "vturb" | "journeys" | "mcp";
 
 export default function AdminAnalyticsDashboard() {
   const router = useRouter();
@@ -213,6 +220,15 @@ export default function AdminAnalyticsDashboard() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const handleCopyText = (key: string, text: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
+    }
+  };
 
   // Geo State Filter
   const [selectedGeoFilter, setSelectedGeoFilter] = useState<"all" | "us" | "international">("us");
@@ -629,6 +645,7 @@ export default function AdminAnalyticsDashboard() {
               { id: "live", label: `Live Radar (${liveVisitors.length})`, icon: Activity },
               { id: "vturb", label: "VTurb Retention", icon: PlayCircle },
               { id: "journeys", label: "Lead Journeys", icon: Compass },
+              { id: "mcp", label: "Custom MCP & AI", icon: Bot },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -1598,6 +1615,305 @@ export default function AdminAnalyticsDashboard() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 8: CUSTOM MCP & AI INTEGRATIONS */}
+        {activeTab === "mcp" && (
+          <div className="space-y-6">
+            {/* Top Overview Banner */}
+            <div className="bg-gradient-to-r from-cyan-950/40 via-zinc-900 to-indigo-950/40 border border-cyan-900/40 rounded-xl p-5 sm:p-6 relative overflow-hidden">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
+                <div className="space-y-1.5 max-w-2xl">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-cyan-950 text-cyan-400 border border-cyan-800/60">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                      Model Context Protocol (MCP) & OpenAI Schema Ready
+                    </span>
+                    <span className="text-xs text-zinc-500 font-mono">v1.0.0</span>
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-zinc-100 font-mono tracking-tight flex items-center gap-2.5">
+                    <Bot className="w-5 h-5 text-cyan-400" />
+                    Custom MCP Server & AI Telemetry Bridge
+                  </h2>
+                  <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                    Conecte o <strong className="text-zinc-200 font-medium">Claude Desktop</strong>, <strong className="text-zinc-200 font-medium">Cursor IDE</strong> e o <strong className="text-zinc-200 font-medium">ChatGPT (Custom GPT Actions)</strong> diretamente à telemetria de tráfego, conversão de landing pages, canais (ChatGPT, Meta Ads, Google Ads) e estados dos EUA em tempo real.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <a
+                    href="/api/openapi.json"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-750 rounded-lg text-xs font-mono transition-colors cursor-pointer"
+                  >
+                    <Code2 className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>View OpenAPI 3.1 JSON</span>
+                    <ExternalLink className="w-3 h-3 text-zinc-500" />
+                  </a>
+                  <button
+                    onClick={() => handleCopyText("api_url", "https://ecom.rarityagency.io/api/v1/analytics")}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-lg text-xs font-mono transition-colors cursor-pointer"
+                  >
+                    {copiedKey === "api_url" ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedKey === "api_url" ? "Copiado!" : "Copy REST API URL"}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Two Column Setup Guides */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Box 1: Claude Desktop & Cursor IDE Setup */}
+              <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 sm:p-6 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 font-bold text-sm">
+                        C
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-zinc-100 font-mono">
+                          Claude Desktop & Cursor MCP
+                        </h3>
+                        <p className="text-[11px] text-zinc-400">
+                          JSON-RPC Stdio Server Transport via Node.js
+                        </p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono text-[10px]">
+                      stdio / npx
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-zinc-400">
+                    Adicione o servidor no seu arquivo <code className="text-cyan-400 bg-zinc-900 px-1 py-0.5 rounded text-[11px]">claude_desktop_config.json</code>:
+                  </p>
+
+                  <div className="bg-zinc-950 border border-zinc-850 rounded-lg p-3 relative group">
+                    <button
+                      onClick={() =>
+                        handleCopyText(
+                          "claude_config",
+                          `{\n  "mcpServers": {\n    "rarity-analytics": {\n      "command": "node",\n      "args": [\n        "/Users/lenovo/Desktop/DIGITAL MARKETING/03_SOFTWARE, AI AND APP DEVELOPMENT/Claude Cowork/Rarity USA Client Aquisition/rarity_ecom_landing_page/mcp/server.mjs"\n      ],\n      "env": {\n        "RARITY_API_URL": "https://ecom.rarityagency.io",\n        "RARITY_API_KEY": "rarity2025"\n      }\n    }\n  }\n}`
+                        )
+                      }
+                      className="absolute right-2.5 top-2.5 p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-xs transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      {copiedKey === "claude_config" ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-[10px] text-emerald-400">Copiado</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span className="text-[10px]">Copiar JSON</span>
+                        </>
+                      )}
+                    </button>
+                    <pre className="text-[11px] font-mono text-zinc-300 overflow-x-auto pr-20 pt-1 leading-relaxed">
+{`{
+  "mcpServers": {
+    "rarity-analytics": {
+      "command": "node",
+      "args": [
+        ".../rarity_ecom_landing_page/mcp/server.mjs"
+      ],
+      "env": {
+        "RARITY_API_URL": "https://ecom.rarityagency.io",
+        "RARITY_API_KEY": "rarity2025"
+      }
+    }
+  }
+}`}
+                    </pre>
+                  </div>
+
+                  <div className="space-y-1 text-[11px] text-zinc-400">
+                    <div className="flex items-center gap-1.5">
+                      <Terminal className="w-3.5 h-3.5 text-zinc-500" />
+                      <span><strong>macOS:</strong> <code className="text-zinc-300">~/Library/Application Support/Claude/claude_desktop_config.json</code></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Terminal className="w-3.5 h-3.5 text-zinc-500" />
+                      <span><strong>Windows:</strong> <code className="text-zinc-300">%APPDATA%\\Claude\\claude_desktop_config.json</code></span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs text-zinc-400">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> 7 ferramentas integradas
+                  </span>
+                  <span className="font-mono text-[11px] text-cyan-400">@modelcontextprotocol/sdk</span>
+                </div>
+              </div>
+
+              {/* Box 2: ChatGPT Custom GPT Actions Setup */}
+              <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 sm:p-6 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-sm">
+                        GPT
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-zinc-100 font-mono">
+                          ChatGPT Custom GPT Action
+                        </h3>
+                        <p className="text-[11px] text-zinc-400">
+                          OpenAPI 3.1 Schema & Custom API Key Auth
+                        </p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono text-[10px]">
+                      OpenAPI 3.1
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-zinc-400">
+                    No editor do seu Custom GPT, configure uma nova <strong>Action</strong>:
+                  </p>
+
+                  <div className="space-y-2.5">
+                    <div className="bg-zinc-950 border border-zinc-850 rounded-lg p-3 space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono">
+                        <span>1. Schema URL (Import from URL):</span>
+                        <button
+                          onClick={() => handleCopyText("gpt_url", "https://ecom.rarityagency.io/api/openapi.json")}
+                          className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer"
+                        >
+                          {copiedKey === "gpt_url" ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedKey === "gpt_url" ? "Copiado" : "Copiar"}</span>
+                        </button>
+                      </div>
+                      <div className="font-mono text-xs text-cyan-300 bg-zinc-900 px-2 py-1 rounded select-all break-all">
+                        https://ecom.rarityagency.io/api/openapi.json
+                      </div>
+                    </div>
+
+                    <div className="bg-zinc-950 border border-zinc-850 rounded-lg p-3 space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono">
+                        <span>2. Authentication Settings:</span>
+                        <button
+                          onClick={() => handleCopyText("gpt_key", "rarity2025")}
+                          className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer"
+                        >
+                          {copiedKey === "gpt_key" ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedKey === "gpt_key" ? "Copiado" : "Copiar Chave"}</span>
+                        </button>
+                      </div>
+                      <div className="text-[11px] text-zinc-300 space-y-0.5">
+                        <div>• Auth Type: <strong className="text-zinc-100">API Key</strong></div>
+                        <div>• Header Name: <strong className="text-cyan-400 font-mono">x-api-key</strong></div>
+                        <div>• Key Value: <strong className="text-zinc-100 font-mono">rarity2025</strong></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs text-zinc-400">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Compatível com GPT-4o & o1
+                  </span>
+                  <span className="font-mono text-[11px] text-emerald-400">REST API v1</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Grid of 7 MCP Tools */}
+            <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 sm:p-6 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-zinc-100 font-mono flex items-center gap-2">
+                    <Cpu className="w-4 h-4 text-cyan-400" />
+                    7 Ferramentas MCP & Ações Expostas à Inteligência Artificial
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    O Claude e o ChatGPT acionam essas ferramentas de forma autônoma para responder dúvidas analíticas.
+                  </p>
+                </div>
+                <span className="text-xs font-mono text-zinc-400">7 tools registradas</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {[
+                  {
+                    name: "get_analytics_overview",
+                    label: "Executive KPIs Overview",
+                    desc: "Visitantes totais, únicos, tempo médio, taxa de scroll, plays VTurb, leads e conversão.",
+                    prompt: "Claude, me dê o resumo executivo de tráfego e conversão dos últimos 7 dias.",
+                  },
+                  {
+                    name: "get_landing_pages_performance",
+                    label: "Landing Pages Breakdown",
+                    desc: "Métricas página a página (/growth-team, /lp2, etc.): views, cliques no CTA, retenção e leads.",
+                    prompt: "Quais são as 2 landing pages com maior taxa de conversão em leads?",
+                  },
+                  {
+                    name: "get_channels_attribution",
+                    label: "Channels & Ads Attribution",
+                    desc: "Atribuição de canais: ChatGPT / AI Search, Meta Ads, Google Ads, Instagram Orgânico e campanhas UTM.",
+                    prompt: "Quantos leads e sessões vieram do Meta Ads em comparação com o ChatGPT?",
+                  },
+                  {
+                    name: "get_us_states_and_geo",
+                    label: "US States & Geolocation",
+                    desc: "Tráfego por estados dos EUA (Califórnia, Flórida, Texas, NY, etc.) e países globais.",
+                    prompt: "Mostre o ranking dos 5 estados americanos que mais geraram visitantes e leads.",
+                  },
+                  {
+                    name: "get_live_visitors",
+                    label: "Live Active Visitors Radar",
+                    desc: "Visitantes navegando ao vivo nas landing pages neste exato minuto (últimos 5 minutos).",
+                    prompt: "Quantas pessoas estão navegando na página agora e em quais rotas?",
+                  },
+                  {
+                    name: "get_lead_journeys",
+                    label: "Lead Journey Trails",
+                    desc: "Trilha cronológica dos leads: primeiro canal de origem, landing page de entrada e agendamentos Cal.com.",
+                    prompt: "Analise a jornada do lead mais recente e como ele chegou até o agendamento.",
+                  },
+                  {
+                    name: "get_vturb_video_stats",
+                    label: "VTurb Video Player Retention",
+                    desc: "Retenção segundo a segundo do VTurb (marcos 10s, 30s, 60s, 120s, 300s, 600s) e liberação do pitch CTA.",
+                    prompt: "Qual a taxa de retenção do vídeo nos primeiros 60 segundos e quantos chegaram ao pitch?",
+                  },
+                ].map((tool, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-zinc-950/80 border border-zinc-850 hover:border-zinc-750 rounded-lg p-3.5 flex flex-col justify-between space-y-2.5 transition-colors"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs font-semibold text-cyan-400">
+                          {tool.name}
+                        </span>
+                        <span className="text-[10px] font-mono text-zinc-500 uppercase">tool</span>
+                      </div>
+                      <div className="text-xs font-medium text-zinc-200">{tool.label}</div>
+                      <p className="text-[11px] text-zinc-400 leading-relaxed">{tool.desc}</p>
+                    </div>
+
+                    <div className="pt-2 border-t border-zinc-900 flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-mono text-zinc-500 truncate">
+                        Prompt: &quot;{tool.prompt.slice(0, 32)}...&quot;
+                      </span>
+                      <button
+                        onClick={() => handleCopyText(`prompt_${idx}`, tool.prompt)}
+                        className="px-2 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-zinc-100 rounded text-[10px] font-mono transition-colors cursor-pointer flex items-center gap-1 shrink-0"
+                      >
+                        {copiedKey === `prompt_${idx}` ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedKey === `prompt_${idx}` ? "Copiado" : "Copiar Prompt"}</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
