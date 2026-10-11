@@ -132,19 +132,56 @@ export function classifyChannel(source?: string, medium?: string, referrer?: str
   return { channel: s.charAt(0).toUpperCase() + s.slice(1), category: "Referral / Other" };
 }
 
-export async function getFullAnalyticsData(range: string = "7d", visitorIdDrilldown: string = "") {
+export async function getFullAnalyticsData(
+  range: string = "7d",
+  visitorIdDrilldown: string = "",
+  customStart?: string,
+  customEnd?: string
+) {
   const now = new Date();
-  let startDate = new Date();
+  let startDate: Date | null = null;
+  let endDate: Date | null = null;
+
   if (range === "today") {
+    startDate = new Date();
     startDate.setHours(0, 0, 0, 0);
-  } else if (range === "7d") {
+  } else if (range === "yesterday") {
+    startDate = new Date();
+    startDate.setDate(now.getDate() - 1);
+    startDate.setHours(0, 0, 0, 0);
+    endDate = new Date();
+    endDate.setDate(now.getDate() - 1);
+    endDate.setHours(23, 59, 59, 999);
+  } else if (range === "7d_excl" || range === "last_7d_excl") {
+    startDate = new Date();
     startDate.setDate(now.getDate() - 7);
-  } else if (range === "30d") {
-    startDate.setDate(now.getDate() - 30);
-  } else {
-    startDate = new Date(2024, 0, 1);
+    startDate.setHours(0, 0, 0, 0);
+    endDate = new Date();
+    endDate.setDate(now.getDate() - 1);
+    endDate.setHours(23, 59, 59, 999);
+  } else if (range === "7d") {
+    startDate = new Date();
+    startDate.setDate(now.getDate() - 7);
+  } else if (range === "this_month") {
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+  } else if (range === "last_month") {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0);
+    endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+  } else if (range === "3m" || range === "last_3m" || range === "90d") {
+    startDate = new Date();
+    startDate.setDate(now.getDate() - 90);
+  } else if (range === "custom" && customStart) {
+    startDate = new Date(customStart);
+    if (customEnd) {
+      endDate = new Date(customEnd);
+      if (customEnd.length <= 10) {
+        endDate.setHours(23, 59, 59, 999);
+      }
+    }
+  } else if (range === "all") {
+    startDate = null; // No date filter - pulls all time since site creation!
+    endDate = null;
   }
-  const startIso = startDate.toISOString();
 
   if (visitorIdDrilldown) {
     if (!isSupabaseConfigured || !supabaseAdmin) {
@@ -238,6 +275,7 @@ export async function getFullAnalyticsData(range: string = "7d", visitorIdDrilld
       utmPerformance: [],
       channelStats: [],
       geoStats: { countries: [], states: [], cities: [] },
+      heatmapByPath: {},
       vturbStats: {
         totalPlays: 0,
         totalUnlocks: 0,
@@ -258,37 +296,46 @@ export async function getFullAnalyticsData(range: string = "7d", visitorIdDrilld
     .order("last_seen_at", { ascending: false })
     .limit(50);
 
-  // 2. Fetch pageviews for range
-  const { data: pageviewsData } = await supabaseAdmin
+  // 2. Fetch pageviews with date boundaries
+  let pvQuery = supabaseAdmin
     .from("analytics_pageviews")
-    .select("id, visitor_id, session_id, pathname, title, duration_seconds, scroll_depth_max, is_bounce, created_at")
-    .gte("created_at", startIso);
+    .select("id, visitor_id, session_id, pathname, title, duration_seconds, scroll_depth_max, is_bounce, created_at");
+  if (startDate) pvQuery = pvQuery.gte("created_at", startDate.toISOString());
+  if (endDate) pvQuery = pvQuery.lte("created_at", endDate.toISOString());
+  const { data: pageviewsData } = await pvQuery;
 
-  // 3. Fetch events for range
-  const { data: eventsData } = await supabaseAdmin
+  // 3. Fetch events with date boundaries
+  let evQuery = supabaseAdmin
     .from("analytics_events")
-    .select("id, visitor_id, pathname, event_type, event_name, event_data, created_at")
-    .gte("created_at", startIso);
+    .select("id, visitor_id, pathname, event_type, event_name, event_data, created_at");
+  if (startDate) evQuery = evQuery.gte("created_at", startDate.toISOString());
+  if (endDate) evQuery = evQuery.lte("created_at", endDate.toISOString());
+  const { data: eventsData } = await evQuery;
 
-  // 4. Fetch leads for range
-  const { data: leadsData } = await supabaseAdmin
+  // 4. Fetch leads with date boundaries
+  let ldQuery = supabaseAdmin
     .from("analytics_leads")
-    .select("*")
-    .gte("created_at", startIso);
+    .select("*");
+  if (startDate) ldQuery = ldQuery.gte("created_at", startDate.toISOString());
+  if (endDate) ldQuery = ldQuery.lte("created_at", endDate.toISOString());
+  const { data: leadsData } = await ldQuery;
 
-  // 5. Fetch sessions for range
-  const { data: sessionsData } = await supabaseAdmin
+  // 5. Fetch sessions with date boundaries
+  let sesQuery = supabaseAdmin
     .from("analytics_sessions")
-    .select("*")
-    .gte("started_at", startIso);
+    .select("*");
+  if (startDate) sesQuery = sesQuery.gte("started_at", startDate.toISOString());
+  if (endDate) sesQuery = sesQuery.lte("started_at", endDate.toISOString());
+  const { data: sessionsData } = await sesQuery;
 
-  // 6. Fetch visitors list
-  const { data: visitorsList } = await supabaseAdmin
+  // 6. Fetch visitors list with date boundaries
+  let visQuery = supabaseAdmin
     .from("analytics_visitors")
     .select("*")
-    .gte("last_seen_at", startIso)
-    .order("last_seen_at", { ascending: false })
-    .limit(150);
+    .order("last_seen_at", { ascending: false });
+  if (startDate) visQuery = visQuery.gte("last_seen_at", startDate.toISOString());
+  if (endDate) visQuery = visQuery.lte("last_seen_at", endDate.toISOString());
+  const { data: visitorsList } = await visQuery.limit(500);
 
   const allPageviews = (pageviewsData || []).filter((p) => !p.pathname?.startsWith("/admin") && !p.pathname?.startsWith("/api"));
   const allEvents = eventsData || [];
@@ -559,6 +606,73 @@ export async function getFullAnalyticsData(range: string = "7d", visitorIdDrilld
   }));
   utmPerformance.sort((a, b) => b.sessions - a.sessions);
 
+  // Heatmap Aggregations
+  const heatmapByPath: Record<string, {
+    clicks: Array<{ xPct: number; yPct: number; label: string; count: number; isBooking: boolean; section: string }>;
+    hotspots: Array<{ label: string; section: string; count: number; isBooking: boolean }>;
+    scrollStats: { m25: number; m50: number; m75: number; m90: number; m100: number; totalViews: number };
+  }> = {};
+
+  for (const pv of allPageviews) {
+    const path = pv.pathname || "/";
+    if (!heatmapByPath[path]) {
+      heatmapByPath[path] = {
+        clicks: [],
+        hotspots: [],
+        scrollStats: { m25: 0, m50: 0, m75: 0, m90: 0, m100: 0, totalViews: 0 },
+      };
+    }
+    heatmapByPath[path].scrollStats.totalViews += 1;
+    const s = pv.scroll_depth_max || 0;
+    if (s >= 25) heatmapByPath[path].scrollStats.m25 += 1;
+    if (s >= 50) heatmapByPath[path].scrollStats.m50 += 1;
+    if (s >= 75) heatmapByPath[path].scrollStats.m75 += 1;
+    if (s >= 90) heatmapByPath[path].scrollStats.m90 += 1;
+    if (s >= 100) heatmapByPath[path].scrollStats.m100 += 1;
+  }
+
+  const clickGroups: Record<string, Record<string, any>> = {};
+  for (const ev of allEvents) {
+    if (ev.event_type === "cta_click" || ev.event_type === "warm_click") {
+      const path = ev.pathname || "/";
+      if (!clickGroups[path]) clickGroups[path] = {};
+
+      const data = ev.event_data || {};
+      const label = ev.event_name || data.label || "Click";
+      const section = data.section || "general";
+      const xPct = typeof data.xPct === "number" ? data.xPct : 50;
+      const yPct = typeof data.yPct === "number" ? data.yPct : 50;
+      const isBooking = Boolean(data.isBooking);
+
+      const key = `${label}___${Math.round(xPct)}___${Math.round(yPct)}`;
+      if (!clickGroups[path][key]) {
+        clickGroups[path][key] = {
+          label,
+          section,
+          xPct,
+          yPct,
+          count: 0,
+          isBooking,
+        };
+      }
+      clickGroups[path][key].count += 1;
+    }
+  }
+
+  for (const [path, items] of Object.entries(clickGroups)) {
+    if (!heatmapByPath[path]) {
+      heatmapByPath[path] = {
+        clicks: [],
+        hotspots: [],
+        scrollStats: { m25: 0, m50: 0, m75: 0, m90: 0, m100: 0, totalViews: 0 },
+      };
+    }
+    const clickList = Object.values(items);
+    clickList.sort((a, b) => b.count - a.count);
+    heatmapByPath[path].clicks = clickList;
+    heatmapByPath[path].hotspots = clickList.slice(0, 15);
+  }
+
   return {
     isDemo: false,
     timeframe: range,
@@ -591,6 +705,7 @@ export async function getFullAnalyticsData(range: string = "7d", visitorIdDrilld
       states: statesList,
       cities: citiesList.slice(0, 20),
     },
+    heatmapByPath,
     vturbStats: {
       totalPlays: vturbPlays,
       totalUnlocks: vturbUnlocks,

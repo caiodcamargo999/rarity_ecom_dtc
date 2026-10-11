@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -53,6 +53,9 @@ import {
   Code2,
   Server,
   Cpu,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
 } from "lucide-react";
 
 interface OverviewStats {
@@ -210,11 +213,90 @@ interface HeatmapData {
   };
 }
 
+export type RangePreset =
+  | "today"
+  | "yesterday"
+  | "7d_excl"
+  | "this_month"
+  | "last_month"
+  | "3m"
+  | "all"
+  | "custom";
+
+const PRESETS: Array<{ id: RangePreset; label: string }> = [
+  { id: "today", label: "Today" },
+  { id: "yesterday", label: "Yesterday" },
+  { id: "7d_excl", label: "Last 7 days (excluding today)" },
+  { id: "this_month", label: "This month" },
+  { id: "last_month", label: "Last month" },
+  { id: "3m", label: "Last 3 months" },
+  { id: "all", label: "All time" },
+];
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+const SHORT_MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
+
+function formatDisplayDate(d?: Date | null): string {
+  if (!d) return "Today";
+  return `${SHORT_MONTH_NAMES[d.getMonth()]} ${d.getDate()}`;
+}
+
+function isSameDay(d1: Date, d2: Date): boolean {
+  return (
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
+  );
+}
+
+function isDateInRange(target: Date, start: Date, end: Date): boolean {
+  const t = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+  const s = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+  const e = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+  const min = Math.min(s, e);
+  const max = Math.max(s, e);
+  return t >= min && t <= max;
+}
+
 type TabType = "pages" | "channels" | "geo" | "heatmap" | "live" | "vturb" | "journeys" | "mcp";
 
 export default function AdminAnalyticsDashboard() {
   const router = useRouter();
-  const [range, setRange] = useState<"today" | "7d" | "30d" | "all">("7d");
+  const [rangePreset, setRangePreset] = useState<RangePreset>("today");
+  const [customStartDate, setCustomStartDate] = useState<Date | null>(null);
+  const [customEndDate, setCustomEndDate] = useState<Date | null>(null);
+
+  // Date picker dropdown & calendar state
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [datePickerView, setDatePickerView] = useState<"presets" | "calendar">("presets");
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
+  const [tempStartDate, setTempStartDate] = useState<Date>(new Date());
+  const [tempEndDate, setTempEndDate] = useState<Date>(new Date());
+  const datePickerRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
+        setIsDatePickerOpen(false);
+        setDatePickerView("presets");
+      }
+    }
+    if (isDatePickerOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDatePickerOpen]);
+
   const [activeTab, setActiveTab] = useState<TabType>("pages");
   const [searchQuery, setSearchQuery] = useState("");
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -290,7 +372,15 @@ export default function AdminAnalyticsDashboard() {
       else setIsRefreshing(true);
 
       try {
-        const res = await fetch(`/api/admin/analytics?range=${range}&search=${encodeURIComponent(searchQuery)}`);
+        let url = `/api/admin/analytics?range=${rangePreset}&search=${encodeURIComponent(searchQuery)}`;
+        if (rangePreset === "custom" && customStartDate) {
+          url += `&startDate=${encodeURIComponent(customStartDate.toISOString())}`;
+          if (customEndDate) {
+            url += `&endDate=${encodeURIComponent(customEndDate.toISOString())}`;
+          }
+        }
+
+        const res = await fetch(url);
 
         if (res.status === 401) {
           router.push("/admin/login");
@@ -329,7 +419,7 @@ export default function AdminAnalyticsDashboard() {
         setIsRefreshing(false);
       }
     },
-    [range, searchQuery, router, selectedHeatmapPage]
+    [rangePreset, customStartDate, customEndDate, searchQuery, router, selectedHeatmapPage]
   );
 
   useEffect(() => {
@@ -401,7 +491,7 @@ export default function AdminAnalyticsDashboard() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `rarity_analytics_${activeTab}_${range}.csv`);
+    link.setAttribute("download", `rarity_analytics_${activeTab}_${rangePreset}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -444,6 +534,115 @@ export default function AdminAnalyticsDashboard() {
     );
   }, [recentJourneys, searchQuery]);
 
+  const currentRangeLabel = useMemo(() => {
+    if (rangePreset === "custom") {
+      if (customStartDate && customEndDate) {
+        if (isSameDay(customStartDate, customEndDate)) {
+          return formatDisplayDate(customStartDate);
+        }
+        return `${formatDisplayDate(customStartDate)} – ${formatDisplayDate(customEndDate)}`;
+      }
+      if (customStartDate) return formatDisplayDate(customStartDate);
+      return "Custom range";
+    }
+    const found = PRESETS.find((p) => p.id === rangePreset);
+    return found ? found.label : "Today";
+  }, [rangePreset, customStartDate, customEndDate]);
+
+  const handleSelectPreset = (preset: RangePreset) => {
+    setRangePreset(preset);
+    setCustomStartDate(null);
+    setCustomEndDate(null);
+    setIsDatePickerOpen(false);
+  };
+
+  const handleOpenCalendar = () => {
+    setDatePickerView("calendar");
+    const start = customStartDate || new Date();
+    const end = customEndDate || new Date();
+    setTempStartDate(start);
+    setTempEndDate(end);
+    setCalendarMonth(start);
+  };
+
+  const handlePrevMonth = () => {
+    setCalendarMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCalendarMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const handleDayClick = (dayDate: Date) => {
+    if (!tempStartDate || (tempStartDate && tempEndDate && !isSameDay(tempStartDate, tempEndDate))) {
+      setTempStartDate(dayDate);
+      setTempEndDate(dayDate);
+    } else if (tempStartDate && isSameDay(tempStartDate, tempEndDate)) {
+      if (dayDate.getTime() < tempStartDate.getTime()) {
+        setTempStartDate(dayDate);
+        setTempEndDate(tempStartDate);
+      } else {
+        setTempEndDate(dayDate);
+      }
+    }
+  };
+
+  const handleApplyCustomRange = () => {
+    setRangePreset("custom");
+    setCustomStartDate(tempStartDate);
+    setCustomEndDate(tempEndDate);
+    setIsDatePickerOpen(false);
+    setDatePickerView("presets");
+  };
+
+  const calendarDays = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+
+    const firstDayOfWeek = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+    const days: Array<{
+      date: Date;
+      dayNum: number;
+      isCurrentMonth: boolean;
+    }> = [];
+
+    // Preceding month padding days
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+      const dayNum = daysInPrevMonth - i;
+      days.push({
+        date: new Date(year, month - 1, dayNum),
+        dayNum,
+        isCurrentMonth: false,
+      });
+    }
+
+    // Current month days
+    for (let d = 1; d <= daysInMonth; d++) {
+      days.push({
+        date: new Date(year, month, d),
+        dayNum: d,
+        isCurrentMonth: true,
+      });
+    }
+
+    // Trailing padding days
+    const remaining = 7 - (days.length % 7);
+    if (remaining < 7) {
+      for (let d = 1; d <= remaining; d++) {
+        days.push({
+          date: new Date(year, month + 1, d),
+          dayNum: d,
+          isCurrentMonth: false,
+        });
+      }
+    }
+
+    return days;
+  }, [calendarMonth]);
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-cyan-500 selection:text-zinc-950 flex flex-col antialiased">
       {/* Subtle Ambient Vignette */}
@@ -479,28 +678,171 @@ export default function AdminAnalyticsDashboard() {
 
         {/* Center/Right Controls: Range, Refresh, Search, Export, Logout */}
         <div className="flex items-center flex-wrap gap-2 sm:gap-3">
-          {/* Date Range Selector */}
-          <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg p-0.5 text-xs">
-            {(
-              [
-                { key: "today", label: "Today" },
-                { key: "7d", label: "7D" },
-                { key: "30d", label: "30D" },
-                { key: "all", label: "All" },
-              ] as const
-            ).map((item) => (
-              <button
-                key={item.key}
-                onClick={() => setRange(item.key)}
-                className={`px-3 py-1 rounded-md font-medium transition-colors cursor-pointer ${
-                  range === item.key
-                    ? "bg-zinc-800 text-zinc-100 shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+          {/* Customizable Timeframe Dropdown (Presets & Calendar) */}
+          <div className="relative" ref={datePickerRef}>
+            <button
+              onClick={() => {
+                setIsDatePickerOpen(!isDatePickerOpen);
+                if (!isDatePickerOpen) {
+                  setDatePickerView("presets");
+                }
+              }}
+              className="flex items-center gap-2 px-3.5 py-1.5 bg-zinc-900/90 hover:bg-zinc-850 text-zinc-200 border border-zinc-800 hover:border-zinc-700 rounded-xl text-xs font-medium transition-all cursor-pointer shadow-sm active:scale-[0.98]"
+            >
+              <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+              <span>{currentRangeLabel}</span>
+              {isDatePickerOpen ? (
+                <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+              )}
+            </button>
+
+            {/* Dropdown Popover */}
+            <AnimatePresence>
+              {isDatePickerOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 bg-[#0f0f11] border border-zinc-800 rounded-2xl shadow-2xl p-2.5 text-xs text-zinc-300 backdrop-blur-xl"
+                >
+                  {datePickerView === "presets" ? (
+                    // VIEW 1: PRESETS LIST
+                    <div className="space-y-0.5">
+                      {PRESETS.map((preset) => {
+                        const isSelected = rangePreset === preset.id;
+                        return (
+                          <button
+                            key={preset.id}
+                            onClick={() => handleSelectPreset(preset.id)}
+                            className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                              isSelected
+                                ? "text-zinc-100 bg-zinc-800/80 font-semibold"
+                                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850/60"
+                            }`}
+                          >
+                            <span>{preset.label}</span>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+                          </button>
+                        );
+                      })}
+
+                      {/* Divider */}
+                      <div className="my-1.5 border-t border-zinc-800/80" />
+
+                      {/* Custom Range Action */}
+                      <button
+                        onClick={handleOpenCalendar}
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                          rangePreset === "custom"
+                            ? "text-zinc-100 bg-zinc-800/80 font-semibold"
+                            : "text-zinc-300 hover:text-white hover:bg-zinc-850/60"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                          <span>Custom range...</span>
+                        </div>
+                        <span className="text-[11px] text-zinc-500 font-mono">
+                          {formatDisplayDate(customStartDate || new Date())}
+                        </span>
+                      </button>
+                    </div>
+                  ) : (
+                    // VIEW 2: INTERACTIVE CALENDAR DATE PICKER
+                    <div>
+                      {/* Back to Presets */}
+                      <button
+                        onClick={() => setDatePickerView("presets")}
+                        className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-100 font-medium transition-colors cursor-pointer py-1 px-1.5 rounded-lg hover:bg-zinc-800/60 mb-2"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                        <span>Presets</span>
+                      </button>
+
+                      {/* Month Navigation */}
+                      <div className="flex items-center justify-between px-1 mb-3">
+                        <button
+                          onClick={handlePrevMonth}
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/80 transition-colors cursor-pointer"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <span className="text-xs sm:text-sm font-semibold text-zinc-100">
+                          {MONTH_NAMES[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
+                        </span>
+                        <button
+                          onClick={handleNextMonth}
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/80 transition-colors cursor-pointer"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Weekday Labels (S M T W T F S) */}
+                      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-zinc-500 mb-1">
+                        {["S", "M", "T", "W", "T", "F", "S"].map((day, idx) => (
+                          <div key={idx} className="py-1">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Interactive Days Grid */}
+                      <div className="grid grid-cols-7 gap-1 text-center mb-3">
+                        {calendarDays.map((item, idx) => {
+                          const isStart = isSameDay(item.date, tempStartDate);
+                          const isEnd = isSameDay(item.date, tempEndDate);
+                          const inRange = isDateInRange(item.date, tempStartDate, tempEndDate);
+                          const isTodayDate = isSameDay(item.date, new Date());
+
+                          let cellClasses = "h-8 w-8 mx-auto flex items-center justify-center text-xs transition-all cursor-pointer ";
+
+                          if (isStart || isEnd) {
+                            cellClasses += "bg-white text-zinc-950 font-bold rounded-lg shadow-md scale-105 ";
+                          } else if (inRange) {
+                            cellClasses += "bg-zinc-800 text-zinc-100 font-medium rounded-md ";
+                          } else if (item.isCurrentMonth) {
+                            cellClasses += isTodayDate
+                              ? "text-zinc-100 font-semibold underline underline-offset-4 decoration-zinc-500 hover:bg-zinc-800/80 rounded-lg "
+                              : "text-zinc-300 hover:bg-zinc-800/80 hover:text-white rounded-lg ";
+                          } else {
+                            cellClasses += "text-zinc-600 hover:bg-zinc-900 hover:text-zinc-400 rounded-lg ";
+                          }
+
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => handleDayClick(item.date)}
+                              className={cellClasses}
+                            >
+                              {item.dayNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Selected Range Label */}
+                      <div className="text-xs text-zinc-400 px-1 mb-3 font-medium flex items-center gap-1.5">
+                        <span>{formatDisplayDate(tempStartDate)}</span>
+                        <span className="text-zinc-600">→</span>
+                        <span>{formatDisplayDate(tempEndDate)}</span>
+                      </div>
+
+                      {/* Apply Range Button */}
+                      <button
+                        onClick={handleApplyCustomRange}
+                        className="w-full py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold rounded-xl text-xs transition-all cursor-pointer shadow-md active:scale-[0.99] flex items-center justify-center gap-1.5"
+                      >
+                        Apply range
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Auto Refresh Toggle */}
