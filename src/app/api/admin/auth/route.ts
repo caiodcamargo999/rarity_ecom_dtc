@@ -1,69 +1,159 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
-
-const ADMIN_PASSWORD = (process.env.ADMIN_DASHBOARD_PASSWORD || "rarity2025").trim();
-const AUTH_COOKIE_NAME = "rarity_analytics_auth";
-const LEGACY_COOKIE_NAME = "rarity_matrix_auth";
-
-function isValidPassword(input?: string): boolean {
-  if (!input) return false;
-  const p = input.trim().toLowerCase();
-  return (
-    p === ADMIN_PASSWORD.toLowerCase() ||
-    p === "rarity2025" ||
-    p === "rarity25" ||
-    p === "rarity"
-  );
-}
-
-function getExpectedToken(): string {
-  return crypto.createHash("sha256").update(`rarity_analytics_${ADMIN_PASSWORD}`).digest("hex");
-}
-
-function getLegacyToken(): string {
-  return crypto.createHash("sha256").update(`rarity_matrix_${ADMIN_PASSWORD}`).digest("hex");
-}
+import {
+  verifyPassword,
+  verifySessionToken,
+  generateSignedSessionToken,
+  checkRateLimit,
+  recordFailedAttempt,
+  clearRateLimit,
+  getClientIp,
+  AUTH_COOKIE_NAME,
+  LEGACY_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+} from "@/lib/auth-security";
 
 export async function POST(req: NextRequest) {
-  try {
-    const { password } = await req.json();
+  const ip = getClientIp(req);
 
-    if (!isValidPassword(password)) {
-      return NextResponse.json({ success: false, message: "Invalid access key / password" }, { status: 401 });
+  // 1. Check rate limit
+  const rateLimitStatus = checkRateLimit(ip);
+  if (rateLimitStatus.isLocked) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "RATE_LIMITED",
+        message: `Too many failed login attempts. Security lock active for ${rateLimitStatus.remainingSeconds}s.`,
+        retryAfter: rateLimitStatus.remainingSeconds,
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": rateLimitStatus.remainingSeconds.toString(),
+          "X-Frame-Options": "DENY",
+          "X-Content-Type-Options": "nosniff",
+        },
+      }
+    );
+  }
+
+  try {
+    const body = await req.json();
+    const { password, _hp_sec } = body;
+
+    // 2. Anti-bot honeypot check: If the hidden honeypot field is filled, reject silently
+    if (_hp_sec && typeof _hp_sec === "string" && _hp_sec.length > 0) {
+      recordFailedAttempt(ip);
+      return NextResponse.json(
+        { success: false, message: "Invalid credentials" },
+        { status: 401 }
+      );
     }
 
-    const token = getExpectedToken();
-    const res = NextResponse.json({ success: true, message: "Authentication successful" });
+    // 3. Constant-time password validation
+    const isValid = verifyPassword(password);
 
-    res.cookies.set(AUTH_COOKIE_NAME, token, {
+    if (!isValid) {
+      const record = recordFailedAttempt(ip);
+      const msg = record.isLocked
+        ? `Too many failed attempts. Security lock active for ${record.remainingSeconds}s.`
+        : `Invalid access key. ${record.attemptsLeft} attempt(s) remaining before lockout.`;
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: msg,
+          attemptsLeft: record.attemptsLeft,
+          isLocked: record.isLocked,
+        },
+        {
+          status: record.isLocked ? 429 : 401,
+          headers: {
+            "X-Frame-Options": "DENY",
+            "X-Content-Type-Options": "nosniff",
+          },
+        }
+      );
+    }
+
+    // 4. Success: Clear rate limit & issue cryptographically signed session token
+    clearRateLimit(ip);
+    const sessionToken = generateSignedSessionToken();
+
+    const res = NextResponse.json(
+      { success: true, message: "Authentication successful" },
+      {
+        headers: {
+          "X-Frame-Options": "DENY",
+          "X-Content-Type-Options": "nosniff",
+          "Cache-Control": "no-store, no-cache, must-revalidate, private",
+        },
+      }
+    );
+
+    res.cookies.set(AUTH_COOKIE_NAME, sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      sameSite: "strict",
+      maxAge: SESSION_MAX_AGE_SECONDS,
       path: "/",
     });
 
     return res;
   } catch (e: any) {
-    return NextResponse.json({ success: false, error: e?.message || "Auth error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: e?.message || "Auth error" },
+      { status: 500 }
+    );
   }
 }
 
 export async function GET(req: NextRequest) {
-  const cookie = req.cookies.get(AUTH_COOKIE_NAME)?.value || req.cookies.get(LEGACY_COOKIE_NAME)?.value;
-  const expected = getExpectedToken();
-  const legacy = getLegacyToken();
+  const cookie =
+    req.cookies.get(AUTH_COOKIE_NAME)?.value ||
+    req.cookies.get(LEGACY_COOKIE_NAME)?.value;
 
-  if (cookie && (cookie === expected || cookie === legacy)) {
-    return NextResponse.json({ authenticated: true });
-  }
+  const isAuth = verifySessionToken(cookie);
 
-  return NextResponse.json({ authenticated: false }, { status: 401 });
+  return NextResponse.json(
+    { authenticated: isAuth },
+    {
+      status: isAuth ? 200 : 401,
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, private",
+        "X-Frame-Options": "DENY",
+        "X-Content-Type-Options": "nosniff",
+      },
+    }
+  );
 }
 
 export async function DELETE() {
-  const res = NextResponse.json({ success: true, message: "Logged out" });
-  res.cookies.delete(AUTH_COOKIE_NAME);
-  res.cookies.delete(LEGACY_COOKIE_NAME);
+  const res = NextResponse.json(
+    { success: true, message: "Logged out" },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, private",
+        "X-Frame-Options": "DENY",
+        "X-Content-Type-Options": "nosniff",
+      },
+    }
+  );
+
+  res.cookies.set(AUTH_COOKIE_NAME, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 0,
+    path: "/",
+  });
+
+  res.cookies.set(LEGACY_COOKIE_NAME, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 0,
+    path: "/",
+  });
+
   return res;
 }

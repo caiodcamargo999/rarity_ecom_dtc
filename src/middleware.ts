@@ -6,11 +6,45 @@ export function middleware(request: NextRequest) {
   const hostname = request.headers.get("host") || "";
   const pathname = url.pathname;
 
-  // 1. Skip Next.js internals, static assets, APIs, admin dashboard, and image files
+  // 1. Zero-Trust Admin Route Protection at the Edge
+  if (pathname.startsWith("/admin")) {
+    const isLoginPage = pathname === "/admin/login";
+    const authCookie =
+      request.cookies.get("rarity_analytics_auth")?.value ||
+      request.cookies.get("rarity_matrix_auth")?.value;
+    const hasAuth = Boolean(authCookie && authCookie.length >= 32);
+
+    // If attempting to access protected admin views without valid session, redirect immediately to login
+    if (!isLoginPage && !hasAuth) {
+      const loginUrl = new URL("/admin/login", request.url);
+      if (pathname !== "/admin") {
+        loginUrl.searchParams.set("redirect", pathname);
+      }
+      const res = NextResponse.redirect(loginUrl);
+      res.headers.set("X-Frame-Options", "DENY");
+      res.headers.set("X-Content-Type-Options", "nosniff");
+      res.headers.set("Cache-Control", "no-store, private");
+      return res;
+    }
+
+    // If already logged in and visiting /admin/login, redirect to /admin/analytics
+    if (isLoginPage && hasAuth) {
+      const analyticsUrl = new URL("/admin/analytics", request.url);
+      return NextResponse.redirect(analyticsUrl);
+    }
+
+    const res = NextResponse.next();
+    res.headers.set("X-Frame-Options", "DENY");
+    res.headers.set("X-Content-Type-Options", "nosniff");
+    res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.headers.set("Cache-Control", "no-store, private");
+    return res;
+  }
+
+  // 2. Skip Next.js internals, static assets, APIs, and image files
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
-    pathname.startsWith("/admin") ||
     pathname.startsWith("/images") ||
     pathname.startsWith("/videos") ||
     pathname.startsWith("/favicon") ||
@@ -20,7 +54,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Query param based A/B testing (?variant=b or ?v=3 or ?headline=growth-team)
+  // 3. Query param based A/B testing (?variant=b or ?v=3 or ?headline=growth-team)
   const variantParam = (
     url.searchParams.get("variant") ||
     url.searchParams.get("v") ||
@@ -40,14 +74,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 3. Subdomain extraction
-  // Handles:
-  // - ecom.rarityagency.io -> apex domain for this landing page
-  // - 2.ecom.rarityagency.io or 2.rarityagency.io -> subdomain "2"
-  // - 3.ecom.rarityagency.io or 3.rarityagency.io -> subdomain "3"
-  // - 4.ecom.rarityagency.io or 4.rarityagency.io -> subdomain "4"
-  // - growth.ecom.rarityagency.io or growth.rarityagency.io -> subdomain "growth"
-  // - team.ecom.rarityagency.io or team.rarityagency.io -> subdomain "team"
+  // 4. Subdomain extraction
   const hostWithoutPort = hostname.split(":")[0].toLowerCase();
   
   let subdomain = "";
@@ -61,7 +88,6 @@ export function middleware(request: NextRequest) {
   } else if (hostWithoutPort.endsWith("rarityagency.io")) {
     const prefix = hostWithoutPort.replace(".rarityagency.io", "");
     if (prefix && prefix !== "www" && prefix !== "ecom" && prefix !== "rarityagency.io") {
-      // Handles 2.ecom, 3.ecom, growth.ecom, etc.
       subdomain = prefix.replace(".ecom", "");
     }
   } else if (hostWithoutPort.endsWith("rarityagency.com")) {
@@ -76,9 +102,8 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 4. Subdomain routing logic
+  // 5. Subdomain routing logic
   if (subdomain && subdomain !== "www" && subdomain !== "ecom") {
-    // Subdomain "2" -> serves original TSL (Get Off The Ad Performance Rollercoaster)
     if (subdomain === "2" || subdomain === "tsl") {
       if (pathname === "/" || pathname === "") {
         url.pathname = "/lp2";
@@ -86,7 +111,6 @@ export function middleware(request: NextRequest) {
       }
     }
 
-    // Subdomain "3" or "growth" or "team" or "offer" or "b" -> serves VSL Variant B ("A Full Growth Team For Less Than One Media Buyer")
     if (
       subdomain === "3" ||
       subdomain === "growth" ||
@@ -111,7 +135,6 @@ export function middleware(request: NextRequest) {
       }
     }
 
-    // Subdomain "4" -> serves TSL Variant B ("A Full Growth Team For Less Than One Media Buyer")
     if (subdomain === "4" || subdomain === "tsl2") {
       if (pathname === "/" || pathname === "") {
         url.pathname = "/growth-team-tsl";
@@ -119,7 +142,6 @@ export function middleware(request: NextRequest) {
       }
     }
 
-    // General fallback for other custom subdomains
     if (pathname === "/" || pathname === "") {
       url.pathname = "/growth-team";
       return NextResponse.rewrite(url);
@@ -138,14 +160,15 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  return response;
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all paths except internal static assets
-     */
     "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
