@@ -31,6 +31,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/"],
       },
     ],
-    sitemap: "https://rarityagency.com/sitemap.xml",
+    sitemap: "https://ecom.rarityagency.io/sitemap.xml",
   };
 }

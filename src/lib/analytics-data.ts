@@ -646,12 +646,17 @@ export async function getFullAnalyticsData(
     }
     channelMap[chKey].sessions += 1;
 
-    const utmKey = `${s.utm_source || detected.channel}___${s.utm_campaign || "none"}`;
+    const isFalseMeta = (s.utm_source === "Meta Ads" || s.utm_source === "meta_ads") && (!s.utm_campaign || s.utm_campaign === "none");
+    const effectiveSource = isFalseMeta ? detected.channel : (s.utm_source || detected.channel);
+    const effectiveCampaign = isFalseMeta ? "none" : (s.utm_campaign || "none");
+    const effectiveMedium = isFalseMeta ? detected.category : (s.utm_medium || detected.category);
+
+    const utmKey = `${effectiveSource}___${effectiveCampaign}`;
     if (!utmMap[utmKey]) {
       utmMap[utmKey] = {
-        source: s.utm_source || detected.channel,
-        campaign: s.utm_campaign || "none",
-        medium: s.utm_medium || detected.category,
+        source: effectiveSource,
+        campaign: effectiveCampaign,
+        medium: effectiveMedium,
         sessions: 0,
         leads: 0,
       };

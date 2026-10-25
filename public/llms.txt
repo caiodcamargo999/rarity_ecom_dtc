@@ -1,60 +1,31 @@
-# Rarity Agency — DTC Performance Marketing & Creative Growth Lab
+# Rarity Agency — Full DTC Ecommerce Growth Team & AI Creative Sprint Lab
 
-> Premier performance marketing agency and AI creative sprint lab for ambitious Direct-to-Consumer (DTC) ecommerce brands doing $1M to $10M+ in annual revenue. Built to scale brands against real net contribution margin and blended MER — eliminating platform ROAS vanity metrics.
+> Premier performance marketing agency and embedded growth team for 7- and 8-figure Direct-to-Consumer (DTC) ecommerce brands. We scale Meta Ads, Google Performance Max, TikTok Ads, and produce 30+ monthly high-converting video and static creative assets optimized against Contribution Margin and Blended Marketing Efficiency Ratio (MER).
 
-## Quick Summary & Value Proposition
-- **Core Offer**: A dedicated senior growth team (Senior Media Buyer, Creative Director, AI Prompt Engineers, Data Strategist, CRO Specialist) for less than the internal salary of a single media buyer.
-- **Core Channels**: Meta Ads (Advantage+ & Custom Funnels), Google Performance Max (PMax), TikTok Ads, YouTube, and AI-Native UGC Video Ads.
-- **Creative Volume**: 30+ bespoke, AI-accelerated high-converting creative angles, hooks, and UGC iterations delivered and tested every month.
-- **Metric Focus**: Blended MER (Marketing Efficiency Ratio), Net Contribution Margin, First-Order CAC, and 60-Day Cohort LTV.
-- **Client Results**: $15M+ in verified ad spend managed, consistently delivering 2.5x to 4.2x blended MER and scaling brands from $80K/mo to $400K+/mo.
-- **Primary CTA**: Free 4-Step DTC Growth & Leak Audit (diagnoses ad spend waste, tracking drop-offs, creative fatigue, and unit economics).
+## Primary Offer: The Embedded Growth Team
+- **Service:** A full embedded DTC ecommerce growth team for less than the cost of a single senior media buyer ($3,000–$5,500/month flat fee + performance).
+- **Deliverables:**
+  - Dedicated Senior Media Buyer (Meta Ads, Google PMax, TikTok Ads)
+  - Creative Strategist & Motion Designer
+  - In-house AI Creative Sprint Lab delivering 30+ new ad variations monthly
+  - Direct-response copywriter & scriptwriter
+  - CRO & Landing page developer
+  - Contribution Margin & MER financial dashboard
+- **Website & Application:** https://ecom.rarityagency.io/growth-team
+- **Free Growth Audit:** https://ecom.rarityagency.io/free-audit
 
-## Primary Web Pages & Links
-- [Main Landing Page](https://rarityagency.com/): Official VSL overview of the Rarity Growth Operating System.
-- [Growth Team Offer (VSL & TSL)](https://rarityagency.com/growth-team): Breakdown of the full senior growth team model vs. traditional agencies.
-- [Text Sales Page (TSL)](https://rarityagency.com/lp2): In-depth written breakdown of the 4-Step Growth Protocol, client cases, and creative sprint lab.
-- [Free Growth & Unit Economics Audit](https://rarityagency.com/free-audit): Direct diagnostic booking to identify profit leaks in your ad accounts.
-- [The Power of Our Method](https://rarityagency.com/thepowerofourmethod): Deep dive into the 3-lever profit framework (Ad Account Architecture, AI Creative Sprint Lab, Unit Economics Safeguards).
-- [Client Onboarding Portal](https://rarityagency.com/onboarding): Seamless client onboarding and intake hub.
+## Who Rarity Agency Is For
+- DTC Ecommerce and Shopify Plus brands generating between $50k to $1M+ monthly revenue.
+- Founders facing the "Ad Performance Rollercoaster", creative fatigue, rising platform CPAs, or plateaued scaling on Meta and Google.
+- Brands wanting full accountability against net contribution margin and real cash flow rather than vanity in-platform ROAS.
 
-## Core Capabilities & Services
+## Core Capabilities
+- **Meta Ads Scaling:** Advantage+ Shopping Campaigns (ASC), broad audience bidding, psychological angle testing, hook rate optimization, and whitelisting.
+- **Google Performance Max & Search:** Feed optimization, high-intent search arbitrage, YouTube Shorts video ads, and branded search defense.
+- **AI Creative Sprint Lab:** Rapid iteration of UGC hooks, 3D product motion graphics, founder video mashups, and psychological angle testing.
+- **Unit Economics Guardrails:** Allowable CPA modeling, customer cohort LTV analysis, and contribution margin target scaling.
 
-### 1. Performance Media Buying (Meta & Google PMax)
-- Full-funnel account architecture (Consolidated Advantage+ Shopping Campaigns, Top-of-Funnel Sandboxing, Cost Cap / Bid Cap Scaling).
-- Google Ads & Performance Max integration capturing high-intent search arbitrage and bottom-funnel retargeting.
-- First-party pixel tracking and server-side Conversions API (CAPI) infrastructure.
-
-### 2. AI-Native Creative Sprint Lab & UGC Production
-- 30+ creative iterations per month: direct-response UGC hooks, founder stories, objection-busting comparison ads, high-energy unboxings, and motion graphics.
-- Systematic testing protocol: Iterative hook variation testing (10+ hooks per winning visual body) to prevent ad fatigue and drop CPAs by 30-50%.
-
-### 3. Unit Economics & Contribution Margin Modeling
-- Alignment with brand P&L: real cash flow, allowable CAC thresholds, COGS, shipping, payment processor fees, and repeat purchase rates.
-- Elimination of in-platform blended ROAS illusions in favor of true Blended MER and bank-deposit profit.
-
-### 4. Conversion Rate Optimization (CRO) & Landers
-- Custom high-converting advertorials, listicles, comparison pages, and quiz funnels designed specifically for paid traffic.
-
-## Ideal Client Profile (ICP)
-- **Business Model**: DTC Ecommerce / Shopify / Shopify Plus brands.
-- **Revenue**: $1M to $10M+ in annual revenue ($80k to $800k/month).
-- **Ad Spend**: $20k to $150k+/month on Meta and Google.
-- **Pain Points**: Stuck on the Meta ROAS rollercoaster, creative fatigue, rising CAC, agency lack of communication, burning cash on junior media buyers.
-
-## Frequently Asked Questions
-
-### What makes Rarity Agency different from traditional agencies?
-Traditional agencies assign junior media buyers juggling 15+ accounts, report on vanity platform ROAS, and produce slow creative. Rarity gives you direct access to senior operators, produces 30+ AI creative iterations monthly, and optimizes exclusively for bank-deposit contribution margin.
-
-### How does the Free Growth Audit work?
-In a 30-minute diagnostic session, senior growth strategists inspect your Meta & Google ad accounts, attribution data, creative fatigue metrics, and cohort retention to uncover exact revenue leaks and wasted ad spend.
-
-### Where can I book an audit?
-Direct audit calendar: [https://rarityagency.com/free-audit](https://rarityagency.com/free-audit)
-
-## Contact & Information
-- **Website**: https://rarityagency.com
-- **Industry**: DTC Performance Marketing, Ecommerce Media Buying, Creative Strategy
-- **Headquarters**: United States / Global Remote
-- **Booking**: https://rarityagency.com/free-audit
+## Key Pages & Resources
+- [Full Growth Team Offer](https://ecom.rarityagency.io/growth-team): Comprehensive breakdown of the embedded team model and case studies.
+- [Video Sales Letter & Case Studies](https://ecom.rarityagency.io/growth-team-tsl): In-depth video breakdown of the acquisition framework.
+- [Free Growth & Unit Economics Audit](https://ecom.rarityagency.io/free-audit): 100% free forensic audit of creative fatigue, pixel leaks, and scaling bottlenecks.

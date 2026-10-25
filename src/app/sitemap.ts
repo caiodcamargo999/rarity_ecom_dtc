@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://rarityagency.com";
+  const baseUrl = "https://ecom.rarityagency.io";
   const currentDate = new Date().toISOString();
 
   return [
