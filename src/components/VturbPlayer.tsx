@@ -113,7 +113,7 @@ export function pauseAllVturbVideos() {
 }
 
 export default function VturbPlayer({
-  videoId = "vid-6aad51ea85641ef58dd2f744",
+  videoId = "vid-6add7fb1b2a34667b75cd5b1",
   className = "",
   delaySeconds = 0,
   enableFloatingOnScroll = false,
@@ -130,12 +130,12 @@ export default function VturbPlayer({
 
   useEffect(() => {
     // 1. Dynamically inject player script if not already present
-    const scriptId = "vturb-player-js-6aad51ea85641ef58dd2f744";
+    const rawPlayerId = videoId.replace(/^vid-(modal-)?/, "") || "6add7fb1b2a34667b75cd5b1";
+    const scriptId = `vturb-player-js-${rawPlayerId}`;
     if (!document.getElementById(scriptId)) {
       const s = document.createElement("script");
       s.id = scriptId;
-      s.src =
-        "https://scripts.converteai.net/09142a2a-f8a3-4494-907a-9caa59d978dd/players/6aad51ea85641ef58dd2f744/v4/player.js";
+      s.src = `https://scripts.converteai.net/09142a2a-f8a3-4494-907a-9caa59d978dd/players/${rawPlayerId}/v4/player.js`;
       s.async = true;
       document.head.appendChild(s);
     }

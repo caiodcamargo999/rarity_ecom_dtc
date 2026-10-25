@@ -295,7 +295,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
         <link
           rel="preload"
-          href="https://scripts.converteai.net/09142a2a-f8a3-4494-907a-9caa59d978dd/players/6aad51ea85641ef58dd2f744/v4/player.js"
+          href="https://scripts.converteai.net/09142a2a-f8a3-4494-907a-9caa59d978dd/players/6add7fb1b2a34667b75cd5b1/v4/player.js"
           as="script"
         />
         <link
@@ -305,7 +305,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
         <link
           rel="preload"
-          href="https://cdn.converteai.net/09142a2a-f8a3-4494-907a-9caa59d978dd/6aad51dd51b0f618853abb52/main.m3u8"
+          href="https://cdn.converteai.net/09142a2a-f8a3-4494-907a-9caa59d978dd/6add7fadc568899fb65890af/main.m3u8"
           as="fetch"
         />
         <link rel="dns-prefetch" href="https://cdn.converteai.net" />
