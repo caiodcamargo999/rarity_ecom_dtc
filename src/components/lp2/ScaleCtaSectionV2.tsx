@@ -4,16 +4,27 @@ import { ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
 
 interface ScaleCtaSectionV2Props {
   onOpenAudit: () => void;
+  lang?: "en" | "pt";
 }
 
-const scaleGuarantees = [
+const scaleGuaranteesEn = [
   "No 12-Month Lock-in Contracts",
   "Full First-Party Data Ownership",
   "Blended MER & P&L Attribution",
   "Senior Strategist Direct Slack/WhatsApp Sync",
 ];
 
-export default function ScaleCtaSectionV2({ onOpenAudit }: ScaleCtaSectionV2Props) {
+const scaleGuaranteesPt = [
+  "Sem Contratos de Fidelidade de 12 Meses",
+  "Propriedade Total dos Seus Dados",
+  "Atribuição Focada em MER e Lucro Real",
+  "Acesso Direto ao Estrategista no Slack/WhatsApp",
+];
+
+export default function ScaleCtaSectionV2({ onOpenAudit, lang = "en" }: ScaleCtaSectionV2Props) {
+  const isPt = lang === "pt";
+  const scaleGuarantees = isPt ? scaleGuaranteesPt : scaleGuaranteesEn;
+
   return (
     <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#00103A] via-[#001244] to-[#000820] overflow-hidden text-center border-t border-white/10">
       {/* Background Radial Glow */}
@@ -24,19 +35,36 @@ export default function ScaleCtaSectionV2({ onOpenAudit }: ScaleCtaSectionV2Prop
         {/* Top Tag */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.07] border border-white/15 text-brand-teal text-xs sm:text-sm font-semibold tracking-wider uppercase backdrop-blur-sm mb-6 shadow-inner">
           <Sparkles className="w-4 h-4 text-brand-teal" />
-          <span>Limited Monthly Capacity • 4 Free Growth Audits Available</span>
+          <span>
+            {isPt
+              ? "Capacidade Mensal Limitada • 4 Auditorias Gratuitas Disponíveis"
+              : "Limited Monthly Capacity • 4 Free Growth Audits Available"}
+          </span>
         </div>
 
         {/* Headline */}
         <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-tight">
-          Ready to scale your{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-tealLight font-serif italic font-normal">
-            growth trajectory?
-          </span>
+          {isPt ? (
+            <>
+              Pronto para acelerar sua{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-tealLight font-serif italic font-normal">
+                trajetória de escala?
+              </span>
+            </>
+          ) : (
+            <>
+              Ready to scale your{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-tealLight font-serif italic font-normal">
+                growth trajectory?
+              </span>
+            </>
+          )}
         </h2>
 
         <p className="mt-6 text-base sm:text-lg text-white/80 max-w-2xl leading-relaxed">
-          Let’s audit your ad accounts, diagnose creative fatigue, and map out your next scaling sprint with complete unit economic precision.
+          {isPt
+            ? "Vamos auditar suas contas de anúncios, diagnosticar a fadiga criativa e desenhar seu próximo ciclo de crescimento com total precisão financeira."
+            : "Let’s audit your ad accounts, diagnose creative fatigue, and map out your next scaling sprint with complete unit economic precision."}
         </p>
 
         {/* CTA Button */}
@@ -45,7 +73,7 @@ export default function ScaleCtaSectionV2({ onOpenAudit }: ScaleCtaSectionV2Prop
             onClick={onOpenAudit}
             className="px-10 py-5 rounded-full text-xs sm:text-sm font-extrabold uppercase tracking-widest bg-[#D80064] hover:bg-[#BF0058] text-white shadow-[0_0_35px_rgba(216,0,100,0.6)] border-2 border-[#D80064] hover:border-brand-teal/60 transition-all flex items-center justify-center gap-3 cursor-pointer group"
           >
-            <span>Claim Your Free Growth Audit</span>
+            <span>{isPt ? "Solicitar Auditoria Gratuita de Growth" : "Claim Your Free Growth Audit"}</span>
             <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1.5 transition-transform" />
           </button>
         </div>

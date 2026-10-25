@@ -8,6 +8,7 @@ import Image from "next/image";
 interface CreativeShowcaseSectionProps {
   onOpenAudit: () => void;
   isCtaVisible?: boolean;
+  lang?: "en" | "pt";
 }
 
 type FormatType = "feed" | "story";
@@ -172,7 +173,9 @@ const storyCreatives: CreativeItem[] = [
 export default function CreativeShowcaseSection({
   onOpenAudit,
   isCtaVisible = true,
+  lang = "en",
 }: CreativeShowcaseSectionProps) {
+  const isPt = lang === "pt";
   const [selectedFormat, setSelectedFormat] = useState<FormatType>("feed");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
@@ -348,7 +351,7 @@ export default function CreativeShowcaseSection({
           >
             <Sparkles className="w-4 h-4 text-[#0FE3B3]" />
             <span className="text-[#0FE3B3] text-xs font-bold uppercase tracking-widest">
-              Proprietary Creative Studio
+              {isPt ? "Estúdio Criativo Proprietário" : "Proprietary Creative Studio"}
             </span>
           </motion.div>
 
@@ -359,10 +362,21 @@ export default function CreativeShowcaseSection({
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight"
           >
-            Ad Creatives Engineered For{" "}
-            <span className="bg-gradient-to-r from-[#0FE3B3] via-[#38bdf8] to-[#D80064] bg-clip-text text-transparent italic font-serif font-normal">
-              Breakout Scale
-            </span>
+            {isPt ? (
+              <>
+                Criativos de Anúncios Criados Para{" "}
+                <span className="bg-gradient-to-r from-[#0FE3B3] via-[#38bdf8] to-[#D80064] bg-clip-text text-transparent italic font-serif font-normal">
+                  Escalar
+                </span>
+              </>
+            ) : (
+              <>
+                Ad Creatives Engineered For{" "}
+                <span className="bg-gradient-to-r from-[#0FE3B3] via-[#38bdf8] to-[#D80064] bg-clip-text text-transparent italic font-serif font-normal">
+                  Breakout Scale
+                </span>
+              </>
+            )}
           </motion.h2>
 
           <motion.p
@@ -372,7 +386,9 @@ export default function CreativeShowcaseSection({
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-white/70 text-sm sm:text-base md:text-lg mt-3.5 max-w-2xl mx-auto leading-relaxed"
           >
-            We combine high-level direct-response copy, visual hooks, and platform-native formats to produce ad assets that stop the scroll and lower your blended CAC.
+            {isPt
+              ? "Combinamos copywriting direto, ganchos visuais e formatos nativos de plataforma para produzir anúncios que travam o scroll e reduzem seu CAC."
+              : "We combine high-level direct-response copy, visual hooks, and platform-native formats to produce ad assets that stop the scroll and lower your blended CAC."}
           </motion.p>
 
           {/* Format Switcher Pills */}
@@ -400,7 +416,7 @@ export default function CreativeShowcaseSection({
               )}
               <span className="relative z-10 flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-sm border border-current"></span>
-                Feed Ads (1:1 Square)
+                {isPt ? "Anúncios de Feed (1:1)" : "Feed Ads (1:1 Square)"}
               </span>
             </button>
 
@@ -421,7 +437,7 @@ export default function CreativeShowcaseSection({
               )}
               <span className="relative z-10 flex items-center gap-1.5">
                 <span className="w-2 h-3 rounded-sm border border-current"></span>
-                Stories &amp; Reels (9:16)
+                {isPt ? "Stories & Reels (9:16)" : "Stories & Reels (9:16)"}
               </span>
             </button>
           </motion.div>
@@ -656,7 +672,9 @@ export default function CreativeShowcaseSection({
 
                 <div className="mt-6 pt-4 border-t border-white/10">
                   <p className="text-white/70 text-xs mb-3">
-                    Want high-converting creative sprints tailored specifically to your DTC brand?
+                    {isPt
+                      ? "Quer sprints de criativos de alta conversão sob medida para sua marca?"
+                      : "Want high-converting creative sprints tailored specifically to your DTC brand?"}
                   </p>
                   <button
                     onClick={() => {
@@ -665,7 +683,7 @@ export default function CreativeShowcaseSection({
                     }}
                     className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#D80064] to-[#0052FF] text-white font-extrabold text-xs uppercase tracking-wider shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                   >
-                    Claim Free Growth Audit
+                    {isPt ? "Solicitar Auditoria Gratuita" : "Claim Free Growth Audit"}
                   </button>
                 </div>
               </div>

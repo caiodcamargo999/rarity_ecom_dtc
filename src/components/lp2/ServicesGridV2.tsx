@@ -2,7 +2,11 @@
 
 import Image from "next/image";
 
-const servicesList = [
+interface ServicesGridV2Props {
+  lang?: "en" | "pt";
+}
+
+const servicesListEn = [
   {
     icon: "/images/pilothouse/strategy.png",
     title: "Growth Strategy",
@@ -35,20 +39,58 @@ const servicesList = [
   },
 ];
 
-export default function ServicesGridV2() {
+const servicesListPt = [
+  {
+    icon: "/images/pilothouse/strategy.png",
+    title: "Estratégia de Growth",
+    description: "Alinhar mídia, criativos e inteligência de dados para escalar margem de contribuição e lucro real",
+  },
+  {
+    icon: "/images/pilothouse/meta-ads.svg",
+    title: "Meta Ads",
+    description: "Estruturas consolidadas de Advantage+, segmentação ampla e escala algorítmica",
+  },
+  {
+    icon: "/images/pilothouse/google-ads.svg",
+    title: "Google & PMax",
+    description: "Domínio de busca de alta intenção e campanhas de Shopping organizadas por margem",
+  },
+  {
+    icon: "/images/pilothouse/tiktok-ads.svg",
+    title: "TikTok Ads",
+    description: "Conquiste atenção com criativos nativos virais e ganchos de alta conversão",
+  },
+  {
+    icon: "/images/pilothouse/creative.svg",
+    title: "Estúdio de Criativos & UGC com IA",
+    description: "Mais de 30 testes iterativos de ganchos e novos ângulos emocionais lançados todo mês",
+  },
+  {
+    icon: "/images/pilothouse/cro.svg",
+    title: "Otimização de Conversão (CRO)",
+    description: "Engenharia de landing pages e refinamento de ofertas para maximizar cada clique",
+  },
+];
+
+export default function ServicesGridV2({ lang = "en" }: ServicesGridV2Props) {
+  const isPt = lang === "pt";
+  const servicesList = isPt ? servicesListPt : servicesListEn;
+
   return (
     <section id="services" className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#00103A] overflow-hidden">
       <div className="max-w-6xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">
           <span className="text-xs sm:text-sm font-extrabold tracking-widest text-brand-teal uppercase block mb-2">
-            SERVICES &amp; CAPABILITIES
+            {isPt ? "SERVIÇOS & COMPETÊNCIAS" : "SERVICES & CAPABILITIES"}
           </span>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-            What we do
+            {isPt ? "O que fazemos" : "What we do"}
           </h2>
           <p className="mt-4 text-sm sm:text-base text-white/80 max-w-xl mx-auto">
-            We create the strategy to align media, creative, and data to scale what matters.
+            {isPt
+              ? "Criamos a estratégia para alinhar mídia, criativos e inteligência de dados para escalar o que realmente importa."
+              : "We create the strategy to align media, creative, and data to scale what matters."}
           </p>
         </div>
 

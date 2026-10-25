@@ -8,9 +8,10 @@ import DashboardPreview from "@/components/common/DashboardPreview";
 
 interface RarityAdCarouselV2Props {
   onOpenAudit: () => void;
+  lang?: "en" | "pt";
 }
 
-const adCases = [
+const adCasesEn = [
   {
     id: "meta-1",
     channel: "Meta Ads",
@@ -97,8 +98,97 @@ const adCases = [
   },
 ];
 
-export default function RarityAdCarouselV2({ onOpenAudit }: RarityAdCarouselV2Props) {
+const adCasesPt = [
+  {
+    id: "meta-1",
+    channel: "Meta Ads",
+    channelColor: "bg-blue-600/20 border-blue-500/40 text-blue-400",
+    tag: "Meta Ads • Escala de Marca DTC",
+    title: "8.32x de ROAS & Mais de $2.95M em Receita Verificada",
+    image: "/images/cases/meta-ads-case-1.png",
+    stats: [
+      { label: "Receita Total", value: "$2.95M+" },
+      { label: "Investimento", value: "$355k" },
+      { label: "ROAS Médio", value: "8.32x" },
+      { label: "Pedidos", value: "7.641" },
+    ],
+    summary:
+      "Reestruturamos a conta de conjuntos fragmentados para um modelo unificado de público amplo (Broad/Advantage+) com testes criativos de IA. O CAC caiu 34% enquanto o volume de pedidos escalou 4x.",
+    strategy: [
+      "Consolidação de verba em campanhas unificadas Advantage+ e Broad",
+      "Produção de mais de 40 variações criativas testando novos ângulos emocionais",
+      "Gestão de investimento focada estritamente em margem de contribuição e MER",
+    ],
+  },
+  {
+    id: "meta-2",
+    channel: "Meta Ads",
+    channelColor: "bg-purple-600/20 border-purple-500/40 text-purple-400",
+    tag: "Meta Ads • Sprints Criativos Rápidos",
+    title: "17.30x de ROAS com Iteração Criativa Acelerada",
+    image: "/images/cases/meta-ads-case-2.png",
+    stats: [
+      { label: "Receita Gerada", value: "$431k+" },
+      { label: "Investimento", value: "$24.9k" },
+      { label: "Pico de ROAS", value: "17.30x" },
+      { label: "Custo / Checkout", value: "$16.06" },
+    ],
+    summary:
+      "Com nossa esteira proprietária de IA, lançamos 35 variações de hook em 7 dias, isolando 3 criativos vencedores que entregaram um retorno recorde de 17.30x de ROAS.",
+    strategy: [
+      "Iteração ágil de vídeos com IA focando em públicos frios de alta intenção",
+      "Separação de campanhas de validação e escala para blindar margens",
+      "Otimização da experiência pós-clique para maximizar finalizações de compra",
+    ],
+  },
+  {
+    id: "google-1",
+    channel: "Google Ads",
+    channelColor: "bg-emerald-600/20 border-emerald-500/40 text-emerald-400",
+    tag: "Google Ads • Escala em Search & PMax",
+    title: "10.86x de ROAS & Mais de $10.7M em Vendas Omnichannel",
+    image: "/images/cases/google-ads-case-1.png",
+    stats: [
+      { label: "Vendas Totais", value: "$10.7M+" },
+      { label: "Investimento", value: "$983k" },
+      { label: "Valor Conv. / Custo", value: "10.86x" },
+      { label: "Impressões", value: "97.1M" },
+    ],
+    summary:
+      "Capturamos tráfego de busca de alta intenção e escalamos o Performance Max integrado ao Meta Ads. Operar ambos como um único orçamento contra o MER gerou tração contínua.",
+    strategy: [
+      "Clusterização de palavras-chave e negativação agressiva de termos irrelevantes",
+      "Otimização de feed no PMax priorizando margem dos produtos mais vendidos",
+      "Validação de atribuição cruzada com os depósitos líquidos da loja",
+    ],
+  },
+  {
+    id: "google-2",
+    channel: "Google Ads",
+    channelColor: "bg-teal-600/20 border-teal-500/40 text-teal-400",
+    tag: "Google Ads • Aquisição em Alto Volume",
+    title: "9.52x de ROAS & $29.83 de Custo por Aquisição",
+    image: "/images/cases/google-ads-case-2.png",
+    stats: [
+      { label: "Volume de Vendas", value: "$989k+" },
+      { label: "Investimento", value: "$104k" },
+      { label: "Custo / Conv.", value: "$29.83" },
+      { label: "Valor / Custo", value: "9.52x" },
+    ],
+    summary:
+      "Otimizamos a estratégia de lances para kits com alta margem de contribuição, reduzindo o custo por conversão e mantendo o ROAS acima de 9.5x em todos os trimestres.",
+    strategy: [
+      "Lances inteligentes com tROAS ajustados ao ciclo de estoque",
+      "Enriquecimento de sinais com listas dos top 5% clientes recorrentes",
+      "Domínio de Shopping em categorias de busca genérica",
+    ],
+  },
+];
+
+export default function RarityAdCarouselV2({ onOpenAudit, lang = "en" }: RarityAdCarouselV2Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const isPt = lang === "pt";
+  const adCases = isPt ? adCasesPt : adCasesEn;
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % adCases.length);
@@ -116,13 +206,15 @@ export default function RarityAdCarouselV2({ onOpenAudit }: RarityAdCarouselV2Pr
         {/* Section Header */}
         <div className="text-center mb-12 sm:mb-16">
           <span className="text-xs sm:text-sm font-extrabold tracking-widest text-brand-teal uppercase block mb-2">
-            PROVEN AD CAMPAIGNS &amp; PERFORMANCE PROOF
+            {isPt ? "CASES REAIS & PROVAS DE PERFORMANCE" : "PROVEN AD CAMPAIGNS & PERFORMANCE PROOF"}
           </span>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-            Rarity Ad Cases &amp; Performance Proof
+            {isPt ? "Cases da Rarity & Resultados Comprovados" : "Rarity Ad Cases & Performance Proof"}
           </h2>
           <p className="mt-4 text-sm sm:text-base text-white/80 max-w-xl mx-auto">
-            Explore our real dashboard proofs, ad campaign architectures, and verified revenue numbers.
+            {isPt
+              ? "Explore nossos dashboards reais, arquiteturas de campanhas e números verificados de faturamento."
+              : "Explore our real dashboard proofs, ad campaign architectures, and verified revenue numbers."}
           </p>
         </div>
 

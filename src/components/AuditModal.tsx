@@ -10,6 +10,7 @@ import { getTracker, getVisitorInfo } from "@/lib/tracker";
 interface AuditModalProps {
   isOpen: boolean;
   onClose: () => void;
+  lang?: "en" | "pt";
 }
 
 // Temporary mode: skip questionnaire questions and show the Cal.com embed directly
@@ -81,7 +82,7 @@ const COUNTRY_CODES = [
 
 const TOTAL_STEPS = 6;
 
-export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
+export default function AuditModal({ isOpen, onClose, lang = "en" }: AuditModalProps) {
   const [utms, setUtms] = useState<UtmData>({});
   const [stage, setStage] = useState<"quiz" | "calendar">(
     DIRECT_CALENDAR_MODE ? "calendar" : "quiz"
@@ -89,7 +90,10 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [answers, setAnswers] = useState<QuizAnswers>(INITIAL_ANSWERS);
   const [errorMsg, setErrorMsg] = useState("");
-  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]);
+  const defaultCountry = lang === "pt"
+    ? (COUNTRY_CODES.find((c) => c.iso === "BR") || COUNTRY_CODES[0])
+    : COUNTRY_CODES[0];
+  const [selectedCountry, setSelectedCountry] = useState(defaultCountry);
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [phoneRaw, setPhoneRaw] = useState("");
   const countryDropdownRef = useRef<HTMLDivElement>(null);
@@ -1013,10 +1017,10 @@ export default function AuditModal({ isOpen, onClose }: AuditModalProps) {
               <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-[#00103A] z-0 pointer-events-none">
                 <div className="w-10 h-10 border-2 border-[#0FE3B3]/20 border-t-[#0FE3B3] rounded-full animate-spin mb-3" />
                 <p className="text-sm font-semibold text-white/80 tracking-wide">
-                  Loading Growth Audit Calendar...
+                  {lang === "pt" ? "Carregando Calendário de Auditoria..." : "Loading Growth Audit Calendar..."}
                 </p>
                 <p className="text-xs text-white/40 mt-1">
-                  Connecting to real-time available time slots
+                  {lang === "pt" ? "Buscando horários disponíveis em tempo real" : "Connecting to real-time available time slots"}
                 </p>
               </div>
 

@@ -1,1 +1,1 @@
-export { default, metadata } from "../growth-team-tsl/page";
+export { default, metadata } from "../free-audit-growth-team/page";

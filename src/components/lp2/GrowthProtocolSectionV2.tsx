@@ -16,9 +16,10 @@ import {
 
 interface GrowthProtocolSectionV2Props {
   onOpenAudit: () => void;
+  lang?: "en" | "pt";
 }
 
-const protocolSteps = [
+const protocolStepsEn = [
   {
     step: "01",
     phase: "DAY 1 – 7",
@@ -77,7 +78,66 @@ const protocolSteps = [
   },
 ];
 
-const comparisonPoints = [
+const protocolStepsPt = [
+  {
+    step: "01",
+    phase: "DIAS 1 – 7",
+    icon: Search,
+    title: "Diagnóstico de Unit Economics & Fugas no Funil",
+    subtitle: "Identificar Vazamento de CAC e Definir CPA Máximo Permissível",
+    description:
+      "Fazemos uma auditoria profunda nas contas de anúncios, tracking server-side, cohorts de retenção e margem no Shopify para eliminar desperdício de verba.",
+    deliverables: [
+      "Auditoria de atribuição e tracking server-side (CAPI)",
+      "Análise de CAC histórico e LTV por cohort",
+      "Roadmap de CPA máximo permissível e metas de MER",
+    ],
+  },
+  {
+    step: "02",
+    phase: "DIAS 7 – 14",
+    icon: Layers,
+    title: "Reestruturação Algorítmica da Conta",
+    subtitle: "Arquiteturas Consolidadas de Advantage+ e Broad",
+    description:
+      "Desmontamos conjuntos de anúncios fragmentados e públicos sobrepostos, reconstruindo estruturas limpas de Advantage+ Shopping e Broad CBO.",
+    deliverables: [
+      "Arquitetura consolidada de campanhas Advantage+",
+      "Ambiente dinâmico para validação rápida de criativos",
+      "Teto de lances (Bid Caps / Cost Caps) para proteger sua margem",
+    ],
+  },
+  {
+    step: "03",
+    phase: "ITERAÇÃO MENSAL",
+    icon: Sparkles,
+    title: "Laboratório de Criativos com IA e Criadores",
+    subtitle: "Mais de 30 Testes de Ganchos e Ângulos Psicológicos por Mês",
+    description:
+      "Fadiga criativa é a causa nº 1 da queda de performance. Nosso estúdio interno produz UGC nativo, ganchos visuais e scripts de quebra de objeção todo mês.",
+    deliverables: [
+      "Otimização de hook rate nos primeiros 3 segundos (>40%)",
+      "UGC com criadores e motion design dinâmico",
+      "Variações de ângulos psicológicos para cada perfil de cliente",
+    ],
+  },
+  {
+    step: "04",
+    phase: "ESCALA CONTÍNUA",
+    icon: TrendingUp,
+    title: "Escala Omnichannel de MER & Otimização de Funil",
+    subtitle: "Sincronização de Intenção de Busca e Páginas de Alta Conversão",
+    description:
+      "Quando anúncios de topo no Meta geram demanda, capturamos intenção no Google Search e direcionamos para advertoriais e funis otimizados de checkout.",
+    deliverables: [
+      "Domínio de Google PMax e buscas institucionais/genéricas",
+      "Landing pages e advertoriais dedicados pré-compra",
+      "Regras de escala de orçamento baseadas no dinheiro real em caixa",
+    ],
+  },
+];
+
+const comparisonPointsEn = [
   {
     feature: "Account Management",
     traditional: "Junior media buyers learning on your dime",
@@ -110,7 +170,44 @@ const comparisonPoints = [
   },
 ];
 
-export default function GrowthProtocolSectionV2({ onOpenAudit }: GrowthProtocolSectionV2Props) {
+const comparisonPointsPt = [
+  {
+    feature: "Gestão da Conta",
+    traditional: "Gestores juniores aprendendo com o seu dinheiro",
+    rarity: "Estrategistas seniores de growth com acesso direto via Slack / WhatsApp",
+  },
+  {
+    feature: "Métrica Principal",
+    traditional: "ROAS inflado de plataforma (frequentemente ilusório)",
+    rarity: "Margem de contribuição líquida e MER real na sua conta bancária",
+  },
+  {
+    feature: "Produção Criativa",
+    traditional: "2 a 3 criativos genéricos por mês",
+    rarity: "Mais de 30 testes mensais de ganchos, UGC e novos ângulos com IA",
+  },
+  {
+    feature: "Estratégia de Canais",
+    traditional: "Equipes de Meta e Google separadas competindo por atribuição",
+    rarity: "Motor único de aquisição omnichannel atuando como uma só verba",
+  },
+  {
+    feature: "Comunicação",
+    traditional: "Atrasos de 24 a 48 horas em chamados e e-mails",
+    rarity: "Alinhamento em tempo real direto com especialistas",
+  },
+  {
+    feature: "Propriedade dos Dados",
+    traditional: "Dados presos na agência e estruturas fechadas",
+    rarity: "Você é 100% dono das contas, pixels, criativos e dados para sempre",
+  },
+];
+
+export default function GrowthProtocolSectionV2({ onOpenAudit, lang = "en" }: GrowthProtocolSectionV2Props) {
+  const isPt = lang === "pt";
+  const protocolSteps = isPt ? protocolStepsPt : protocolStepsEn;
+  const comparisonPoints = isPt ? comparisonPointsPt : comparisonPointsEn;
+
   return (
     <section id="performance" className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#001244] overflow-hidden">
       {/* Background Accent Gradients */}
@@ -121,13 +218,15 @@ export default function GrowthProtocolSectionV2({ onOpenAudit }: GrowthProtocolS
         {/* Section Header */}
         <div className="text-center mb-16 sm:mb-20">
           <span className="text-xs sm:text-sm font-extrabold tracking-widest text-brand-teal uppercase block mb-2">
-            THE RARITY GROWTH ENGINE
+            {isPt ? "O MOTOR DE GROWTH DA RARITY" : "THE RARITY GROWTH ENGINE"}
           </span>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-            How We Scale DTC Brands Beyond The Plateau
+            {isPt ? "Como Escalamos Marcas de E-commerce Além do Platô" : "How We Scale DTC Brands Beyond The Plateau"}
           </h2>
           <p className="mt-4 text-sm sm:text-base text-white/80 max-w-2xl mx-auto leading-relaxed">
-            A proven, battle-tested 4-step execution blueprint engineered to scale your contribution margin and real net profit.
+            {isPt
+              ? "Um protocolo validado em 4 etapas, estruturado para escalar sua margem de contribuição e lucro líquido real."
+              : "A proven, battle-tested 4-step execution blueprint engineered to scale your contribution margin and real net profit."}
           </p>
         </div>
 
@@ -169,7 +268,7 @@ export default function GrowthProtocolSectionV2({ onOpenAudit }: GrowthProtocolS
                 {/* Deliverables Bullet Points */}
                 <div className="pt-4 border-t border-white/10 space-y-2">
                   <span className="text-[11px] font-bold text-white/50 uppercase tracking-wider block mb-2">
-                    Key Execution Deliverables
+                    {isPt ? "Entregáveis de Execução" : "Key Execution Deliverables"}
                   </span>
                   {step.deliverables.map((item, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs text-white/80">
@@ -187,10 +286,12 @@ export default function GrowthProtocolSectionV2({ onOpenAudit }: GrowthProtocolS
         <div className="bg-[#000c2e] border border-white/15 rounded-3xl p-5 sm:p-10 shadow-2xl overflow-hidden relative">
           <div className="text-center mb-8 sm:mb-10">
             <span className="text-xs font-extrabold tracking-widest text-brand-magenta uppercase block mb-1">
-              THE HARD TRUTH ABOUT AGENCIES
+              {isPt ? "A VERDADE SOBRE AS AGÊNCIAS" : "THE HARD TRUTH ABOUT AGENCIES"}
             </span>
             <h3 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Why Founders Fire Their Agency &amp; Switch To Rarity
+              {isPt
+                ? "Por Que Fundadores Demitem Suas Agências e Migram Para a Rarity"
+                : "Why Founders Fire Their Agency & Switch To Rarity"}
             </h3>
           </div>
 
@@ -206,7 +307,7 @@ export default function GrowthProtocolSectionV2({ onOpenAudit }: GrowthProtocolS
                     {item.feature}
                   </span>
                   <span className="text-[10px] font-mono font-bold text-brand-teal bg-brand-teal/15 border border-brand-teal/30 px-2 py-0.5 rounded-full">
-                    Rarity Standard
+                    {isPt ? "Padrão Rarity" : "Rarity Standard"}
                   </span>
                 </div>
 
@@ -215,7 +316,7 @@ export default function GrowthProtocolSectionV2({ onOpenAudit }: GrowthProtocolS
                   <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                   <div>
                     <div className="text-[10px] font-bold uppercase tracking-wider text-red-400/90 mb-0.5">
-                      Traditional Agency
+                      {isPt ? "Agência Tradicional" : "Traditional Agency"}
                     </div>
                     <div className="text-xs text-white/70 leading-relaxed">
                       {item.traditional}
@@ -228,7 +329,7 @@ export default function GrowthProtocolSectionV2({ onOpenAudit }: GrowthProtocolS
                   <CheckCircle2 className="w-4 h-4 text-brand-teal shrink-0 mt-0.5" />
                   <div>
                     <div className="text-[10px] font-black uppercase tracking-wider text-brand-teal mb-0.5">
-                      The Rarity Growth Engine
+                      {isPt ? "O Motor de Growth da Rarity" : "The Rarity Growth Engine"}
                     </div>
                     <div className="text-xs text-white font-bold leading-relaxed">
                       {item.rarity}
@@ -244,12 +345,14 @@ export default function GrowthProtocolSectionV2({ onOpenAudit }: GrowthProtocolS
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-white/15 text-xs uppercase tracking-wider">
-                  <th className="py-3.5 px-4 text-white/60 font-semibold w-1/3">Area</th>
+                  <th className="py-3.5 px-4 text-white/60 font-semibold w-1/3">
+                    {isPt ? "Pilar" : "Area"}
+                  </th>
                   <th className="py-3.5 px-4 text-red-400/90 font-bold w-1/3 bg-red-950/20 rounded-t-xl">
-                    Traditional Agency
+                    {isPt ? "Agência Tradicional" : "Traditional Agency"}
                   </th>
                   <th className="py-3.5 px-4 text-brand-teal font-extrabold w-1/3 bg-brand-teal/10 rounded-t-xl">
-                    The Rarity Growth Engine
+                    {isPt ? "O Motor de Growth da Rarity" : "The Rarity Growth Engine"}
                   </th>
                 </tr>
               </thead>

@@ -12,34 +12,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1.0,
     },
     {
+      url: `${baseUrl}/free-audit`,
+      lastModified: currentDate,
+      changeFrequency: "daily",
+      priority: 0.95,
+    },
+    {
       url: `${baseUrl}/growth-team`,
       lastModified: currentDate,
       changeFrequency: "daily",
       priority: 0.95,
     },
     {
-      url: `${baseUrl}/lp2`,
-      lastModified: currentDate,
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/growth-team-tsl`,
-      lastModified: currentDate,
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/free-audit`,
+      url: `${baseUrl}/free-audit-growth-team`,
       lastModified: currentDate,
       changeFrequency: "daily",
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/free-audit-br`,
+      lastModified: currentDate,
+      changeFrequency: "weekly",
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/rarityaudit`,
+      url: `${baseUrl}/free-audit-growth-team-br`,
       lastModified: currentDate,
       changeFrequency: "weekly",
-      priority: 0.85,
+      priority: 0.9,
     },
   ];
 }

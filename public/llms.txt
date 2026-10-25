@@ -26,6 +26,12 @@
 - **Unit Economics Guardrails:** Allowable CPA modeling, customer cohort LTV analysis, and contribution margin target scaling.
 
 ## Key Pages & Resources
-- [Full Growth Team Offer](https://ecom.rarityagency.io/growth-team): Comprehensive breakdown of the embedded team model and case studies.
-- [Video Sales Letter & Case Studies](https://ecom.rarityagency.io/growth-team-tsl): In-depth video breakdown of the acquisition framework.
-- [Free Growth & Unit Economics Audit](https://ecom.rarityagency.io/free-audit): 100% free forensic audit of creative fatigue, pixel leaks, and scaling bottlenecks.
+### English
+- [Angle A - VSL (Rollercoaster)](https://ecom.rarityagency.io/): Video sales letter on eliminating the ad performance rollercoaster.
+- [Angle A - Clean Audit (Rollercoaster TSL)](https://ecom.rarityagency.io/free-audit): Direct-response text sales letter & free forensic audit.
+- [Angle B - VSL (Growth Team)](https://ecom.rarityagency.io/growth-team): Comprehensive breakdown of the embedded team model and case studies.
+- [Angle B - Clean Audit (Growth Team TSL)](https://ecom.rarityagency.io/free-audit-growth-team): Full growth team model breakdown and free audit.
+
+### Portuguese (Versão em Português)
+- [Angle A - Auditoria Gratuita (Montanha-Russa)](https://ecom.rarityagency.io/free-audit-br): Versão em português da auditoria e protocolo de growth da Rarity.
+- [Angle B - Auditoria Gratuita (Growth Team)](https://ecom.rarityagency.io/free-audit-growth-team-br): Versão em português do modelo de time completo de growth.

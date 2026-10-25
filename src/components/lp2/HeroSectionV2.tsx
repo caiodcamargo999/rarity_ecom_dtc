@@ -7,9 +7,10 @@ import Image from "next/image";
 interface HeroSectionV2Props {
   onOpenAudit: () => void;
   headlineVariant?: "default" | "growth-team";
+  lang?: "en" | "pt";
 }
 
-const rarityGuarantees = [
+const rarityGuaranteesEn = [
   {
     icon: Clock,
     title: "US Business Hours Coverage",
@@ -32,10 +33,37 @@ const rarityGuarantees = [
   },
 ];
 
+const rarityGuaranteesPt = [
+  {
+    icon: Clock,
+    title: "Atendimento em Tempo Real",
+    description: "Respostas ágeis e alinhamento direto, sem atrasos de 24 horas na comunicação.",
+  },
+  {
+    icon: KeyRound,
+    title: "100% de Propriedade Sua",
+    description: "Suas contas de anúncios, pixels, criativos e base de clientes são seus. Sempre.",
+  },
+  {
+    icon: UserCheck,
+    title: "Acesso Direto a Estrategistas Seniores",
+    description: "Fale com quem opera sua conta diretamente, sem intermediários ou estagiários.",
+  },
+  {
+    icon: BarChart3,
+    title: "Escala por MER & Lucro Líquido",
+    description: "Otimizamos para margem de contribuição e caixa real, não ROAS inflado de plataforma.",
+  },
+];
+
 export default function HeroSectionV2({
   onOpenAudit,
   headlineVariant = "default",
+  lang = "en",
 }: HeroSectionV2Props) {
+  const isPt = lang === "pt";
+  const guarantees = isPt ? rarityGuaranteesPt : rarityGuaranteesEn;
+
   return (
     <section className="relative pt-16 pb-20 sm:pt-24 sm:pb-28 px-4 sm:px-6 lg:px-8 bg-[#00103A] overflow-hidden text-center">
       {/* Dynamic Cybernetic Dot Grid Mesh */}
@@ -70,16 +98,33 @@ export default function HeroSectionV2({
             transition={{ duration: 0.6 }}
             className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-[1.15]"
           >
-            <span className="block">
-              A Full Growth Team For
-            </span>
-            <span className="block mt-2 sm:mt-3 text-white">
-              Less Than One{" "}
-              <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-tealLight via-white to-brand-teal drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
-                Media Buyer
-              </span>
-              .
-            </span>
+            {isPt ? (
+              <>
+                <span className="block">
+                  Um Time Completo de Growth Por
+                </span>
+                <span className="block mt-2 sm:mt-3 text-white">
+                  Menos Que Um Único{" "}
+                  <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-tealLight via-white to-brand-teal drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
+                    Gestor de Tráfego
+                  </span>
+                  .
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="block">
+                  A Full Growth Team For
+                </span>
+                <span className="block mt-2 sm:mt-3 text-white">
+                  Less Than One{" "}
+                  <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-tealLight via-white to-brand-teal drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
+                    Media Buyer
+                  </span>
+                  .
+                </span>
+              </>
+            )}
           </motion.h1>
         ) : (
           <motion.h1
@@ -88,20 +133,41 @@ export default function HeroSectionV2({
             transition={{ duration: 0.6 }}
             className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-[1.15]"
           >
-            <span className="block">
-              Get Off The Ad Performance{" "}
-              <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-tealLight drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
-                Rollercoaster
-              </span>
-              .
-            </span>
-            <span className="block mt-2 sm:mt-3 text-white">
-              Scale What Actually Drives{" "}
-              <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-tealLight via-white to-brand-teal drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
-                Real Profit
-              </span>
-              .
-            </span>
+            {isPt ? (
+              <>
+                <span className="block">
+                  Saia da Montanha-Russa de Performance de{" "}
+                  <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-tealLight drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
+                    Anúncios
+                  </span>
+                  .
+                </span>
+                <span className="block mt-2 sm:mt-3 text-white">
+                  Escale o Que Realmente Gera{" "}
+                  <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-tealLight via-white to-brand-teal drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
+                    Lucro Líquido
+                  </span>
+                  .
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="block">
+                  Get Off The Ad Performance{" "}
+                  <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-tealLight drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
+                    Rollercoaster
+                  </span>
+                  .
+                </span>
+                <span className="block mt-2 sm:mt-3 text-white">
+                  Scale What Actually Drives{" "}
+                  <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-tealLight via-white to-brand-teal drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
+                    Real Profit
+                  </span>
+                  .
+                </span>
+              </>
+            )}
           </motion.h1>
         )}
 
@@ -112,8 +178,17 @@ export default function HeroSectionV2({
           transition={{ duration: 0.6, delay: 0.15 }}
           className="mt-8 text-sm sm:text-base md:text-lg text-white/85 max-w-2xl leading-relaxed font-normal"
         >
-          We help ambitious DTC brands <strong className="text-white font-bold">break through revenue plateaus</strong> and{" "}
-          <strong className="text-white font-bold">scale profitably</strong> by aligning Meta Ads, Google PMax, and 30+ monthly AI creative sprints around one single metric: <strong className="text-brand-teal font-bold">real contribution margin</strong>.
+          {isPt ? (
+            <>
+              Ajudamos marcas ambiciosas de e-commerce a <strong className="text-white font-bold">romper o platô de faturamento</strong> e{" "}
+              <strong className="text-white font-bold">escalar com lucro real</strong>, unindo Meta Ads, Google PMax e mais de 30 sprints criativos de IA por mês em torno de uma única métrica: <strong className="text-brand-teal font-bold">margem de contribuição real</strong>.
+            </>
+          ) : (
+            <>
+              We help ambitious DTC brands <strong className="text-white font-bold">break through revenue plateaus</strong> and{" "}
+              <strong className="text-white font-bold">scale profitably</strong> by aligning Meta Ads, Google PMax, and 30+ monthly AI creative sprints around one single metric: <strong className="text-brand-teal font-bold">real contribution margin</strong>.
+            </>
+          )}
         </motion.p>
 
         {/* Dual CTA Buttons */}
@@ -128,7 +203,7 @@ export default function HeroSectionV2({
             onClick={onOpenAudit}
             className="w-full sm:w-auto px-8 py-4 rounded-full text-xs sm:text-sm font-extrabold uppercase tracking-wider bg-[#D80064] hover:bg-[#BF0058] text-white shadow-[0_0_25px_rgba(216,0,100,0.5)] border-2 border-[#D80064] hover:border-brand-teal/60 transition-all flex items-center justify-center gap-2 cursor-pointer group"
           >
-            <span>SEE WHAT’S POSSIBLE</span>
+            <span>{isPt ? "VER O QUE É POSSÍVEL" : "SEE WHAT’S POSSIBLE"}</span>
             <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1 transition-transform" />
           </button>
 
@@ -137,11 +212,11 @@ export default function HeroSectionV2({
             href="#cases"
             className="w-full sm:w-auto px-8 py-4 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider bg-white/5 hover:bg-white/10 text-white border-2 border-white/20 hover:border-brand-teal transition-all cursor-pointer text-center"
           >
-            VIEW ALL CASE STUDIES
+            {isPt ? "VER TODOS OS CASES" : "VIEW ALL CASE STUDIES"}
           </a>
         </motion.div>
 
-        {/* Authentic Rarity Core Operational Guarantees (Replacing generic NPS / fake badges) */}
+        {/* Authentic Rarity Core Operational Guarantees */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -149,7 +224,7 @@ export default function HeroSectionV2({
           className="mt-16 pt-8 w-full border-t border-white/10"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {rarityGuarantees.map((item, idx) => {
+            {guarantees.map((item, idx) => {
               const Icon = item.icon;
               return (
                 <div
