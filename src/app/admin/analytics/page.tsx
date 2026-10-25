@@ -216,6 +216,7 @@ interface HeatmapData {
 export type RangePreset =
   | "today"
   | "yesterday"
+  | "7d"
   | "7d_excl"
   | "this_month"
   | "last_month"
@@ -226,7 +227,7 @@ export type RangePreset =
 const PRESETS: Array<{ id: RangePreset; label: string }> = [
   { id: "today", label: "Today" },
   { id: "yesterday", label: "Yesterday" },
-  { id: "7d_excl", label: "Last 7 days (excluding today)" },
+  { id: "7d", label: "Last 7 days" },
   { id: "this_month", label: "This month" },
   { id: "last_month", label: "Last month" },
   { id: "3m", label: "Last 3 months" },
@@ -589,8 +590,12 @@ export default function AdminAnalyticsDashboard() {
 
   const handleApplyCustomRange = () => {
     setRangePreset("custom");
+    const end = tempEndDate ? new Date(tempEndDate) : null;
+    if (end) {
+      end.setHours(23, 59, 59, 999);
+    }
     setCustomStartDate(tempStartDate);
-    setCustomEndDate(tempEndDate);
+    setCustomEndDate(end);
     setIsDatePickerOpen(false);
     setDatePickerView("presets");
   };

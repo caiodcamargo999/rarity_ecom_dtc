@@ -245,29 +245,27 @@ export async function getFullAnalyticsData(
     endDate = new Date();
     endDate.setDate(now.getDate() - 1);
     endDate.setHours(23, 59, 59, 999);
-  } else if (range === "7d_excl" || range === "last_7d_excl") {
+  } else if (range === "7d" || range === "7d_excl" || range === "last_7d" || range === "last_7d_excl") {
     startDate = new Date();
-    startDate.setDate(now.getDate() - 7);
+    startDate.setDate(now.getDate() - 6);
     startDate.setHours(0, 0, 0, 0);
-    endDate = new Date();
-    endDate.setDate(now.getDate() - 1);
-    endDate.setHours(23, 59, 59, 999);
-  } else if (range === "7d") {
-    startDate = new Date();
-    startDate.setDate(now.getDate() - 7);
+    endDate = null; // Includes the current day
   } else if (range === "this_month") {
     startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+    endDate = null; // Includes the current day
   } else if (range === "last_month") {
     startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0);
     endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
   } else if (range === "3m" || range === "last_3m" || range === "90d") {
     startDate = new Date();
     startDate.setDate(now.getDate() - 90);
+    startDate.setHours(0, 0, 0, 0);
+    endDate = null;
   } else if (range === "custom" && customStart) {
     startDate = new Date(customStart);
     if (customEnd) {
       endDate = new Date(customEnd);
-      if (customEnd.length <= 10) {
+      if (customEnd.length <= 10 || (endDate.getHours() === 0 && endDate.getMinutes() === 0 && endDate.getSeconds() === 0)) {
         endDate.setHours(23, 59, 59, 999);
       }
     }
