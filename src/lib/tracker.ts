@@ -134,8 +134,8 @@ async function resolveGeoAsync() {
       cachedGeo = {
         country: data.country || "United States",
         countryCode: data.country_code || "US",
-        region: data.region || "",
-        city: data.city || "",
+        region: cleanGeoString(data.region || ""),
+        city: cleanGeoString(data.city || ""),
       };
       try {
         sessionStorage.setItem(GEO_STORAGE_KEY, JSON.stringify(cachedGeo));
@@ -143,6 +143,21 @@ async function resolveGeoAsync() {
       } catch (e) {}
     }
   } catch (err) {}
+}
+
+export function cleanGeoString(val?: string | null): string {
+  if (!val) return "";
+  try {
+    let decoded = decodeURIComponent(val.replace(/\+/g, " "));
+    if (decoded.includes("%")) {
+      try {
+        decoded = decodeURIComponent(decoded);
+      } catch (e) {}
+    }
+    return decoded.trim();
+  } catch (e) {
+    return val.replace(/%20/g, " ").trim();
+  }
 }
 
 // Channel Detection Algorithm
@@ -187,10 +202,10 @@ export function detectTrafficChannel(referrer = "", utms: Record<string, string>
     };
   }
 
-  // 2. Meta Ads (Facebook & Instagram Paid Ads)
+  // 2. Meta Ads (Facebook & Instagram Paid Ads - requires explicit fbclid or paid UTMs)
   if (
     hasFbclid ||
-    ((utmSource.includes("meta") || utmSource.includes("facebook") || utmSource.includes("instagram") || utmSource.includes("fb") || utmSource.includes("ig")) &&
+    ((utmSource.includes("meta") || utmSource.includes("facebook") || utmSource.includes("instagram") || utmSource === "fb" || utmSource === "ig") &&
       (utmMedium.includes("cpc") || utmMedium.includes("paid") || utmMedium.includes("ad") || utmMedium.includes("feed") || utmMedium.includes("story") || utmMedium.includes("reels")))
   ) {
     return {
@@ -373,14 +388,19 @@ export function captureAndGetUtms(): Record<string, string> {
     "fbclid",
     "gclid",
     "ttclid",
-    "fbc",
-    "fbp",
   ];
 
   let stored: Record<string, string> = {};
+  let hadLegacyFbp = false;
   try {
     const raw = localStorage.getItem(UTM_STORAGE_KEY) || sessionStorage.getItem(UTM_STORAGE_KEY);
-    if (raw) stored = JSON.parse(raw);
+    if (raw) {
+      stored = JSON.parse(raw);
+      if ("fbp" in stored) {
+        delete stored.fbp;
+        hadLegacyFbp = true;
+      }
+    }
   } catch (e) {}
 
   let updated = false;
@@ -392,18 +412,14 @@ export function captureAndGetUtms(): Record<string, string> {
     }
   }
 
+  // Only store fbc if it contains a verified click ID (fb.1.)
   const fbc = getCookie("_fbc");
-  if (fbc && !stored.fbc) {
+  if (fbc && fbc.startsWith("fb.1.") && !stored.fbc) {
     stored.fbc = fbc;
     updated = true;
   }
-  const fbp = getCookie("_fbp");
-  if (fbp && !stored.fbp) {
-    stored.fbp = fbp;
-    updated = true;
-  }
 
-  if (updated) {
+  if (updated || hadLegacyFbp) {
     try {
       localStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(stored));
       sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(stored));

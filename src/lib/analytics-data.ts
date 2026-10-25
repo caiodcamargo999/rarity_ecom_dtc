@@ -15,6 +15,50 @@ export const US_STATES_MAP: Record<string, string> = {
   DC: "District of Columbia",
 };
 
+export function cleanGeoString(val?: string | null): string {
+  if (!val) return "";
+  try {
+    let decoded = decodeURIComponent(val.replace(/\+/g, " "));
+    if (decoded.includes("%")) {
+      try {
+        decoded = decodeURIComponent(decoded);
+      } catch (e) {}
+    }
+    return decoded.trim();
+  } catch (e) {
+    return val.replace(/%20/g, " ").trim();
+  }
+}
+
+export const CITY_TO_STATE_MAP: Record<string, { state: string; stateCode: string; country?: string }> = {
+  "moses lake": { state: "Washington", stateCode: "WA", country: "United States" },
+  "des moines": { state: "Iowa", stateCode: "IA", country: "United States" },
+  "san jose": { state: "California", stateCode: "CA", country: "United States" },
+  "boydton": { state: "Virginia", stateCode: "VA", country: "United States" },
+  "ashburn": { state: "Virginia", stateCode: "VA", country: "United States" },
+  "seattle": { state: "Washington", stateCode: "WA", country: "United States" },
+  "toronto": { state: "Ontario", stateCode: "ON", country: "Canada" },
+  "campinas": { state: "São Paulo", stateCode: "SP", country: "Brazil" },
+  "florianopolis": { state: "Santa Catarina", stateCode: "SC", country: "Brazil" },
+  "florianópolis": { state: "Santa Catarina", stateCode: "SC", country: "Brazil" },
+  "curitiba": { state: "Paraná", stateCode: "PR", country: "Brazil" },
+  "lulea": { state: "Norrbotten", stateCode: "BD", country: "Sweden" },
+  "luleå": { state: "Norrbotten", stateCode: "BD", country: "Sweden" },
+  "san francisco": { state: "California", stateCode: "CA", country: "United States" },
+  "los angeles": { state: "California", stateCode: "CA", country: "United States" },
+  "new york": { state: "New York", stateCode: "NY", country: "United States" },
+  "austin": { state: "Texas", stateCode: "TX", country: "United States" },
+  "dallas": { state: "Texas", stateCode: "TX", country: "United States" },
+  "chicago": { state: "Illinois", stateCode: "IL", country: "United States" },
+  "atlanta": { state: "Georgia", stateCode: "GA", country: "United States" },
+  "miami": { state: "Florida", stateCode: "FL", country: "United States" },
+  "phoenix": { state: "Arizona", stateCode: "AZ", country: "United States" },
+  "denver": { state: "Colorado", stateCode: "CO", country: "United States" },
+  "boston": { state: "Massachusetts", stateCode: "MA", country: "United States" },
+  "boardman": { state: "Oregon", stateCode: "OR", country: "United States" },
+  "council bluffs": { state: "Iowa", stateCode: "IA", country: "United States" },
+};
+
 const STATE_NAME_TO_CODE: Record<string, string> = {};
 Object.entries(US_STATES_MAP).forEach(([code, name]) => {
   STATE_NAME_TO_CODE[name.toLowerCase()] = code;
@@ -23,7 +67,9 @@ Object.entries(US_STATES_MAP).forEach(([code, name]) => {
 
 export function normalizeState(rawState?: string): { state: string; stateCode: string } {
   if (!rawState) return { state: "Direct / Global", stateCode: "US" };
-  const clean = rawState.trim();
+  const clean = cleanGeoString(rawState);
+  if (!clean) return { state: "Direct / Global", stateCode: "US" };
+
   const upper = clean.toUpperCase();
   if (US_STATES_MAP[upper]) {
     return { state: US_STATES_MAP[upper], stateCode: upper };
@@ -33,7 +79,14 @@ export function normalizeState(rawState?: string): { state: string; stateCode: s
     const code = STATE_NAME_TO_CODE[lower];
     return { state: US_STATES_MAP[code] || clean, stateCode: code };
   }
-  return { state: clean, stateCode: upper.substring(0, 2) };
+  if (CITY_TO_STATE_MAP[lower]) {
+    const mapped = CITY_TO_STATE_MAP[lower];
+    return { state: mapped.state, stateCode: mapped.stateCode };
+  }
+  if (clean.length === 2) {
+    return { state: upper, stateCode: upper };
+  }
+  return { state: clean, stateCode: clean.length <= 3 ? upper : "" };
 }
 
 // Visitors saved before the tracker started storing the state have no region,
@@ -75,9 +128,14 @@ export function resolveVisitorState(
 }
 
 export function classifyChannel(source?: string, medium?: string, referrer?: string): { channel: string; category: string } {
-  const s = (source || "").toLowerCase();
-  const m = (medium || "").toLowerCase();
-  const r = (referrer || "").toLowerCase();
+  const s = (source || "").toLowerCase().trim();
+  const m = (medium || "").toLowerCase().trim();
+  const r = (referrer || "").toLowerCase().trim();
+
+  // Guard against legacy false Meta Ads created by previous tracking bug
+  if ((s === "meta ads" || s === "meta_ads") && (m === "tracked" || !m || m === "none")) {
+    return { channel: "Direct / Typed URL", category: "Direct" };
+  }
 
   // 1. ChatGPT / AI Search
   if (
@@ -101,12 +159,8 @@ export function classifyChannel(source?: string, medium?: string, referrer?: str
 
   // 2. Meta Ads
   if (
-    s.includes("meta") ||
-    s.includes("facebook") ||
-    (s.includes("instagram") && (m.includes("cpc") || m.includes("paid") || m.includes("ad"))) ||
-    s.includes("fb_") ||
-    s.includes("ig_") ||
-    m.includes("paid_social")
+    (s.includes("meta") || s.includes("facebook") || (s.includes("instagram") && (m.includes("cpc") || m.includes("paid") || m.includes("ad"))) || s.includes("fb_") || s.includes("ig_") || m.includes("paid_social")) &&
+    m !== "tracked"
   ) {
     return { channel: "Meta Ads (FB & IG)", category: "Paid Social" };
   }
@@ -330,7 +384,7 @@ export async function getFullAnalyticsData(
   // 1. Fetch live visitors
   const { data: liveData } = await supabaseAdmin
     .from("analytics_visitors")
-    .select("visitor_id, full_name, email, phone, company_name, device_type, os, browser, country, city, first_touch_utm_source, first_touch_utm_medium, last_touch_landing_page, last_seen_at")
+    .select("visitor_id, full_name, email, phone, company_name, device_type, os, browser, country, state, region, city, first_touch_utm_source, first_touch_utm_medium, last_touch_landing_page, last_seen_at")
     .gte("last_seen_at", fiveMinutesAgoIso)
     .order("last_seen_at", { ascending: false })
     .limit(50);

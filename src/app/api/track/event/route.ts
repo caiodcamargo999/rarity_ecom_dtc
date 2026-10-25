@@ -8,6 +8,26 @@ function detectChannelServer(referrer = "", utms: Record<string, string> = {}, c
   source: string;
   medium: string;
 } {
+  const ref = (referrer || "").toLowerCase();
+  const utmSource = (utms.utm_source || "").toLowerCase();
+  const utmMedium = (utms.utm_medium || "").toLowerCase();
+  const hasFbclid = Boolean(utms.fbclid);
+  const hasGclid = Boolean(utms.gclid);
+  const hasTtclid = Boolean(utms.ttclid);
+
+  // Safeguard: reject false Meta Ads override if no fbclid and no paid Meta UTMs
+  if (
+    channelOverride === "Meta Ads" &&
+    !hasFbclid &&
+    !utmSource.includes("meta") &&
+    !utmSource.includes("facebook") &&
+    !utmSource.includes("instagram") &&
+    utmSource !== "fb" &&
+    utmSource !== "ig"
+  ) {
+    channelOverride = undefined;
+  }
+
   if (channelOverride) {
     return {
       channel: channelOverride,
@@ -15,15 +35,6 @@ function detectChannelServer(referrer = "", utms: Record<string, string> = {}, c
       medium: utms.utm_medium || "tracked",
     };
   }
-
-  const ref = (referrer || "").toLowerCase();
-  const utmSource = (utms.utm_source || "").toLowerCase();
-  const utmMedium = (utms.utm_medium || "").toLowerCase();
-  // Only a real click id counts as an ad click. _fbp is the Meta Pixel's
-  // browser cookie and exists for every visitor, so it is not an ad signal.
-  const hasFbclid = Boolean(utms.fbclid);
-  const hasGclid = Boolean(utms.gclid);
-  const hasTtclid = Boolean(utms.ttclid);
 
   // ChatGPT & AI Search
   if (
@@ -47,10 +58,10 @@ function detectChannelServer(referrer = "", utms: Record<string, string> = {}, c
     return { channel: "ChatGPT / AI Search", source, medium: "ai_search" };
   }
 
-  // Meta Ads
+  // Meta Ads (requires explicit fbclid or paid UTMs)
   if (
     hasFbclid ||
-    ((utmSource.includes("meta") || utmSource.includes("facebook") || utmSource.includes("instagram") || utmSource.includes("fb") || utmSource.includes("ig")) &&
+    ((utmSource.includes("meta") || utmSource.includes("facebook") || utmSource.includes("instagram") || utmSource === "fb" || utmSource === "ig") &&
       (utmMedium.includes("cpc") || utmMedium.includes("paid") || utmMedium.includes("ad") || utmMedium.includes("feed") || utmMedium.includes("story") || utmMedium.includes("reels")))
   ) {
     return {
