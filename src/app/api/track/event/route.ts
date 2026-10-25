@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
 import { normalizeState, US_STATES_MAP } from "@/lib/analytics-data";
 import { resolveCountry, safeDecode } from "@/lib/geo";
+import { META_BOT_UA, isMetaSource, isPaidMetaMedium } from "@/lib/meta-attribution";
 
 function detectChannelServer(referrer = "", utms: Record<string, string> = {}, channelOverride?: string): {
   channel: string;
@@ -15,16 +16,9 @@ function detectChannelServer(referrer = "", utms: Record<string, string> = {}, c
   const hasGclid = Boolean(utms.gclid);
   const hasTtclid = Boolean(utms.ttclid);
 
-  // Safeguard: reject false Meta Ads override if no fbclid and no paid Meta UTMs
-  if (
-    channelOverride === "Meta Ads" &&
-    !hasFbclid &&
-    !utmSource.includes("meta") &&
-    !utmSource.includes("facebook") &&
-    !utmSource.includes("instagram") &&
-    utmSource !== "fb" &&
-    utmSource !== "ig"
-  ) {
+  // Safeguard: a client-sent "Meta Ads" override is re-derived on the server unless the
+  // UTMs carry a paid medium; fbclid alone (organic link click) is not enough.
+  if (channelOverride === "Meta Ads" && !(isMetaSource(utmSource) && isPaidMetaMedium(utmMedium))) {
     channelOverride = undefined;
   }
 
@@ -58,11 +52,13 @@ function detectChannelServer(referrer = "", utms: Record<string, string> = {}, c
     return { channel: "ChatGPT / AI Search", source, medium: "ai_search" };
   }
 
-  // Meta Ads (requires explicit fbclid or paid UTMs)
+  // Meta Ads: fbclid is also added to organic link clicks, so it only counts as paid
+  // together with a paid medium or an ad campaign name.
+  const utmCampaign = (utms.utm_campaign || "").toLowerCase();
+  const hasAdCampaign = Boolean(utmCampaign) && utmCampaign !== "none" && !/bio|organic|profile|story_link|share/.test(`${utmMedium} ${utmCampaign}`);
   if (
-    hasFbclid ||
-    ((utmSource.includes("meta") || utmSource.includes("facebook") || utmSource.includes("instagram") || utmSource === "fb" || utmSource === "ig") &&
-      (utmMedium.includes("cpc") || utmMedium.includes("paid") || utmMedium.includes("ad") || utmMedium.includes("feed") || utmMedium.includes("story") || utmMedium.includes("reels")))
+    (hasFbclid && (isPaidMetaMedium(utmMedium) || hasAdCampaign)) ||
+    (isMetaSource(utmSource) && isPaidMetaMedium(utmMedium))
   ) {
     return {
       channel: "Meta Ads",
@@ -83,6 +79,11 @@ function detectChannelServer(referrer = "", utms: Record<string, string> = {}, c
   // Instagram Organic
   if (ref.includes("instagram.com") || ref.includes("l.instagram.com") || utmSource === "instagram" || utmSource === "ig") {
     return { channel: "Instagram Organic", source: "Instagram", medium: utmMedium || "social_organic" };
+  }
+
+  // Facebook Organic (fbclid or Facebook referrer without a paid signal)
+  if (hasFbclid || /(^|[./])(facebook\.com|fb\.com|fb\.me)/.test(ref) || utmSource.includes("facebook") || utmSource === "fb") {
+    return { channel: "Facebook Organic", source: "Facebook Organic", medium: utmMedium || "social_organic" };
   }
 
   // TikTok
@@ -154,6 +155,11 @@ export async function POST(req: NextRequest) {
 
     // Ignore admin or internal pages
     if (pathname && (pathname.startsWith("/admin") || pathname.startsWith("/api"))) {
+      return NextResponse.json({ success: true, ignored: true });
+    }
+
+    // Ignore Meta link-preview crawlers
+    if (META_BOT_UA.test(req.headers.get("user-agent") || "")) {
       return NextResponse.json({ success: true, ignored: true });
     }
 

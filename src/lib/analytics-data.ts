@@ -1,5 +1,6 @@
 import { supabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
 import { resolveCountry, safeDecode } from "@/lib/geo";
+import { isMetaSource, isPaidMetaMedium } from "@/lib/meta-attribution";
 
 export const US_STATES_MAP: Record<string, string> = {
   AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
@@ -158,11 +159,16 @@ export function classifyChannel(source?: string, medium?: string, referrer?: str
   }
 
   // 2. Meta Ads
-  if (
-    (s.includes("meta") || s.includes("facebook") || (s.includes("instagram") && (m.includes("cpc") || m.includes("paid") || m.includes("ad"))) || s.includes("fb_") || s.includes("ig_") || m.includes("paid_social")) &&
-    m !== "tracked"
-  ) {
+  // Requires a paid medium; a bare "facebook"/"meta" source (e.g. fbclid on an organic or bio link) is not an ad.
+  if ((isMetaSource(s) || m.includes("paid_social")) && isPaidMetaMedium(m)) {
     return { channel: "Meta Ads (FB & IG)", category: "Paid Social" };
+  }
+  // Non-paid Meta traffic: Instagram falls through to rule 4, everything else is Facebook Organic.
+  if (isMetaSource(s) && !s.includes("instagram") && !r.includes("instagram.com")) {
+    return { channel: "Facebook Organic", category: "Organic Social" };
+  }
+  if (r.includes("facebook.com") || r.includes("fb.com")) {
+    return { channel: "Facebook Organic", category: "Organic Social" };
   }
 
   // 3. Google Ads

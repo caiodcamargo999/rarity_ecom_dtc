@@ -1,5 +1,7 @@
 "use client";
 
+import { isMetaSource, isPaidMetaMedium } from "@/lib/meta-attribution";
+
 export const VISITOR_ID_KEY = "rarity_vid";
 export const SESSION_ID_KEY = "rarity_sid";
 export const SESSION_TIME_KEY = "rarity_sid_time";
@@ -202,11 +204,12 @@ export function detectTrafficChannel(referrer = "", utms: Record<string, string>
     };
   }
 
-  // 2. Meta Ads (Facebook & Instagram Paid Ads - requires explicit fbclid or paid UTMs)
+  // 2. Meta Ads (Facebook & Instagram Paid Ads). fbclid is also added to organic link clicks,
+  // so it only counts as paid together with a paid medium or an ad campaign name.
+  const hasAdCampaign = utmCampaign !== "none" && !/bio|organic|profile|story_link|share/i.test(`${utmMedium} ${utmCampaign}`);
   if (
-    hasFbclid ||
-    ((utmSource.includes("meta") || utmSource.includes("facebook") || utmSource.includes("instagram") || utmSource === "fb" || utmSource === "ig") &&
-      (utmMedium.includes("cpc") || utmMedium.includes("paid") || utmMedium.includes("ad") || utmMedium.includes("feed") || utmMedium.includes("story") || utmMedium.includes("reels")))
+    (hasFbclid && (isPaidMetaMedium(utmMedium) || hasAdCampaign)) ||
+    (isMetaSource(utmSource) && isPaidMetaMedium(utmMedium))
   ) {
     return {
       channel: "Meta Ads",
@@ -240,6 +243,21 @@ export function detectTrafficChannel(referrer = "", utms: Record<string, string>
     return {
       channel: "Instagram Organic",
       source: "Instagram",
+      medium: utmMedium || "social_organic",
+      campaign: utmCampaign,
+    };
+  }
+
+  // 4b. Facebook Organic (fbclid or Facebook referrer without a paid signal)
+  if (
+    hasFbclid ||
+    /(^|[./])(facebook\.com|fb\.com|fb\.me)/.test(ref) ||
+    utmSource.includes("facebook") ||
+    utmSource === "fb"
+  ) {
+    return {
+      channel: "Facebook Organic",
+      source: "Facebook Organic",
       medium: utmMedium || "social_organic",
       campaign: utmCampaign,
     };
