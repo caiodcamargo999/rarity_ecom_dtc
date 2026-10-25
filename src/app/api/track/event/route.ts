@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
+import { normalizeState, US_STATES_MAP } from "@/lib/analytics-data";
+import { resolveCountry, safeDecode } from "@/lib/geo";
 
 function detectChannelServer(referrer = "", utms: Record<string, string> = {}, channelOverride?: string): {
   channel: string;
@@ -17,7 +19,9 @@ function detectChannelServer(referrer = "", utms: Record<string, string> = {}, c
   const ref = (referrer || "").toLowerCase();
   const utmSource = (utms.utm_source || "").toLowerCase();
   const utmMedium = (utms.utm_medium || "").toLowerCase();
-  const hasFbclid = Boolean(utms.fbclid || utms.fbc || utms.fbp);
+  // Only a real click id counts as an ad click. _fbp is the Meta Pixel's
+  // browser cookie and exists for every visitor, so it is not an ad signal.
+  const hasFbclid = Boolean(utms.fbclid);
   const hasGclid = Boolean(utms.gclid);
   const hasTtclid = Boolean(utms.ttclid);
 
@@ -147,25 +151,40 @@ export async function POST(req: NextRequest) {
     }
 
     // Geolocation Resolution
-    const country =
+    const { name: country, code: countryCode } = resolveCountry(
       body.country ||
-      req.headers.get("x-vercel-ip-country") ||
-      req.headers.get("cf-ipcountry") ||
-      req.headers.get("x-country-code") ||
-      "United States";
+        req.headers.get("x-vercel-ip-country") ||
+        req.headers.get("cf-ipcountry") ||
+        req.headers.get("x-country-code") ||
+        "United States"
+    );
 
-    const stateOrRegion =
+    const regionRaw = safeDecode(
       body.region ||
-      req.headers.get("x-vercel-ip-country-region") ||
-      req.headers.get("cf-region-code") ||
-      req.headers.get("cf-region") ||
-      "";
+        req.headers.get("x-vercel-ip-country-region") ||
+        req.headers.get("cf-region-code") ||
+        req.headers.get("cf-region") ||
+        ""
+    );
 
-    const city =
+    // Vercel sends the city URL-encoded ("Moses%20Lake"); decode it.
+    const city = safeDecode(
       body.city ||
-      req.headers.get("x-vercel-ip-city") ||
-      req.headers.get("cf-ipcity") ||
-      "";
+        req.headers.get("x-vercel-ip-city") ||
+        req.headers.get("cf-ipcity") ||
+        ""
+    );
+
+    // Full state name for the US ("WA" -> "Washington"); raw region elsewhere.
+    let state = "";
+    if (regionRaw) {
+      if (countryCode === "US") {
+        const { stateCode } = normalizeState(regionRaw);
+        state = US_STATES_MAP[stateCode] || "";
+      } else {
+        state = regionRaw;
+      }
+    }
 
     // Channel Detection
     const detected = detectChannelServer(referrer, utms, channel);
@@ -179,9 +198,32 @@ export async function POST(req: NextRequest) {
 
     // 1. Handle PAGEVIEW event
     if (type === "pageview") {
-      // Upsert Visitor with detected channel & source
-      await supabaseAdmin.from("analytics_visitors").upsert(
-        {
+      // Geo + device fields are refreshed on every pageview; only write the
+      // geo keys we actually resolved so we never blank an existing value.
+      const refreshFields = {
+        last_touch_landing_page: pathname,
+        device_type: device,
+        browser,
+        os,
+        ip_address: clientIp,
+        country,
+        last_seen_at: nowIso,
+        ...(city ? { city } : {}),
+        ...(regionRaw ? { region: regionRaw } : {}),
+        ...(state ? { state } : {}),
+      };
+
+      const { data: existingVisitor } = await supabaseAdmin
+        .from("analytics_visitors")
+        .select("visitor_id")
+        .eq("visitor_id", visitorId)
+        .maybeSingle();
+
+      if (existingVisitor) {
+        // Returning visitor: keep the original first-touch attribution.
+        await supabaseAdmin.from("analytics_visitors").update(refreshFields).eq("visitor_id", visitorId);
+      } else {
+        await supabaseAdmin.from("analytics_visitors").insert({
           visitor_id: visitorId,
           first_touch_utm_source: detected.channel || utms?.utm_source || null,
           first_touch_utm_medium: detected.medium || utms?.utm_medium || null,
@@ -190,17 +232,9 @@ export async function POST(req: NextRequest) {
           first_touch_utm_term: utms?.utm_term || null,
           first_touch_referrer: referrer || null,
           first_touch_landing_page: pathname,
-          last_touch_landing_page: pathname,
-          device_type: device,
-          browser,
-          os,
-          ip_address: clientIp,
-          country,
-          city: city || stateOrRegion || null,
-          last_seen_at: nowIso,
-        },
-        { onConflict: "visitor_id", ignoreDuplicates: false }
-      );
+          ...refreshFields,
+        });
+      }
 
       // Upsert Session
       await supabaseAdmin.from("analytics_sessions").upsert(
@@ -249,7 +283,7 @@ export async function POST(req: NextRequest) {
           utms,
           device,
           country,
-          state: stateOrRegion,
+          state: state || regionRaw,
           city,
           channel: detected.channel,
           source: detected.source,
@@ -310,7 +344,7 @@ export async function POST(req: NextRequest) {
         event_data: {
           ...eventData,
           country,
-          state: stateOrRegion,
+          state: state || regionRaw,
           city,
           channel: detected.channel,
           source: detected.source,

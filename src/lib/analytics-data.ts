@@ -1,4 +1,5 @@
 import { supabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
+import { resolveCountry, safeDecode } from "@/lib/geo";
 
 export const US_STATES_MAP: Record<string, string> = {
   AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
@@ -33,6 +34,44 @@ export function normalizeState(rawState?: string): { state: string; stateCode: s
     return { state: US_STATES_MAP[code] || clean, stateCode: code };
   }
   return { state: clean, stateCode: upper.substring(0, 2) };
+}
+
+// Visitors saved before the tracker started storing the state have no region,
+// only a city. These are the US cities seen so far, used ONLY as a fallback for
+// those older rows. New rows get the real state from Vercel's geo header.
+const LEGACY_US_CITY_TO_STATE: Record<string, string> = {
+  "moses lake": "WA",
+  "des moines": "IA",
+  "san jose": "CA",
+  boydton: "VA",
+  ashburn: "VA",
+};
+
+/**
+ * Resolves the state for a visitor row. Never derives a state from the city
+ * name's letters (that is what produced "MO" for Moses Lake).
+ */
+export function resolveVisitorState(
+  visitor: { state?: string | null; region?: string | null; city?: string | null },
+  countryCode: string
+): { state: string; stateCode: string } {
+  const rawRegion = safeDecode(visitor.state || visitor.region || "");
+
+  if (countryCode === "US") {
+    let code = "";
+    if (rawRegion) {
+      const n = normalizeState(rawRegion);
+      if (US_STATES_MAP[n.stateCode]) code = n.stateCode;
+    }
+    if (!code) code = LEGACY_US_CITY_TO_STATE[safeDecode(visitor.city).toLowerCase()] || "";
+    if (code) return { state: US_STATES_MAP[code], stateCode: code };
+    return { state: "Unknown state", stateCode: "—" };
+  }
+
+  if (rawRegion) {
+    return { state: rawRegion, stateCode: rawRegion.length <= 3 ? rawRegion.toUpperCase() : "—" };
+  }
+  return { state: "Unknown region", stateCode: "—" };
 }
 
 export function classifyChannel(source?: string, medium?: string, referrer?: string): { channel: string; category: string } {
@@ -463,9 +502,8 @@ export async function getFullAnalyticsData(
   });
 
   for (const visitor of allVisitors) {
-    const rawCountry = visitor.country || "United States";
-    const countryCode = rawCountry === "United States" || rawCountry === "US" ? "US" : rawCountry.substring(0, 2).toUpperCase();
-    const countryName = rawCountry === "US" ? "United States" : rawCountry;
+    const { name: countryName, code: countryCode } = resolveCountry(visitor.country);
+    const visitorCity = safeDecode(visitor.city);
 
     const hasLead = leadByVisitor.has(visitor.visitor_id);
     const isBooking = hasLead && leadByVisitor.get(visitor.visitor_id)?.scheduled_on_cal === "Yes";
@@ -483,8 +521,7 @@ export async function getFullAnalyticsData(
     if (hasLead) countryMap[countryName].leads += 1;
     if (isBooking) countryMap[countryName].bookings += 1;
 
-    const rawState = visitor.city || "";
-    const { state, stateCode } = normalizeState(rawState);
+    const { state, stateCode } = resolveVisitorState(visitor, countryCode);
     const stateKey = `${countryName}___${state}`;
 
     if (!stateMap[stateKey]) {
@@ -501,11 +538,11 @@ export async function getFullAnalyticsData(
     if (hasLead) stateMap[stateKey].leads += 1;
     if (isBooking) stateMap[stateKey].bookings += 1;
 
-    if (visitor.city) {
-      const cityKey = `${visitor.city}___${state}___${countryName}`;
+    if (visitorCity) {
+      const cityKey = `${visitorCity}___${state}___${countryName}`;
       if (!cityMap[cityKey]) {
         cityMap[cityKey] = {
-          city: visitor.city,
+          city: visitorCity,
           state,
           country: countryName,
           visitors: 0,
@@ -691,13 +728,23 @@ export async function getFullAnalyticsData(
     pagesPerformance,
     liveVisitors: (liveData || []).map((v) => ({
       ...v,
+      city: safeDecode(v.city),
+      country: v.country ? resolveCountry(v.country).name : v.country,
       current_page: v.last_touch_landing_page,
       channel: classifyChannel(v.first_touch_utm_source, v.first_touch_utm_medium).channel,
     })),
-    recentJourneys: allVisitors.map((v) => ({
-      ...v,
-      detectedChannel: classifyChannel(v.first_touch_utm_source, v.first_touch_utm_medium, v.first_touch_referrer).channel,
-    })),
+    recentJourneys: allVisitors.map((v) => {
+      const geoCountry = resolveCountry(v.country);
+      const geoState = resolveVisitorState(v, geoCountry.code);
+      return {
+        ...v,
+        city: safeDecode(v.city),
+        country: v.country ? geoCountry.name : v.country,
+        state: geoState.state,
+        stateCode: geoState.stateCode,
+        detectedChannel: classifyChannel(v.first_touch_utm_source, v.first_touch_utm_medium, v.first_touch_referrer).channel,
+      };
+    }),
     utmPerformance,
     channelStats,
     geoStats: {

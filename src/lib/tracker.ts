@@ -151,7 +151,10 @@ export function detectTrafficChannel(referrer = "", utms: Record<string, string>
   const utmSource = (utms.utm_source || "").toLowerCase();
   const utmMedium = (utms.utm_medium || "").toLowerCase();
   const utmCampaign = utms.utm_campaign || "none";
-  const hasFbclid = Boolean(utms.fbclid || utms.fbc || utms.fbp);
+  // Only a real click id counts as an ad click. _fbp is the Meta Pixel's
+  // browser cookie and exists for EVERY visitor on a pixel-enabled site, so it
+  // must never be used to attribute traffic to Meta Ads.
+  const hasFbclid = Boolean(utms.fbclid);
   const hasGclid = Boolean(utms.gclid);
   const hasTtclid = Boolean(utms.ttclid);
 
