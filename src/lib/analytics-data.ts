@@ -782,6 +782,7 @@ export async function getFullAnalyticsData(
   }
 
   const clickGroups: Record<string, Record<string, any>> = {};
+  const deviceByVisitor = new Map<string, string>(allVisitors.map((v) => [v.visitor_id, v.device_type || ""] as [string, string]));
   for (const ev of allEvents) {
     if (ev.event_type === "cta_click" || ev.event_type === "warm_click") {
       const path = ev.pathname || "/";
@@ -794,7 +795,8 @@ export async function getFullAnalyticsData(
       const yPct = typeof data.yPct === "number" ? data.yPct : 50;
       const isBooking = Boolean(data.isBooking);
 
-      const key = `${label}___${Math.round(xPct)}___${Math.round(yPct)}`;
+      const device: "mobile" | "desktop" = deviceByVisitor.get(ev.visitor_id) === "mobile" ? "mobile" : "desktop";
+      const key = `${device}___${label}___${Math.round(xPct)}___${Math.round(yPct)}`;
       if (!clickGroups[path][key]) {
         clickGroups[path][key] = {
           label,
@@ -803,6 +805,7 @@ export async function getFullAnalyticsData(
           yPct,
           count: 0,
           isBooking,
+          device,
         };
       }
       clickGroups[path][key].count += 1;

@@ -161,7 +161,8 @@ export function middleware(request: NextRequest) {
   }
 
   const response = NextResponse.next();
-  response.headers.set("X-Frame-Options", "DENY");
+  // SAMEORIGIN (not DENY) so the admin heatmap can render the public pages in a frame.
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   return response;

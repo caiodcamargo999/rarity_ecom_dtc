@@ -506,7 +506,7 @@ export class RarityTracker {
   private heartbeatTimer: any = null;
 
   constructor() {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && !window.location.search.includes("heatmap_preview=1")) {
       this.init();
     }
   }
