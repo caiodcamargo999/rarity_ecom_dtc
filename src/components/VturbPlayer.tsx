@@ -113,7 +113,7 @@ export function pauseAllVturbVideos() {
 }
 
 export default function VturbPlayer({
-  videoId = "vid-6add7fb1b2a34667b75cd5b1",
+  videoId = "vid-6af11075e4056bc5cf6cd56a",
   className = "",
   delaySeconds = 0,
   enableFloatingOnScroll = false,
@@ -130,7 +130,7 @@ export default function VturbPlayer({
 
   useEffect(() => {
     // 1. Dynamically inject player script if not already present
-    const rawPlayerId = videoId.replace(/^vid-(modal-)?/, "") || "6add7fb1b2a34667b75cd5b1";
+    const rawPlayerId = videoId.replace(/^vid-(modal-)?/, "") || "6af11075e4056bc5cf6cd56a";
     const scriptId = `vturb-player-js-${rawPlayerId}`;
     if (!document.getElementById(scriptId)) {
       const s = document.createElement("script");

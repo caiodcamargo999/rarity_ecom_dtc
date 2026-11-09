@@ -55,7 +55,7 @@ export default function VideoModal({ isOpen, onClose, onOpenAudit }: VideoModalP
           {/* Video Player Box */}
           <div className="w-full bg-black">
             <VturbPlayer
-              videoId="vid-modal-6add7fb1b2a34667b75cd5b1"
+              videoId="vid-modal-6af11075e4056bc5cf6cd56a"
               enableFloatingOnScroll={false}
             />
           </div>
