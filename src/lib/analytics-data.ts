@@ -1,4 +1,5 @@
 import { supabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
+import { isBotIp } from "@/lib/meta-attribution";
 import { resolveCountry, safeDecode } from "@/lib/geo";
 import { isMetaSource, isPaidMetaMedium } from "@/lib/meta-attribution";
 
@@ -389,7 +390,7 @@ export async function getFullAnalyticsData(
   // 1. Fetch live visitors
   const { data: liveData } = await supabaseAdmin
     .from("analytics_visitors")
-    .select("visitor_id, full_name, email, phone, company_name, device_type, os, browser, country, state, region, city, first_touch_utm_source, first_touch_utm_medium, last_touch_landing_page, last_seen_at")
+    .select("visitor_id, ip_address, full_name, email, phone, company_name, device_type, os, browser, country, state, region, city, first_touch_utm_source, first_touch_utm_medium, last_touch_landing_page, last_seen_at")
     .gte("last_seen_at", fiveMinutesAgoIso)
     .order("last_seen_at", { ascending: false })
     .limit(50);
@@ -433,13 +434,17 @@ export async function getFullAnalyticsData(
     .order("last_seen_at", { ascending: false });
   if (startDate) visQuery = visQuery.gte("last_seen_at", startDate.toISOString());
   if (endDate) visQuery = visQuery.lte("last_seen_at", endDate.toISOString());
-  const { data: visitorsList } = await visQuery.limit(500);
+  const { data: visitorsList } = await visQuery.limit(1000);
 
-  const allPageviews = (pageviewsData || []).filter((p) => !p.pathname?.startsWith("/admin") && !p.pathname?.startsWith("/api"));
-  const allEvents = eventsData || [];
+  // Meta ad-review bots and scanners are not people: drop them from every traffic metric.
+  const botIds = new Set((visitorsList || []).filter((v) => isBotIp(v.ip_address)).map((v) => v.visitor_id));
+  const notBot = (x: { visitor_id?: string | null }) => !x.visitor_id || !botIds.has(x.visitor_id);
+
+  const allPageviews = (pageviewsData || []).filter((p) => !p.pathname?.startsWith("/admin") && !p.pathname?.startsWith("/api") && notBot(p));
+  const allEvents = (eventsData || []).filter(notBot);
   const allLeads = leadsData || [];
-  const allSessions = sessionsData || [];
-  const allVisitors = visitorsList || [];
+  const allSessions = (sessionsData || []).filter(notBot);
+  const allVisitors = (visitorsList || []).filter(notBot);
 
   const totalVisitors = new Set(allPageviews.map((p) => p.visitor_id)).size || allVisitors.length;
   const totalPageviews = allPageviews.length;
@@ -827,14 +832,14 @@ export async function getFullAnalyticsData(
       totalPageviews,
       avgDurationSeconds,
       avgScrollDepth,
-      activeLiveVisitors: (liveData || []).length,
+      activeLiveVisitors: (liveData || []).filter((v) => !isBotIp(v.ip_address)).length,
       totalLeads,
       totalBookings,
       conversionRate,
       vturbPlays,
     },
     pagesPerformance,
-    liveVisitors: (liveData || []).map((v) => ({
+    liveVisitors: (liveData || []).filter((v) => !isBotIp(v.ip_address)).map((v) => ({
       ...v,
       city: safeDecode(v.city),
       country: v.country ? resolveCountry(v.country).name : v.country,

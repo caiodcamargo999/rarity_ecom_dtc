@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from "react";
 import { useRouter } from "next/navigation";
+import { getAdCreative } from "@/lib/ad-creatives";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity,
@@ -165,7 +166,22 @@ interface VisitorJourney {
   scheduled_on_cal?: string;
 }
 
-type AdSort = "best" | "bookings" | "leads" | "sessions" | "rate";
+type MetaAd = {
+  campaign: string; adSet: string; ad: string; impressions: number; spend: number;
+  linkClicks: number; lpViews: number; plays3s: number; videoImpressions: number;
+};
+type MetaAgg = Omit<MetaAd, "campaign" | "adSet" | "ad">;
+const normKey = (s: string) => cleanName(s).toLowerCase().replace(/[^a-z0-9]/g, "");
+const addMeta = (a: MetaAgg | null, b: MetaAgg): MetaAgg => ({
+  impressions: (a?.impressions || 0) + b.impressions,
+  spend: (a?.spend || 0) + b.spend,
+  linkClicks: (a?.linkClicks || 0) + b.linkClicks,
+  lpViews: (a?.lpViews || 0) + b.lpViews,
+  plays3s: (a?.plays3s || 0) + b.plays3s,
+  videoImpressions: (a?.videoImpressions || 0) + b.videoImpressions,
+});
+
+type AdSort = "best" | "conversions" | "ctr" | "hook" | "sessions";
 
 interface AdMetric {
   ad: string;
@@ -282,6 +298,31 @@ function isDateInRange(target: Date, start: Date, end: Date): boolean {
   return t >= min && t <= max;
 }
 
+const isMacro = (s: string) => /\{\{.*\}\}/.test(s);
+
+function cleanName(s: string): string {
+  let v = s || "";
+  try { v = decodeURIComponent(v.replace(/\+/g, " ")); } catch { v = v.replace(/\+/g, " "); }
+  return v.replace(/\s+/g, " ").trim();
+}
+
+function normalizeAds(list: AdMetric[]): AdMetric[] {
+  const m = new Map<string, AdMetric & { dur: number }>();
+  for (const a of list) {
+    const n = { ...a, ad: cleanName(a.ad), adSet: cleanName(a.adSet), campaign: cleanName(a.campaign) };
+    const k = `${n.ad}|${n.adSet}|${n.campaign}`;
+    const x = m.get(k);
+    if (!x) { m.set(k, { ...n, dur: n.avgDurationSeconds * n.sessions }); continue; }
+    x.sessions += n.sessions; x.leads += n.leads; x.bookings += n.bookings; x.dur += n.avgDurationSeconds * n.sessions;
+  }
+  return Array.from(m.values()).map(({ dur, ...x }) => ({
+    ...x,
+    avgDurationSeconds: x.sessions ? Math.round(dur / x.sessions) : 0,
+    leadRate: x.sessions ? Math.round((x.leads / x.sessions) * 1000) / 10 : 0,
+    bookingRate: x.sessions ? Math.round((x.bookings / x.sessions) * 1000) / 10 : 0,
+  }));
+}
+
 type TabType = "pages" | "channels" | "campaigns" | "ads" | "geo" | "heatmap" | "live" | "vturb" | "journeys" | "mcp";
 
 export default function AdminAnalyticsDashboard() {
@@ -357,7 +398,11 @@ export default function AdminAnalyticsDashboard() {
   const [channelStats, setChannelStats] = useState<ChannelMetric[]>([]);
   const [adPerformance, setAdPerformance] = useState<AdMetric[]>([]);
   const [campFilter, setCampFilter] = useState<"all" | "leads" | "bookings">("all");
-  const [campSort, setCampSort] = useState("bookings");
+  const [campLevel, setCampLevel] = useState<"campaign" | "adset" | "ad">("campaign");
+  const [campSortKey, setCampSortKey] = useState("sessions");
+  const [campSortDir, setCampSortDir] = useState<"asc" | "desc">("desc");
+  const [metaAds, setMetaAds] = useState<MetaAd[]>([]);
+  const [metaConfigured, setMetaConfigured] = useState(false);
   const [campSearch, setCampSearch] = useState("");
   const [expandedCamps, setExpandedCamps] = useState<Record<string, boolean>>({});
   const [adSort, setAdSort] = useState<AdSort>("best");
@@ -405,6 +450,11 @@ export default function AdminAnalyticsDashboard() {
           }
         }
 
+        fetch(url.replace("/api/admin/analytics", "/api/admin/meta-ads"))
+          .then((r) => r.json())
+          .then((j) => { setMetaConfigured(!!j.configured && !j.error); setMetaAds(Array.isArray(j.ads) ? j.ads : []); })
+          .catch(() => { setMetaConfigured(false); setMetaAds([]); });
+
         const res = await fetch(url);
 
         if (res.status === 401) {
@@ -420,7 +470,7 @@ export default function AdminAnalyticsDashboard() {
           setRecentJourneys(data.recentJourneys || []);
           setUtmPerformance(data.utmPerformance || []);
           setChannelStats(data.channelStats || []);
-          setAdPerformance(data.adPerformance || []);
+          setAdPerformance(normalizeAds(data.adPerformance || []));
           if (data.geoStats) {
             setGeoStats(data.geoStats);
           }
@@ -1321,210 +1371,290 @@ export default function AdminAnalyticsDashboard() {
         )}
 
         {activeTab === "campaigns" && (() => {
-          type Camp = {
-            campaign: string; channel: string; ads: AdMetric[]; adSets: number;
-            sessions: number; leads: number; bookings: number; durSum: number;
+          type Row = {
+            key: string; name: string; sub: string; channel: string; thumbAd?: string;
+            sessions: number; durSum: number; leads: number; bookings: number; meta: MetaAgg | null;
           };
-          const map = new Map<string, Camp>();
+          const rowKey = (c: string, s: string, a: string) =>
+            campLevel === "campaign" ? normKey(c) : campLevel === "adset" ? `${normKey(c)}|${normKey(s)}` : `${normKey(c)}|${normKey(s)}|${normKey(a)}`;
+          const rowMap = new Map<string, Row>();
+          const blank = (c: string, s: string, a: string, channel: string): Row => ({
+            key: rowKey(c, s, a),
+            name: campLevel === "campaign" ? c : campLevel === "adset" ? s : a,
+            sub: campLevel === "campaign" ? channel : campLevel === "adset" ? c : s,
+            channel, thumbAd: campLevel === "ad" ? a : undefined,
+            sessions: 0, durSum: 0, leads: 0, bookings: 0, meta: null,
+          });
           for (const a of adPerformance) {
-            const c = map.get(a.campaign) || { campaign: a.campaign, channel: a.channel, ads: [], adSets: 0, sessions: 0, leads: 0, bookings: 0, durSum: 0 };
-            c.ads.push(a);
-            c.sessions += a.sessions; c.leads += a.leads; c.bookings += a.bookings;
-            c.durSum += a.avgDurationSeconds * a.sessions;
-            map.set(a.campaign, c);
+            const k = rowKey(a.campaign, a.adSet, a.ad);
+            const r = rowMap.get(k) || blank(a.campaign, a.adSet, a.ad, a.channel);
+            r.sessions += a.sessions; r.leads += a.leads; r.bookings += a.bookings; r.durSum += a.avgDurationSeconds * a.sessions;
+            rowMap.set(k, r);
           }
-          const camps = Array.from(map.values()).map((c) => ({
-            ...c,
-            adSets: new Set(c.ads.map((a) => a.adSet)).size,
-            avgDur: c.sessions ? Math.round(c.durSum / c.sessions) : 0,
-            leadRate: c.sessions ? Math.round((c.leads / c.sessions) * 1000) / 10 : 0,
-            bookingRate: c.sessions ? Math.round((c.bookings / c.sessions) * 1000) / 10 : 0,
-          }));
+          for (const m of metaAds) {
+            const k = rowKey(m.campaign, m.adSet, m.ad);
+            const r = rowMap.get(k) || blank(m.campaign, m.adSet, m.ad, "Meta Ads (FB & IG)");
+            r.meta = addMeta(r.meta, m);
+            rowMap.set(k, r);
+          }
+          const all = Array.from(rowMap.values());
           const q = campSearch.trim().toLowerCase();
-          const filtered = camps.filter((c) => {
-            if (q && !c.campaign.toLowerCase().includes(q) && !c.channel.toLowerCase().includes(q)) return false;
-            if (campFilter === "leads") return c.leads > 0;
-            if (campFilter === "bookings") return c.bookings > 0;
+          const filtered = all.filter((r) => {
+            if (q && !r.name.toLowerCase().includes(q) && !r.sub.toLowerCase().includes(q)) return false;
+            if (campFilter === "leads") return r.leads > 0;
+            if (campFilter === "bookings") return r.bookings > 0;
             return true;
           });
-          const sorters: Record<string, (a: typeof camps[number], b: typeof camps[number]) => number> = {
-            bookings: (a, b) => b.bookings - a.bookings || b.leads - a.leads || b.sessions - a.sessions,
-            leads: (a, b) => b.leads - a.leads || b.sessions - a.sessions,
-            sessions: (a, b) => b.sessions - a.sessions,
-            rate: (a, b) => b.bookingRate - a.bookingRate || b.leadRate - a.leadRate,
-            name: (a, b) => a.campaign.localeCompare(b.campaign),
+          const val = (r: Row, k: string): number => {
+            const m = r.meta;
+            switch (k) {
+              case "spend": return m?.spend ?? -1;
+              case "impressions": return m?.impressions ?? -1;
+              case "ctr": return m && m.impressions ? m.linkClicks / m.impressions : -1;
+              case "hook": return m && m.videoImpressions ? m.plays3s / m.videoImpressions : -1;
+              case "sessions": return r.sessions;
+              case "time": return r.sessions ? r.durSum / r.sessions : 0;
+              case "leads": return r.leads;
+              case "cpl": return m && r.leads ? m.spend / r.leads : Infinity;
+              case "booked": return r.bookings;
+              case "cpb": return m && r.bookings ? m.spend / r.bookings : Infinity;
+              case "leadRate": return r.sessions ? r.leads / r.sessions : 0;
+              case "bookRate": return r.sessions ? r.bookings / r.sessions : 0;
+              default: return 0;
+            }
           };
-          const rows = [...filtered].sort(sorters[campSort]);
-          const tot = camps.reduce((t, c) => ({ s: t.s + c.sessions, l: t.l + c.leads, b: t.b + c.bookings }), { s: 0, l: 0, b: 0 });
-          const dash = <span className="text-zinc-600">-</span>;
-          const num = (n: number) => (n > 0 ? n.toLocaleString() : dash);
-          const dur = (s: number) => (s > 0 ? `${Math.floor(s / 60)}m ${s % 60}s` : dash);
-          const pct = (n: number) => (n > 0 ? `${n}%` : dash);
-          const filterChips: { id: "all" | "leads" | "bookings"; label: string; n: number }[] = [
-            { id: "all", label: "All", n: camps.length },
-            { id: "leads", label: "With leads", n: camps.filter((c) => c.leads > 0).length },
-            { id: "bookings", label: "With bookings", n: camps.filter((c) => c.bookings > 0).length },
+          const rows = [...filtered].sort((a, b) => {
+            if (campSortKey === "name") return (campSortDir === "desc" ? -1 : 1) * a.name.localeCompare(b.name);
+            const va = val(a, campSortKey);
+            const vb = val(b, campSortKey);
+            if (va === vb) return b.sessions - a.sessions;
+            return campSortDir === "desc" ? (va < vb ? 1 : -1) : (va < vb ? -1 : 1);
+          });
+          const tot = filtered.reduce(
+            (t, r) => ({ s: t.s + r.sessions, d: t.d + r.durSum, l: t.l + r.leads, b: t.b + r.bookings, meta: r.meta ? addMeta(t.meta, r.meta) : t.meta }),
+            { s: 0, d: 0, l: 0, b: 0, meta: null as MetaAgg | null }
+          );
+          const hasMeta = metaConfigured;
+          const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          const pc = (n: number) => `${(Math.round(n * 100) / 100).toLocaleString()}%`;
+          const mm = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+          const dim = <span className="text-zinc-600">-</span>;
+          const cols: { k: string; label: string; meta?: boolean; w?: string }[] = [
+            { k: "spend", label: "Spend", meta: true },
+            { k: "impressions", label: "Impr.", meta: true },
+            { k: "ctr", label: "CTR", meta: true },
+            { k: "hook", label: "Hook rate", meta: true },
+            { k: "sessions", label: "Sessions" },
+            { k: "time", label: "Avg time" },
+            { k: "leads", label: "Leads" },
+            { k: "cpl", label: "Cost / lead", meta: true },
+            { k: "booked", label: "Booked" },
+            { k: "cpb", label: "Cost / booking", meta: true },
+            { k: "leadRate", label: "Lead rate" },
+            { k: "bookRate", label: "Booking rate" },
           ];
+          const visibleCols = cols.filter((c) => !c.meta || hasMeta);
+          const cell = (r: { sessions: number; durSum: number; leads: number; bookings: number; meta: MetaAgg | null }, k: string) => {
+            const m = r.meta;
+            switch (k) {
+              case "spend": return m ? money(m.spend) : dim;
+              case "impressions": return m ? m.impressions.toLocaleString() : dim;
+              case "ctr": return m && m.impressions ? pc((m.linkClicks / m.impressions) * 100) : dim;
+              case "hook": return m && m.videoImpressions ? pc((m.plays3s / m.videoImpressions) * 100) : dim;
+              case "sessions": return r.sessions.toLocaleString();
+              case "time": return r.sessions ? mm(r.durSum / r.sessions) : dim;
+              case "leads": return r.leads > 0 ? <span className="text-zinc-50 font-semibold">{r.leads}</span> : <span className="text-zinc-600">0</span>;
+              case "cpl": return m && r.leads ? money(m.spend / r.leads) : dim;
+              case "booked": return r.bookings > 0 ? <span className="text-emerald-400 font-semibold">{r.bookings}</span> : <span className="text-zinc-600">0</span>;
+              case "cpb": return m && r.bookings ? money(m.spend / r.bookings) : dim;
+              case "leadRate": return r.sessions ? pc((r.leads / r.sessions) * 100) : dim;
+              case "bookRate": return r.sessions ? (r.bookings > 0 ? <span className="text-emerald-400">{pc((r.bookings / r.sessions) * 100)}</span> : "0%") : dim;
+              default: return null;
+            }
+          };
+          const levels: { id: "campaign" | "adset" | "ad"; label: string }[] = [
+            { id: "campaign", label: "Campaigns" },
+            { id: "adset", label: "Ad sets" },
+            { id: "ad", label: "Ads" },
+          ];
+          const filterChips: { id: "all" | "leads" | "bookings"; label: string }[] = [
+            { id: "all", label: "All" },
+            { id: "leads", label: "With leads" },
+            { id: "bookings", label: "With bookings" },
+          ];
+          const sortBy = (k: string) => {
+            if (campSortKey === k) setCampSortDir((d) => (d === "desc" ? "asc" : "desc"));
+            else { setCampSortKey(k); setCampSortDir("desc"); }
+          };
 
           return (
             <div className="space-y-4">
-              <div>
-                <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2 font-mono">
-                  <Megaphone className="w-4 h-4 text-blue-400" strokeWidth={1.75} />
-                  Campaigns
-                </h2>
-                <p className="text-xs text-zinc-400 mt-1">Delivery and conversion by campaign (utm_campaign) in the selected range. Click a row to see its ads.</p>
-              </div>
-
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                {[
-                  { l: "CAMPAIGNS", v: camps.length.toLocaleString(), s: `${camps.reduce((n, c) => n + c.ads.length, 0)} ads` },
-                  { l: "SESSIONS", v: tot.s.toLocaleString(), s: "from tagged ads" },
-                  { l: "LEADS", v: tot.l.toLocaleString(), s: `${tot.s ? Math.round((tot.l / tot.s) * 1000) / 10 : 0}% lead rate`, a: true },
-                  { l: "BOOKINGS", v: tot.b.toLocaleString(), s: "calls booked", a: true },
-                  { l: "SESSION → BOOKING", v: `${tot.s ? Math.round((tot.b / tot.s) * 1000) / 10 : 0}%`, s: "booking rate", a: true },
-                ].map((k) => (
-                  <div key={k.l} className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4">
-                    <p className="text-[10px] font-mono tracking-wider text-zinc-500">{k.l}</p>
-                    <p className={`text-2xl font-semibold mt-1 ${k.a ? "text-emerald-400" : "text-zinc-100"}`}>{k.v}</p>
-                    <p className="text-[11px] text-zinc-500 mt-1">{k.s}</p>
+              <div className="flex items-end justify-between gap-4 flex-wrap">
+                <div>
+                  <h2 className="text-lg font-semibold text-zinc-50 tracking-tight">Attribution</h2>
+                  <p className="text-sm text-zinc-400 mt-0.5">Every number tied to the ad that brought the person. Click a column to sort.</p>
+                </div>
+                {!hasMeta && (
+                  <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/70 px-3 py-2 text-xs text-zinc-400">
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    Connect Meta to add Spend, CTR, Hook rate and cost per lead and booking.
                   </div>
-                ))}
+                )}
               </div>
 
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-mono text-zinc-400 mr-1">{filtered.length} campaigns</span>
-                  <div className="inline-flex rounded-full bg-zinc-900/60 border border-zinc-800 p-0.5">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="inline-flex rounded-lg border border-zinc-800 bg-zinc-900/70 p-0.5">
+                    {levels.map((l) => (
+                      <button
+                        key={l.id}
+                        onClick={() => setCampLevel(l.id)}
+                        className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                          campLevel === l.id ? "bg-blue-500 text-white shadow" : "text-zinc-400 hover:text-zinc-100"
+                        }`}
+                      >
+                        {l.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="inline-flex rounded-full border border-zinc-800 bg-zinc-900/70 p-0.5">
                     {filterChips.map((c) => (
                       <button
                         key={c.id}
                         onClick={() => setCampFilter(c.id)}
-                        className={`px-3 py-1 rounded-full text-xs font-mono transition-colors ${
-                          campFilter === c.id ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-200"
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                          campFilter === c.id ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-100"
                         }`}
                       >
-                        {c.label} <span className="opacity-60">{c.n}</span>
+                        {c.label}
                       </button>
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-zinc-500">Sort</span>
-                  <select
-                    value={campSort}
-                    onChange={(e) => setCampSort(e.target.value)}
-                    className="bg-zinc-900/60 border border-zinc-800 rounded-md px-3 py-1.5 text-xs font-mono text-zinc-200 focus:outline-none"
-                  >
-                    <option value="bookings">Most bookings</option>
-                    <option value="leads">Most leads</option>
-                    <option value="sessions">Most sessions</option>
-                    <option value="rate">Booking rate</option>
-                    <option value="name">Name</option>
-                  </select>
-                  <div className="relative">
-                    <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      value={campSearch}
-                      onChange={(e) => setCampSearch(e.target.value)}
-                      placeholder="Search"
-                      className="w-44 pl-8 pr-3 py-1.5 rounded-md bg-zinc-900/60 border border-zinc-800 text-xs font-mono text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600"
-                    />
-                  </div>
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    value={campSearch}
+                    onChange={(e) => setCampSearch(e.target.value)}
+                    placeholder={`Search ${levels.find((l) => l.id === campLevel)!.label.toLowerCase()}`}
+                    className="w-56 rounded-lg border border-zinc-800 bg-zinc-900/70 pl-8 pr-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600"
+                  />
                 </div>
               </div>
 
-              <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-x-auto">
-                <table className="w-full text-left text-xs sm:text-sm min-w-[860px]">
-                  <thead>
-                    <tr className="text-zinc-500 uppercase font-mono text-[11px] border-b border-zinc-800">
-                      <th className="py-3 pl-4 pr-2 w-8" />
-                      <th className="py-3 px-3 font-medium">Name</th>
-                      <th className="py-3 px-3 font-medium">Channel</th>
-                      <th className="py-3 px-3 font-medium text-right">Ad sets</th>
-                      <th className="py-3 px-3 font-medium text-right">Ads</th>
-                      <th className="py-3 px-3 font-medium text-right">Sessions</th>
-                      <th className="py-3 px-3 font-medium text-right">Avg time</th>
-                      <th className="py-3 px-3 font-medium text-right">Leads</th>
-                      <th className="py-3 px-3 font-medium text-right">Bookings</th>
-                      <th className="py-3 px-3 font-medium text-right">Lead rate</th>
-                      <th className="py-3 px-4 font-medium text-right">Booking rate</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.length === 0 ? (
-                      <tr>
-                        <td colSpan={11} className="py-10 text-center text-zinc-400 text-xs font-mono">
-                          {camps.length === 0 ? "No campaign traffic with UTM tags in this range." : "No campaign matches."}
-                        </td>
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-[13px] min-w-[900px] [font-feature-settings:'tnum']">
+                    <thead>
+                      <tr className="border-b border-zinc-800 bg-zinc-950/70">
+                        <th className="py-3 pl-4 pr-3 sticky left-0 bg-zinc-950 z-10 min-w-[280px]">
+                          <button onClick={() => sortBy("name")} className="text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-500 hover:text-zinc-200">
+                            {levels.find((l) => l.id === campLevel)!.label.replace(/s$/, "")} {campSortKey === "name" ? (campSortDir === "desc" ? "↓" : "↑") : ""}
+                          </button>
+                        </th>
+                        {visibleCols.map((c) => (
+                          <th key={c.k} className="py-3 px-3 text-right whitespace-nowrap">
+                            <button onClick={() => sortBy(c.k)} className={`text-[10px] font-semibold uppercase tracking-[0.08em] hover:text-zinc-200 ${campSortKey === c.k ? "text-zinc-100" : "text-zinc-500"}`}>
+                              {c.label} {campSortKey === c.k ? (campSortDir === "desc" ? "↓" : "↑") : ""}
+                            </button>
+                          </th>
+                        ))}
                       </tr>
-                    ) : rows.map((c) => {
-                      const open = !!expandedCamps[c.campaign];
-                      return (
-                        <Fragment key={c.campaign}>
-                          <tr
-                            onClick={() => setExpandedCamps((p) => ({ ...p, [c.campaign]: !p[c.campaign] }))}
-                            className="border-b border-zinc-800/60 hover:bg-zinc-800/30 cursor-pointer transition-colors"
-                          >
-                            <td className="py-3.5 pl-4 pr-2 text-zinc-500">
-                              <ChevronRight className={`w-4 h-4 transition-transform ${open ? "rotate-90" : ""}`} />
+                      <tr className="border-b border-zinc-800 bg-blue-500/5">
+                        <td className="py-3 pl-4 pr-3 sticky left-0 bg-[#0d1220] z-10 text-xs font-semibold text-zinc-200">
+                          Total <span className="text-zinc-500 font-normal">· {filtered.length} {filtered.length === 1 ? "row" : "rows"}</span>
+                        </td>
+                        {visibleCols.map((c) => (
+                          <td key={c.k} className="py-3 px-3 text-right font-semibold text-zinc-100">
+                            {cell({ sessions: tot.s, durSum: tot.d, leads: tot.l, bookings: tot.b, meta: tot.meta }, c.k)}
+                          </td>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.length === 0 ? (
+                        <tr>
+                          <td colSpan={visibleCols.length + 1} className="py-14 text-center text-sm text-zinc-500">
+                            {all.length === 0 ? "No tagged ad traffic in this range." : "Nothing matches this filter."}
+                          </td>
+                        </tr>
+                      ) : rows.map((r) => {
+                        const thumb = r.thumbAd ? getAdCreative(r.thumbAd) : null;
+                        return (
+                          <tr key={r.key} className="border-b border-zinc-800/60 hover:bg-zinc-800/30 transition-colors">
+                            <td className="py-2.5 pl-4 pr-3 sticky left-0 bg-zinc-900 z-10 max-w-[340px]">
+                              <div className="flex items-center gap-3">
+                                {campLevel === "ad" && (
+                                  thumb ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={thumb} alt="" className="w-9 h-11 rounded-md object-cover object-top border border-zinc-700 shrink-0" />
+                                  ) : (
+                                    <div className="w-9 h-11 rounded-md bg-zinc-800 border border-zinc-700 shrink-0" />
+                                  )
+                                )}
+                                <div className="min-w-0">
+                                  <p className="font-medium text-zinc-100 truncate" title={r.name}>{r.name}</p>
+                                  <p className="text-[11px] text-zinc-500 truncate" title={r.sub}>{r.sub}</p>
+                                </div>
+                              </div>
                             </td>
-                            <td className="py-3.5 px-3 max-w-[320px]">
-                              <p className="font-medium text-zinc-100 truncate" title={c.campaign}>{c.campaign}</p>
-                              <p className="text-[11px] text-zinc-500">{c.ads.length} {c.ads.length === 1 ? "ad" : "ads"}</p>
-                            </td>
-                            <td className="py-3.5 px-3 font-mono text-zinc-400">{c.channel}</td>
-                            <td className="py-3.5 px-3 font-mono text-zinc-300 text-right">{num(c.adSets)}</td>
-                            <td className="py-3.5 px-3 font-mono text-zinc-300 text-right">{num(c.ads.length)}</td>
-                            <td className="py-3.5 px-3 font-mono text-zinc-200 text-right">{num(c.sessions)}</td>
-                            <td className="py-3.5 px-3 font-mono text-zinc-300 text-right">{dur(c.avgDur)}</td>
-                            <td className="py-3.5 px-3 font-mono font-semibold text-zinc-100 text-right">{num(c.leads)}</td>
-                            <td className="py-3.5 px-3 font-mono font-semibold text-zinc-100 text-right">{num(c.bookings)}</td>
-                            <td className="py-3.5 px-3 font-mono text-zinc-300 text-right">{pct(c.leadRate)}</td>
-                            <td className={`py-3.5 px-4 font-mono text-right ${c.bookingRate > 0 ? "text-emerald-400" : ""}`}>{pct(c.bookingRate)}</td>
+                            {visibleCols.map((c) => (
+                              <td key={c.k} className="py-2.5 px-3 text-right text-zinc-300 whitespace-nowrap">{cell(r, c.k)}</td>
+                            ))}
                           </tr>
-                          {open && [...c.ads].sort((a, b) => b.bookings - a.bookings || b.leads - a.leads || b.sessions - a.sessions).map((a) => (
-                            <tr key={`${c.campaign}|${a.adSet}|${a.ad}`} className="border-b border-zinc-800/40 bg-zinc-950/40">
-                              <td />
-                              <td className="py-2.5 px-3 pl-8 max-w-[320px]">
-                                <p className="text-zinc-200 truncate" title={a.ad}>{a.ad}</p>
-                                <p className="text-[11px] text-zinc-500 truncate">{a.adSet}</p>
-                              </td>
-                              <td />
-                              <td />
-                              <td />
-                              <td className="py-2.5 px-3 font-mono text-zinc-300 text-right">{num(a.sessions)}</td>
-                              <td className="py-2.5 px-3 font-mono text-zinc-400 text-right">{dur(a.avgDurationSeconds)}</td>
-                              <td className="py-2.5 px-3 font-mono text-zinc-200 text-right">{num(a.leads)}</td>
-                              <td className="py-2.5 px-3 font-mono text-zinc-200 text-right">{num(a.bookings)}</td>
-                              <td className="py-2.5 px-3 font-mono text-zinc-400 text-right">{pct(a.leadRate)}</td>
-                              <td className="py-2.5 px-4 font-mono text-zinc-400 text-right">{pct(a.bookingRate)}</td>
-                            </tr>
-                          ))}
-                        </Fragment>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           );
         })()}
 
         {activeTab === "ads" && (() => {
-          const weight = (a: AdMetric) => a.bookings * 10 + a.leads * 3 + a.sessions * 0.1;
-          const maxWeight = Math.max(1, ...adPerformance.map(weight));
-          const scored = adPerformance.map((a) => ({ ...a, score: Math.round((weight(a) / maxWeight) * 100) }));
+          const metaFor = (a: AdMetric): MetaAgg | null => {
+            const k = `${normKey(a.campaign)}|${normKey(a.adSet)}|${normKey(a.ad)}`;
+            let agg: MetaAgg | null = null;
+            for (const m of metaAds) if (`${normKey(m.campaign)}|${normKey(m.adSet)}|${normKey(m.ad)}` === k) agg = addMeta(agg, m);
+            return agg;
+          };
+          const withMeta = adPerformance.map((a) => {
+            const m = metaFor(a);
+            return {
+              ...a,
+              spend: m?.spend ?? null,
+              ctr: m && m.impressions ? (m.linkClicks / m.impressions) * 100 : null,
+              hook: m && m.videoImpressions ? (m.plays3s / m.videoImpressions) * 100 : null,
+            };
+          });
+          // Score: conversions 50%, CTR 25%, hook rate 25% (each against the best ad). Missing parts are redistributed.
+          const conv = (a: { leads: number; bookings: number }) => a.bookings * 3 + a.leads;
+          const maxConv = Math.max(0, ...withMeta.map(conv));
+          const maxCtr = Math.max(0, ...withMeta.map((a) => a.ctr ?? 0));
+          const maxHook = Math.max(0, ...withMeta.map((a) => a.hook ?? 0));
+          const scored = withMeta.map((a) => {
+            const parts: [number, number][] = [];
+            if (maxConv > 0) parts.push([0.5, conv(a) / maxConv]);
+            if (maxCtr > 0 && a.ctr != null) parts.push([0.25, a.ctr / maxCtr]);
+            if (maxHook > 0 && a.hook != null) parts.push([0.25, a.hook / maxHook]);
+            const w = parts.reduce((s, [x]) => s + x, 0);
+            const score = w > 0 ? Math.round((parts.reduce((s, [x, v]) => s + x * v, 0) / w) * 100) : 0;
+            return { ...a, score };
+          });
           const q = adSearch.trim().toLowerCase();
           const filtered = scored.filter(
             (a) => !q || a.ad.toLowerCase().includes(q) || a.adSet.toLowerCase().includes(q) || a.campaign.toLowerCase().includes(q)
           );
-          const sorters: Record<AdSort, (a: typeof scored[number], b: typeof scored[number]) => number> = {
-            best: (a, b) => b.score - a.score,
-            bookings: (a, b) => b.bookings - a.bookings || b.leads - a.leads,
-            leads: (a, b) => b.leads - a.leads || b.sessions - a.sessions,
+          type S = typeof scored[number];
+          const byConv = (a: S, b: S) => b.bookings - a.bookings || b.leads - a.leads;
+          const sorters: Record<AdSort, (a: S, b: S) => number> = {
+            // Best ad: conversions first, then CTR, then hook rate, then traffic
+            best: (a, b) => byConv(a, b) || (b.ctr ?? -1) - (a.ctr ?? -1) || (b.hook ?? -1) - (a.hook ?? -1) || b.sessions - a.sessions,
+            conversions: (a, b) => byConv(a, b) || b.sessions - a.sessions,
+            ctr: (a, b) => (b.ctr ?? -1) - (a.ctr ?? -1) || byConv(a, b),
+            hook: (a, b) => (b.hook ?? -1) - (a.hook ?? -1) || byConv(a, b),
             sessions: (a, b) => b.sessions - a.sessions,
-            rate: (a, b) => b.bookingRate - a.bookingRate || b.leadRate - a.leadRate,
           };
           const sorted = [...filtered].sort(sorters[adSort]);
           const visible = sorted.slice(0, adVisible);
@@ -1536,10 +1666,9 @@ export default function AdminAnalyticsDashboard() {
           const bestId = sorted.length > 0 && sorted[0].score > 0 ? `${sorted[0].ad}|${sorted[0].adSet}|${sorted[0].campaign}` : "";
           const sortChips: { id: AdSort; label: string }[] = [
             { id: "best", label: "Best ad" },
-            { id: "bookings", label: "Bookings" },
-            { id: "leads", label: "Leads" },
+            { id: "conversions", label: "Conversions" },
+            ...(metaConfigured ? [{ id: "ctr" as AdSort, label: "CTR" }, { id: "hook" as AdSort, label: "Hook rate" }] : []),
             { id: "sessions", label: "Sessions" },
-            { id: "rate", label: "Booking rate" },
           ];
           const hues = [217, 262, 160, 24, 330, 190, 45, 0];
           const hueFor = (s: string) => hues[Array.from(s).reduce((h, c) => h + c.charCodeAt(0), 0) % hues.length];
@@ -1611,19 +1740,25 @@ export default function AdminAnalyticsDashboard() {
                   {visible.map((item) => {
                     const id = `${item.ad}|${item.adSet}|${item.campaign}`;
                     const hue = hueFor(item.ad);
+                    const thumb = getAdCreative(item.ad);
                     return (
                       <div key={id} className="bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden flex flex-col">
                         <div
-                          className="relative aspect-[4/3] flex items-center justify-center p-4 text-center"
+                          className="relative aspect-[4/5] overflow-hidden flex items-center justify-center p-4 text-center"
                           style={{ background: `linear-gradient(135deg, hsl(${hue} 70% 28%), hsl(${(hue + 40) % 360} 70% 14%))` }}
                         >
+                          {thumb ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={thumb} alt={item.ad} loading="lazy" className="absolute inset-0 w-full h-full object-cover object-top" />
+                          ) : (
+                            <p className="text-white/90 font-semibold text-base leading-tight line-clamp-4 break-words">{item.ad}</p>
+                          )}
                           {id === bestId && (
-                            <span className="absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-400 text-amber-950 text-[10px] font-semibold">
+                            <span className="absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-400 text-amber-950 text-[10px] font-semibold shadow">
                               <Trophy className="w-3 h-3" strokeWidth={2} /> Best ad
                             </span>
                           )}
-                          <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/50 text-zinc-200 text-[10px] font-mono">{item.channel}</span>
-                          <p className="text-white/90 font-semibold text-base leading-tight line-clamp-4 break-words">{item.ad}</p>
+                          <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur text-zinc-100 text-[10px] font-mono">{item.channel}</span>
                         </div>
                         <div className="p-3 flex items-start justify-between gap-2">
                           <div className="min-w-0">
@@ -1636,14 +1771,26 @@ export default function AdminAnalyticsDashboard() {
                             {item.score}
                           </span>
                         </div>
-                        <div className="px-3 pb-3 flex items-end justify-between">
+                        <div className="px-3 pb-3 grid grid-cols-3 gap-2">
                           <div>
-                            <p className="text-[10px] font-mono tracking-wider text-zinc-500">BOOKING RATE</p>
-                            <p className={`text-xl font-semibold ${item.bookingRate > 0 ? "text-emerald-400" : "text-zinc-500"}`}>{item.bookingRate}%</p>
+                            <p className="text-[10px] font-mono tracking-wider text-zinc-500">{metaConfigured ? "CTR" : "LEAD RATE"}</p>
+                            <p className="text-lg font-semibold text-zinc-100">
+                              {metaConfigured ? (item.ctr != null ? `${item.ctr.toFixed(2)}%` : "-") : `${item.leadRate}%`}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-mono tracking-wider text-zinc-500">{metaConfigured ? "HOOK RATE" : "BOOKING RATE"}</p>
+                            <p className={`text-lg font-semibold ${!metaConfigured && item.bookingRate > 0 ? "text-emerald-400" : "text-zinc-100"}`}>
+                              {metaConfigured ? (item.hook != null ? `${item.hook.toFixed(1)}%` : "-") : `${item.bookingRate}%`}
+                            </p>
                           </div>
                           <div className="text-right">
-                            <p className="text-[10px] font-mono tracking-wider text-zinc-500">LEAD RATE</p>
-                            <p className="text-sm font-semibold text-zinc-200">{item.leadRate}%</p>
+                            <p className="text-[10px] font-mono tracking-wider text-zinc-500">{metaConfigured ? "SPEND" : "AVG TIME"}</p>
+                            <p className="text-lg font-semibold text-zinc-100">
+                              {metaConfigured
+                                ? (item.spend != null ? `$${item.spend.toFixed(2)}` : "-")
+                                : `${Math.floor(item.avgDurationSeconds / 60)}:${String(item.avgDurationSeconds % 60).padStart(2, "0")}`}
+                            </p>
                           </div>
                         </div>
                         <div className="mt-auto grid grid-cols-3 border-t border-zinc-800 text-center">

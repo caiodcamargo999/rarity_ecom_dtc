@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
 import { normalizeState, US_STATES_MAP } from "@/lib/analytics-data";
 import { resolveCountry, safeDecode } from "@/lib/geo";
-import { META_BOT_UA, isMetaSource, isPaidMetaMedium } from "@/lib/meta-attribution";
+import { META_BOT_UA, isBotIp, isMetaSource, isPaidMetaMedium } from "@/lib/meta-attribution";
 
 function detectChannelServer(referrer = "", utms: Record<string, string> = {}, channelOverride?: string): {
   channel: string;
@@ -160,6 +160,12 @@ export async function POST(req: NextRequest) {
 
     // Ignore Meta link-preview crawlers
     if (META_BOT_UA.test(req.headers.get("user-agent") || "")) {
+      return NextResponse.json({ success: true, ignored: true });
+    }
+
+    // Ignore Meta ad-review bots and scanners (real headless Chrome from Meta's data centres)
+    const callerIp = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "";
+    if (isBotIp(callerIp)) {
       return NextResponse.json({ success: true, ignored: true });
     }
 
