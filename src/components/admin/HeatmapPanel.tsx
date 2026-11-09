@@ -29,6 +29,27 @@ const PAGES = [
   { path: "/onboarding", label: "Client Onboarding (/onboarding)" },
 ];
 
+
+// Raw tracker labels are developer-ish ("Click in vid-6af11075..."). Show something a human reads.
+function prettySection(s: string): string {
+  const v = (s || "").toLowerCase();
+  if (v.startsWith("vid-") || v.includes("vturb") || v.includes("player")) return "VSL video";
+  if (v === "section" || v === "div" || v === "main") return "Page body";
+  if (v === "header" || v === "nav") return "Header";
+  if (v === "footer") return "Footer";
+  if (v === "general" || v === "") return "Page background";
+  return s.replace(/[-_]+/g, " ").replace(/^./, (c) => c.toUpperCase());
+}
+
+function prettyLabel(label: string): string {
+  const m = /^Click in (.+)$/.exec(label || "");
+  if (!m) return label;
+  const sec = prettySection(m[1]);
+  if (sec === "VSL video") return "VSL video player";
+  if (sec === "Page background" || sec === "Page body") return "Empty area (not a button)";
+  return `${sec} area`;
+}
+
 const EMPTY: HeatData = { clicks: [], hotspots: [], scrollStats: { m25: 0, m50: 0, m75: 0, m90: 0, m100: 0, totalViews: 0 } };
 
 // cold (blue) to hot (red)
@@ -96,12 +117,16 @@ export default function HeatmapPanel({
   const bookingClicks = clicks.filter((c) => c.isBooking).reduce((n, c) => n + c.count, 0);
   const maxCount = Math.max(1, ...clicks.map((c) => c.count));
   const ranked = useMemo(() => {
-    // one row per element label
-    const m = new Map<string, HeatClick & { total: number; ySum: number; n: number }>();
+    // one row per element (human name)
+    const m = new Map<string, { name: string; section: string; isBooking: boolean; total: number; ySum: number; xSum: number }>();
     for (const c of clicks) {
-      const x = m.get(c.label) || { ...c, total: 0, ySum: 0, n: 0 };
-      x.total += c.count; x.ySum += c.yPct * c.count; x.n += c.count;
-      m.set(c.label, x);
+      const name = prettyLabel(c.label);
+      const x = m.get(name) || { name, section: prettySection(c.section), isBooking: false, total: 0, ySum: 0, xSum: 0 };
+      x.total += c.count;
+      x.ySum += c.yPct * c.count;
+      x.xSum += c.xPct * c.count;
+      x.isBooking = x.isBooking || c.isBooking;
+      m.set(name, x);
     }
     return Array.from(m.values()).sort((a, b) => b.total - a.total);
   }, [clicks]);
@@ -177,14 +202,17 @@ export default function HeatmapPanel({
       const o = off.getContext("2d");
       if (!o) return;
       o.clearRect(0, 0, cw, ch);
-      const radius = (device === "desktop" ? 78 : 46) * RES;
+      const radius = (device === "desktop" ? 104 : 62) * RES;
       for (const c of clicks) {
         const x = (c.xPct / 100) * cw;
         const y = ((c.yPct / 100) * docH - scrollTop) * RES;
         if (y < -radius || y > ch + radius) continue;
         const a = Math.min(1, 0.32 + 0.68 * (c.count / maxCount));
         const g = o.createRadialGradient(x, y, 0, x, y, radius);
+        // gaussian-ish falloff: soft shoulder, no hard edge
         g.addColorStop(0, `rgba(0,0,0,${a})`);
+        g.addColorStop(0.35, `rgba(0,0,0,${a * 0.62})`);
+        g.addColorStop(0.7, `rgba(0,0,0,${a * 0.2})`);
         g.addColorStop(1, "rgba(0,0,0,0)");
         o.fillStyle = g;
         o.fillRect(x - radius, y - radius, radius * 2, radius * 2);
@@ -195,7 +223,7 @@ export default function HeatmapPanel({
         const a = px[i + 3];
         if (!a) continue;
         px[i] = PALETTE[a * 3]; px[i + 1] = PALETTE[a * 3 + 1]; px[i + 2] = PALETTE[a * 3 + 2];
-        px[i + 3] = Math.min(215, a * 1.9);
+        px[i + 3] = Math.min(205, Math.pow(a / 255, 0.8) * 255 * 1.35);
       }
       ctx.putImageData(img, 0, 0);
     } else {
@@ -305,15 +333,16 @@ export default function HeatmapPanel({
       {/* KPI chips */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { l: "Clicks", v: totalClicks.toLocaleString(), s: `${device} visitors` },
-          { l: "Booking-intent clicks", v: bookingClicks.toLocaleString(), s: totalClicks ? `${Math.round((bookingClicks / totalClicks) * 100)}% of clicks` : "none yet" },
-          { l: "Hottest element", v: ranked[0]?.label || "-", s: ranked[0] ? `${ranked[0].total} clicks` : "no clicks yet", small: true },
-          { l: "Page views", v: hm.scrollStats.totalViews.toLocaleString(), s: "scroll tracked" },
+          { l: "Clicks", v: totalClicks.toLocaleString(), s: `${device} visitors`, c: "from-orange-500/20" },
+          { l: "Booking-intent clicks", v: bookingClicks.toLocaleString(), s: totalClicks ? `${Math.round((bookingClicks / totalClicks) * 100)}% of clicks` : "none yet", c: "from-emerald-500/20" },
+          { l: "Hottest element", v: ranked[0]?.name || "-", s: ranked[0] ? `${ranked[0].total} clicks · ${ranked[0].section}` : "no clicks yet", small: true, c: "from-red-500/20" },
+          { l: "Page views", v: hm.scrollStats.totalViews.toLocaleString(), s: "scroll tracked", c: "from-blue-500/20" },
         ].map((k) => (
-          <div key={k.l} className="rounded-xl border border-zinc-800 bg-zinc-900/70 p-4 min-w-0">
-            <p className="text-xs text-zinc-400">{k.l}</p>
-            <p className={`mt-1 font-semibold text-zinc-50 truncate ${k.small ? "text-base" : "text-2xl"}`} title={k.v}>{k.v}</p>
-            <p className="text-xs text-zinc-500 mt-0.5">{k.s}</p>
+          <div key={k.l} className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4 min-w-0">
+            <div className={`pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b ${k.c} to-transparent`} />
+            <p className="relative text-xs font-medium text-zinc-400">{k.l}</p>
+            <p className={`relative mt-1.5 font-semibold text-zinc-50 truncate tracking-tight ${k.small ? "text-base leading-8" : "text-3xl"}`} title={k.v}>{k.v}</p>
+            <p className="relative text-xs text-zinc-500 mt-0.5 truncate">{k.s}</p>
           </div>
         ))}
       </div>
@@ -321,7 +350,7 @@ export default function HeatmapPanel({
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
         {/* left: leaderboard + depth */}
         <div className="xl:col-span-4 space-y-4 order-2 xl:order-1">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2"><Flame className="w-4 h-4 text-orange-400" /> Hottest elements</h3>
               <span className="text-xs text-zinc-500">{ranked.length} elements</span>
@@ -332,24 +361,31 @@ export default function HeatmapPanel({
               <div className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1">
                 {ranked.map((r, i) => {
                   const [cr, cg, cb] = colorAt(r.total / ranked[0].total);
+                  const col = `rgb(${cr | 0},${cg | 0},${cb | 0})`;
                   return (
                     <button
-                      key={r.label}
-                      onClick={() => jumpTo(r.ySum / r.n)}
-                      className="w-full text-left rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 hover:border-zinc-600 transition-colors"
+                      key={r.name}
+                      onClick={() => jumpTo(r.ySum / r.total)}
+                      className="group w-full text-left rounded-xl border border-zinc-800 bg-gradient-to-b from-zinc-900 to-zinc-950 px-3.5 py-3 hover:border-zinc-600 transition-all hover:-translate-y-px"
+                      style={i === 0 ? { boxShadow: `0 0 0 1px ${col}55, 0 8px 24px -12px ${col}` } : undefined}
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="flex items-center gap-2 min-w-0">
-                          <span className="w-5 h-5 rounded-md text-[10px] font-bold flex items-center justify-center text-zinc-950 shrink-0" style={{ background: `rgb(${cr | 0},${cg | 0},${cb | 0})` }}>{i + 1}</span>
-                          <span className="text-xs text-zinc-100 truncate" title={r.label}>{r.label}</span>
-                          {r.isBooking && <span className="text-[9px] font-semibold rounded bg-emerald-500/15 text-emerald-400 px-1.5 py-0.5 shrink-0">BOOKING</span>}
-                        </span>
-                        <span className="text-xs font-semibold text-zinc-200 shrink-0">{r.total}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center text-zinc-950 shrink-0 shadow" style={{ background: col }}>{i + 1}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[13px] font-medium text-zinc-100 truncate" title={r.name}>{r.name}</span>
+                            {r.isBooking && <span className="text-[9px] font-bold tracking-wide rounded-full bg-emerald-500/15 text-emerald-400 px-2 py-0.5 shrink-0">BOOKING</span>}
+                          </div>
+                          <p className="text-[11px] text-zinc-500 mt-0.5">{r.section}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-semibold text-zinc-50 leading-none">{r.total}</p>
+                          <p className="text-[10px] text-zinc-500 mt-1">{totalClicks ? Math.round((r.total / totalClicks) * 100) : 0}%</p>
+                        </div>
                       </div>
-                      <div className="mt-1.5 h-1 rounded-full bg-zinc-800 overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${(r.total / ranked[0].total) * 100}%`, background: `rgb(${cr | 0},${cg | 0},${cb | 0})` }} />
+                      <div className="mt-2.5 h-1.5 rounded-full bg-zinc-800/80 overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${(r.total / ranked[0].total) * 100}%`, background: `linear-gradient(90deg, ${col}99, ${col})` }} />
                       </div>
-                      <p className="text-[10px] text-zinc-500 mt-1">section: {r.section}</p>
                     </button>
                   );
                 })}
@@ -357,7 +393,7 @@ export default function HeatmapPanel({
             )}
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-orange-400" /> Scroll depth</h3>
               <span className="text-xs text-zinc-500">{hm.scrollStats.totalViews} views</span>
@@ -371,8 +407,8 @@ export default function HeatmapPanel({
                       <span className="text-zinc-400">{d.zone}</span>
                       <span className="text-zinc-100 font-medium">{d.pct}% reached</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(2, d.pct)}%`, background: `rgb(${cr | 0},${cg | 0},${cb | 0})` }} />
+                    <div className="h-2 rounded-full bg-zinc-800/80 overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(3, d.pct)}%`, background: `linear-gradient(90deg, rgb(${cr | 0},${cg | 0},${cb | 0})99, rgb(${cr | 0},${cg | 0},${cb | 0}))` }} />
                     </div>
                   </div>
                 );
@@ -382,7 +418,7 @@ export default function HeatmapPanel({
         </div>
 
         {/* right: live page with heat */}
-        <div className="xl:col-span-8 order-1 xl:order-2 rounded-xl border border-zinc-800 bg-zinc-900/60 overflow-hidden">
+        <div className="xl:col-span-8 order-1 xl:order-2 rounded-2xl border border-zinc-800 bg-zinc-900/60 overflow-hidden shadow-[0_20px_60px_-30px_rgba(249,115,22,0.35)]">
           <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60">
             <div className="flex items-center gap-1.5 shrink-0">
               <span className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
@@ -435,16 +471,20 @@ export default function HeatmapPanel({
 
                 {mode === "heat" && pins &&
                   topPins.map((r, i) => {
-                    // pin at the weighted centre of this element's clicks
-                    const pts = clicks.filter((c) => c.label === r.label);
-                    const x = pts.reduce((s, c) => s + c.xPct * c.count, 0) / (r.n || 1);
-                    const y = (r.ySum / (r.n || 1) / 100) * docH - scrollTop;
+                    const x = r.xSum / (r.total || 1);
+                    const y = (r.ySum / (r.total || 1) / 100) * docH - scrollTop;
                     if (y < -20 || y > VH + 20) return null;
+                    const [cr, cg, cb] = colorAt(r.total / (ranked[0]?.total || 1));
                     return (
-                      <div key={r.label} className="absolute pointer-events-none" style={{ left: `${x}%`, top: y, transform: "translate(-50%, -50%)" }}>
+                      <div key={r.name} className="absolute pointer-events-none" style={{ left: `${x}%`, top: y, transform: "translate(-50%, -50%)" }}>
                         <span
-                          className="flex items-center justify-center rounded-full bg-zinc-950 text-white font-bold border-2 border-white shadow-lg"
-                          style={{ width: 26 / scale, height: 26 / scale, fontSize: 12 / scale }}
+                          className="flex items-center justify-center rounded-full text-white font-bold"
+                          style={{
+                            width: 28 / scale, height: 28 / scale, fontSize: 13 / scale,
+                            background: "rgba(9,9,11,0.92)",
+                            border: `${2.5 / scale}px solid rgb(${cr | 0},${cg | 0},${cb | 0})`,
+                            boxShadow: `0 0 ${18 / scale}px rgba(${cr | 0},${cg | 0},${cb | 0},0.8)`,
+                          }}
                         >
                           {i + 1}
                         </span>
