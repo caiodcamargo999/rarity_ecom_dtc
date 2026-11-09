@@ -370,6 +370,7 @@ export async function getFullAnalyticsData(
       liveVisitors: [],
       recentJourneys: [],
       utmPerformance: [],
+      adPerformance: [],
       channelStats: [],
       geoStats: { countries: [], states: [], cities: [] },
       heatmapByPath: {},
@@ -706,6 +707,50 @@ export async function getFullAnalyticsData(
   }));
   utmPerformance.sort((a, b) => b.sessions - a.sessions);
 
+  // Ad (creative) performance: utm_content = ad name, utm_term = ad set, utm_campaign = campaign.
+  // Leads are attributed to the ad of their session, falling back to the visitor's latest ad session.
+  const adMap: Record<string, { ad: string; adSet: string; campaign: string; channel: string; sessions: number; totalDuration: number; leads: number; bookings: number }> = {};
+  const sessionAdKey: Record<string, string> = {};
+  const visitorAdKey: Record<string, string> = {};
+  const adSessions = [...allSessions]
+    .filter((s) => s.utm_content)
+    .sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime());
+  for (const s of adSessions) {
+    const campaign = s.utm_campaign || "none";
+    const adSet = s.utm_term || "—";
+    const key = `${s.utm_content}___${adSet}___${campaign}`;
+    if (!adMap[key]) {
+      adMap[key] = {
+        ad: s.utm_content,
+        adSet,
+        campaign,
+        channel: classifyChannel(s.utm_source, s.utm_medium, s.referrer).channel,
+        sessions: 0,
+        totalDuration: 0,
+        leads: 0,
+        bookings: 0,
+      };
+    }
+    adMap[key].sessions += 1;
+    adMap[key].totalDuration += s.duration_seconds || 0;
+    sessionAdKey[s.session_id] = key;
+    visitorAdKey[s.visitor_id] = key;
+  }
+  for (const l of allLeads) {
+    const key = (l.session_id && sessionAdKey[l.session_id]) || (l.visitor_id && visitorAdKey[l.visitor_id]);
+    if (!key || !adMap[key]) continue;
+    adMap[key].leads += 1;
+    if (l.scheduled_on_cal === "Yes") adMap[key].bookings += 1;
+  }
+  const adPerformance = Object.values(adMap)
+    .map(({ totalDuration, ...a }) => ({
+      ...a,
+      avgDurationSeconds: a.sessions ? Math.round(totalDuration / a.sessions) : 0,
+      leadRate: a.sessions ? Number(((a.leads / a.sessions) * 100).toFixed(1)) : 0,
+      bookingRate: a.sessions ? Number(((a.bookings / a.sessions) * 100).toFixed(1)) : 0,
+    }))
+    .sort((a, b) => b.bookings - a.bookings || b.leads - a.leads || b.sessions - a.sessions);
+
   // Heatmap Aggregations
   const heatmapByPath: Record<string, {
     clicks: Array<{ xPct: number; yPct: number; label: string; count: number; isBooking: boolean; section: string }>;
@@ -809,6 +854,7 @@ export async function getFullAnalyticsData(
       };
     }),
     utmPerformance,
+    adPerformance,
     channelStats,
     geoStats: {
       countries: countriesList,

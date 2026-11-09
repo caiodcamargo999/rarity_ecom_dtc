@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity,
+  Trophy,
   Users,
   Eye,
   Clock,
@@ -164,6 +165,19 @@ interface VisitorJourney {
   scheduled_on_cal?: string;
 }
 
+interface AdMetric {
+  ad: string;
+  adSet: string;
+  campaign: string;
+  channel: string;
+  sessions: number;
+  avgDurationSeconds: number;
+  leads: number;
+  bookings: number;
+  leadRate: number;
+  bookingRate: number;
+}
+
 interface UtmMetric {
   source: string;
   campaign: string;
@@ -266,7 +280,7 @@ function isDateInRange(target: Date, start: Date, end: Date): boolean {
   return t >= min && t <= max;
 }
 
-type TabType = "pages" | "channels" | "geo" | "heatmap" | "live" | "vturb" | "journeys" | "mcp";
+type TabType = "pages" | "channels" | "ads" | "geo" | "heatmap" | "live" | "vturb" | "journeys" | "mcp";
 
 export default function AdminAnalyticsDashboard() {
   const router = useRouter();
@@ -339,6 +353,7 @@ export default function AdminAnalyticsDashboard() {
   const [recentJourneys, setRecentJourneys] = useState<VisitorJourney[]>([]);
   const [utmPerformance, setUtmPerformance] = useState<UtmMetric[]>([]);
   const [channelStats, setChannelStats] = useState<ChannelMetric[]>([]);
+  const [adPerformance, setAdPerformance] = useState<AdMetric[]>([]);
   const [geoStats, setGeoStats] = useState<{
     countries: CountryMetric[];
     states: StateMetric[];
@@ -396,6 +411,7 @@ export default function AdminAnalyticsDashboard() {
           setRecentJourneys(data.recentJourneys || []);
           setUtmPerformance(data.utmPerformance || []);
           setChannelStats(data.channelStats || []);
+          setAdPerformance(data.adPerformance || []);
           if (data.geoStats) {
             setGeoStats(data.geoStats);
           }
@@ -998,6 +1014,7 @@ export default function AdminAnalyticsDashboard() {
             {[
               { id: "pages", label: "Landing Pages", icon: Layers },
               { id: "channels", label: "Channels & Ads", icon: Target },
+              { id: "ads", label: "Best Ads", icon: Trophy },
               { id: "geo", label: "Geo & US States", icon: Globe },
               { id: "heatmap", label: "Visual Heatmap", icon: Flame },
               { id: "live", label: `Live Radar (${liveVisitors.length})`, icon: Activity },
@@ -1289,6 +1306,77 @@ export default function AdminAnalyticsDashboard() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "ads" && (
+          <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-zinc-800 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2 font-mono">
+                  <Trophy className="w-4 h-4 text-amber-400" strokeWidth={1.75} />
+                  Best Ads by Performance
+                </h2>
+                <p className="text-xs text-zinc-400">
+                  Ranked by booked calls, then leads, then sessions. Ad = utm_content, Ad Set = utm_term.
+                </p>
+              </div>
+              <span className="text-xs font-mono text-zinc-400">{adPerformance.length} ads tracked</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead>
+                  <tr className="bg-zinc-950/60 text-zinc-400 uppercase font-mono text-[11px] border-b border-zinc-800">
+                    <th className="py-2.5 px-4 sm:px-6 font-medium">#</th>
+                    <th className="py-2.5 px-3 font-medium">Ad (utm_content)</th>
+                    <th className="py-2.5 px-3 font-medium">Ad Set</th>
+                    <th className="py-2.5 px-3 font-medium">Campaign</th>
+                    <th className="py-2.5 px-3 font-medium">Sessions</th>
+                    <th className="py-2.5 px-3 font-medium">Avg Time</th>
+                    <th className="py-2.5 px-3 font-medium">Leads</th>
+                    <th className="py-2.5 px-3 font-medium">Bookings</th>
+                    <th className="py-2.5 px-3 font-medium">Lead Rate</th>
+                    <th className="py-2.5 px-4 text-right font-medium">Booking Rate</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/50">
+                  {adPerformance.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} className="py-8 text-center text-zinc-400 text-xs font-mono">
+                        No ad traffic with utm_content yet. Add utm_content={"{{ad.name}}"} to your ad URL parameters.
+                      </td>
+                    </tr>
+                  ) : (
+                    adPerformance.map((item, idx) => (
+                      <tr key={`${item.ad}-${item.adSet}-${item.campaign}`} className="hover:bg-zinc-850/40 transition-colors">
+                        <td className="py-3 px-4 sm:px-6 font-mono text-zinc-400">
+                          {idx === 0 && item.leads > 0 ? <Trophy className="w-4 h-4 text-amber-400" strokeWidth={1.75} /> : idx + 1}
+                        </td>
+                        <td className="py-3 px-3 font-mono font-medium text-zinc-100 max-w-[260px] truncate" title={item.ad}>{item.ad}</td>
+                        <td className="py-3 px-3 font-mono text-zinc-400 max-w-[180px] truncate" title={item.adSet}>{item.adSet}</td>
+                        <td className="py-3 px-3 font-mono text-zinc-400 max-w-[180px] truncate" title={item.campaign}>{item.campaign}</td>
+                        <td className="py-3 px-3 font-mono font-medium text-zinc-200">{item.sessions.toLocaleString()}</td>
+                        <td className="py-3 px-3 font-mono text-zinc-300">{Math.floor(item.avgDurationSeconds / 60)}m {item.avgDurationSeconds % 60}s</td>
+                        <td className="py-3 px-3 font-mono font-semibold text-zinc-100">{item.leads}</td>
+                        <td className="py-3 px-3 font-mono font-semibold text-zinc-100">{item.bookings}</td>
+                        <td className="py-3 px-3 font-mono text-zinc-300">{item.leadRate}%</td>
+                        <td className="py-3 px-4 text-right">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded text-xs font-mono font-semibold ${
+                              item.bookingRate > 0
+                                ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/60"
+                                : "text-zinc-400"
+                            }`}
+                          >
+                            {item.bookingRate}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
