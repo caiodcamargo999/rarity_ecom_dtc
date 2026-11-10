@@ -6,8 +6,12 @@ import { getStoredUtms, UtmData } from "@/components/UtmTracker";
 import { getTracker, getVisitorInfo } from "@/lib/tracker";
 
 export const BOOKING_SECTION_ID = "book-a-call";
-const CAL_NAMESPACE = "free-growth-audit";
-const CAL_LINK = "caiodecamargo/free-growth-audit";
+// English pages book the English event; Portuguese pages book the PT event.
+const CAL_EVENTS = {
+  en: { slug: "free-growth-audit", brand: "#D80064" },
+  pt: { slug: "auditoria-de-growth-marketing", brand: "#D80064" },
+} as const;
+const CAL_USER = "caiodecamargo";
 
 /** Smoothly scrolls to the inline calendar. Used by every CTA on the page. */
 export function scrollToBooking() {
@@ -27,6 +31,8 @@ interface BookingSectionProps {
 }
 
 export default function BookingSection({ lang = "en", variant = "dark" }: BookingSectionProps) {
+  const { slug: CAL_NAMESPACE, brand } = CAL_EVENTS[lang === "pt" ? "pt" : "en"];
+  const CAL_LINK = `${CAL_USER}/${CAL_NAMESPACE}`;
   const [utms, setUtms] = useState<UtmData>({});
   const utmsRef = useRef<UtmData>({});
   const handledRef = useRef(false);
@@ -44,7 +50,7 @@ export default function BookingSection({ lang = "en", variant = "dark" }: Bookin
     });
     const qs = params.toString();
     return qs ? `${CAL_LINK}?${qs}` : CAL_LINK;
-  }, [utms]);
+  }, [utms, CAL_LINK]);
 
   const calConfig = useMemo(() => {
     const c: Record<string, string> = { layout: "month_view", useSlotsViewOnSmallScreen: "true" };
@@ -107,7 +113,7 @@ export default function BookingSection({ lang = "en", variant = "dark" }: Bookin
         email,
         phone,
         store: "Ecom Brand",
-        eventType: detail.eventType || "free-growth-audit",
+        eventType: detail.eventType || CAL_NAMESPACE,
         date: meetingDate,
         timeZone,
         utm_source: latestUtms.utm_source || "",
@@ -158,11 +164,12 @@ export default function BookingSection({ lang = "en", variant = "dark" }: Bookin
 
     (async function () {
       const cal = await getCalApi({ namespace: CAL_NAMESPACE });
+      (window as any).Cal && ((window as any).Cal.config = { ...((window as any).Cal.config || {}), forwardQueryParams: true });
       cal("ui", {
         theme: "light",
         cssVarsPerTheme: {
-          light: { "cal-brand": "#D80064" },
-          dark: { "cal-brand": "#D80064" },
+          light: { "cal-brand": brand },
+          dark: { "cal-brand": brand },
         },
         hideEventTypeDetails: false,
         layout: "month_view",
@@ -192,7 +199,7 @@ export default function BookingSection({ lang = "en", variant = "dark" }: Bookin
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, []);
+  }, [CAL_NAMESPACE, brand]);
 
   const bg = variant === "navy" ? "bg-[#001244]" : "bg-black";
 
