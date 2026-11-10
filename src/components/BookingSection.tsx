@@ -8,8 +8,8 @@ import { getTracker, getVisitorInfo } from "@/lib/tracker";
 export const BOOKING_SECTION_ID = "book-a-call";
 // English pages book the English event; Portuguese pages book the PT event.
 const CAL_EVENTS = {
-  en: { slug: "free-growth-audit", brand: "#D80064" },
-  pt: { slug: "auditoria-de-growth-marketing", brand: "#D80064" },
+  en: { slug: "free-growth-audit", brand: "#D80064", darkBrand: "#D80064" },
+  pt: { slug: "auditoria-de-growth-marketing", brand: "#5f0f65", darkBrand: "#9316c0" },
 } as const;
 const CAL_USER = "caiodecamargo";
 
@@ -31,7 +31,7 @@ interface BookingSectionProps {
 }
 
 export default function BookingSection({ lang = "en", variant = "dark" }: BookingSectionProps) {
-  const { slug: CAL_NAMESPACE, brand } = CAL_EVENTS[lang === "pt" ? "pt" : "en"];
+  const { slug: CAL_NAMESPACE, brand, darkBrand } = CAL_EVENTS[lang === "pt" ? "pt" : "en"];
   const CAL_LINK = `${CAL_USER}/${CAL_NAMESPACE}`;
   const [utms, setUtms] = useState<UtmData>({});
   const utmsRef = useRef<UtmData>({});
@@ -53,7 +53,7 @@ export default function BookingSection({ lang = "en", variant = "dark" }: Bookin
   }, [utms, CAL_LINK]);
 
   const calConfig = useMemo(() => {
-    const c: Record<string, string> = { layout: "month_view", useSlotsViewOnSmallScreen: "true" };
+    const c: Record<string, string> = { layout: "month_view", useSlotsViewOnSmallScreen: "true", theme: "light" };
     (["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "fbclid", "fbc", "fbp"] as const).forEach(
       (k) => {
         if (utms[k]) c[k] = utms[k] as string;
@@ -169,7 +169,7 @@ export default function BookingSection({ lang = "en", variant = "dark" }: Bookin
         theme: "light",
         cssVarsPerTheme: {
           light: { "cal-brand": brand },
-          dark: { "cal-brand": brand },
+          dark: { "cal-brand": darkBrand },
         },
         hideEventTypeDetails: false,
         layout: "month_view",
@@ -199,7 +199,7 @@ export default function BookingSection({ lang = "en", variant = "dark" }: Bookin
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [CAL_NAMESPACE, brand]);
+  }, [CAL_NAMESPACE, brand, darkBrand]);
 
   const bg = variant === "navy" ? "bg-[#001244]" : "bg-black";
 
