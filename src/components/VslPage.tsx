@@ -9,7 +9,7 @@ import CaseStudiesSection from "@/components/CaseStudiesSection";
 import CreativeShowcaseSection from "@/components/CreativeShowcaseSection";
 import AuditProcessSection from "@/components/AuditProcessSection";
 import Footer from "@/components/Footer";
-import AuditModal from "@/components/AuditModal";
+import BookingSection, { scrollToBooking } from "@/components/BookingSection";
 import VideoModal from "@/components/VideoModal";
 import { pauseAllVturbVideos } from "@/components/VturbPlayer";
 
@@ -18,14 +18,13 @@ interface VslPageProps {
 }
 
 export default function VslPage({ headlineVariant = "default" }: VslPageProps) {
-  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
   const handleOpenAudit = () => {
     pauseAllVturbVideos();
-    setIsAuditModalOpen(true);
+    setIsVideoModalOpen(false);
+    scrollToBooking();
   };
-  const handleCloseAudit = () => setIsAuditModalOpen(false);
 
   const handleOpenVideo = () => setIsVideoModalOpen(true);
   const handleCloseVideo = () => setIsVideoModalOpen(false);
@@ -70,14 +69,13 @@ export default function VslPage({ headlineVariant = "default" }: VslPageProps) {
         isCtaVisible={true}
       />
 
+      {/* Inline Cal.com booking calendar */}
+      <BookingSection />
+
       {/* Footer */}
       <Footer />
 
       {/* Interactive Modals */}
-      <AuditModal
-        isOpen={isAuditModalOpen}
-        onClose={handleCloseAudit}
-      />
       <VideoModal
         isOpen={isVideoModalOpen}
         onClose={handleCloseVideo}

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import HeaderV2 from "@/components/lp2/HeaderV2";
 import HeroSectionV2 from "@/components/lp2/HeroSectionV2";
 import RarityAdCarouselV2 from "@/components/lp2/RarityAdCarouselV2";
@@ -8,7 +7,7 @@ import CreativeShowcaseSection from "@/components/CreativeShowcaseSection";
 import GrowthProtocolSectionV2 from "@/components/lp2/GrowthProtocolSectionV2";
 import ServicesGridV2 from "@/components/lp2/ServicesGridV2";
 import ScaleCtaSectionV2 from "@/components/lp2/ScaleCtaSectionV2";
-import AuditModal from "@/components/AuditModal";
+import BookingSection, { scrollToBooking } from "@/components/BookingSection";
 import { pauseAllVturbVideos } from "@/components/VturbPlayer";
 
 interface TslPageProps {
@@ -17,13 +16,10 @@ interface TslPageProps {
 }
 
 export default function TslPage({ headlineVariant = "default", lang = "en" }: TslPageProps) {
-  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
-
   const handleOpenAudit = () => {
     pauseAllVturbVideos();
-    setIsAuditModalOpen(true);
+    scrollToBooking();
   };
-  const handleCloseAudit = () => setIsAuditModalOpen(false);
 
   return (
     <main className="min-h-screen bg-[#001244] text-white selection:bg-[#D80064] selection:text-white relative font-sans">
@@ -48,19 +44,15 @@ export default function TslPage({ headlineVariant = "default", lang = "en" }: Ts
       {/* 6. Ready to Scale (CTA Banner + Official Badges) */}
       <ScaleCtaSectionV2 onOpenAudit={handleOpenAudit} lang={lang} />
 
+      {/* 6.1 Inline Cal.com booking calendar */}
+      <BookingSection lang={lang} variant="navy" />
+
       {/* 7. Minimalist Footer */}
       <footer className="py-8 bg-[#000820] border-t border-white/10 text-center relative z-10">
         <p className="font-mono text-xs sm:text-sm text-white/60 tracking-wider">
           {lang === "pt" ? "Rarity 2026 - todos os direitos reservados" : "Rarity 2026 - all rights reserved"}
         </p>
       </footer>
-
-      {/* Free Growth Audit Modal */}
-      <AuditModal
-        isOpen={isAuditModalOpen}
-        onClose={handleCloseAudit}
-        lang={lang}
-      />
     </main>
   );
 }
