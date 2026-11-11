@@ -450,7 +450,18 @@ export async function getFullAnalyticsData(
 
   const allPageviews = (pageviewsData || []).filter((p) => !p.pathname?.startsWith("/admin") && !p.pathname?.startsWith("/api") && notBot(p));
   const allEvents = (eventsData || []).filter(notBot);
-  const allLeads = leadsData || [];
+  // One booking is written by the browser AND by the Cal.com webhook (phone differs by a leading
+  // apostrophe), so collapse rows for the same person + meeting into a single lead.
+  const allLeads = (() => {
+    const seen = new Map<string, any>();
+    for (const l of leadsData || []) {
+      const who = (l.email || "").trim().toLowerCase() || String(l.phone || "").replace(/\D/g, "") || l.visitor_id || l.id;
+      const key = `${who}|${l.meeting_date || ""}`;
+      const prev = seen.get(key);
+      if (!prev || (prev.scheduled_on_cal !== "Yes" && l.scheduled_on_cal === "Yes")) seen.set(key, l);
+    }
+    return Array.from(seen.values());
+  })();
   const allSessions = (sessionsData || []).filter(notBot);
   const allVisitors = (visitorsList || []).filter(notBot);
 
