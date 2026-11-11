@@ -104,8 +104,12 @@ export default function BookingSection({ lang = "en", variant = "dark" }: Bookin
       if (!email && !phone && !fullName) return;
 
       (window as any).dataLayer = (window as any).dataLayer || [];
+      const bookingUid = String(booking.uid || detail.uid || booking.bookingUid || detail.bookingUid || "");
       (window as any).dataLayer.push({
         event: "bookingSuccessful",
+        // Same id the server sends to Meta (schedule_<booking uid>) so the pixel can dedupe.
+        schedule_event_id: bookingUid ? `schedule_${bookingUid}` : "",
+        lead_event_id: bookingUid ? `lead_${bookingUid}` : "",
         data: detail,
         name: fullName,
         first_name: firstName,

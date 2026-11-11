@@ -181,7 +181,9 @@ export async function POST(req: NextRequest) {
     });
 
     // 3. Send to Meta Conversions API (Server-Side Tracking)
-    await sendToMetaCAPI(leadPayload, utms, req);
+    // Schedule is sent to Meta ONLY by the Cal.com webhook (one event per booking, with a stable
+    // event_id). Sending it here too produced duplicate conversions.
+    // await sendToMetaCAPI(leadPayload, utms, req);
 
     // 4. Sync directly to Supabase Analytics & Lead Database
     if (isSupabaseConfigured && supabaseAdmin) {

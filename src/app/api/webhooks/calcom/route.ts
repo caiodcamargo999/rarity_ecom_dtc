@@ -367,7 +367,16 @@ export async function POST(req: NextRequest) {
 
     // 6. Server-Side Meta Conversions API (CAPI) Dispatch
     let capiResult: any = null;
-    if (META_PIXEL_ID && META_CAPI_ACCESS_TOKEN && email) {
+    // One conversion = one booking. Only a brand-new booking counts (not reschedules / updates), and
+    // every event carries a stable event_id (the Cal.com booking uid) so Meta can deduplicate any
+    // retry or the browser pixel copy of the same booking.
+    const triggerEvent: string = rawBody.triggerEvent || "";
+    const isNewBooking = !triggerEvent || triggerEvent === "BOOKING_CREATED";
+    const bookingUid = String(payload.uid || payload.bookingUid || payload.booking?.uid || payload.bookingId || payload.id || "");
+    const eventIdBase = bookingUid || hashSha256(`${email}|${payload.startTime || ""}`).slice(0, 24);
+    const scheduleEventId = `schedule_${eventIdBase}`;
+    const leadEventId = `lead_${eventIdBase}`;
+    if (META_PIXEL_ID && META_CAPI_ACCESS_TOKEN && email && isNewBooking) {
       try {
         const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0] || "";
         const clientUserAgent = req.headers.get("user-agent") || "";
@@ -405,6 +414,7 @@ export async function POST(req: NextRequest) {
         const capiEvents = [
           {
             event_name: "Schedule",
+            event_id: scheduleEventId,
             event_time: currentTimestamp,
             action_source: "website",
             event_source_url: landingPageWithUtms,
@@ -413,6 +423,7 @@ export async function POST(req: NextRequest) {
           },
           {
             event_name: "Lead",
+            event_id: leadEventId,
             event_time: currentTimestamp,
             action_source: "website",
             event_source_url: landingPageWithUtms,
