@@ -446,6 +446,23 @@ export async function getFullAnalyticsData(
 
   // Meta ad-review bots and scanners are not people: drop them from every traffic metric.
   const botIds = new Set((visitorsList || []).filter((v) => isBotIp(v.ip_address)).map((v) => v.visitor_id));
+
+  // Internal / test traffic: anyone who has booked or submitted with an internal email is the team
+  // testing, so drop their leads AND their browsing from every metric. Add more emails with the
+  // ANALYTICS_EXCLUDE_EMAILS env var (comma separated).
+  const internalEmails = Array.from(
+    new Set(
+      ["caiorarity@gmail.com", ...(process.env.ANALYTICS_EXCLUDE_EMAILS || "").split(",")]
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean)
+    )
+  );
+  const { data: internalLeadRows } = await supabaseAdmin
+    .from("analytics_leads")
+    .select("visitor_id, email")
+    .in("email", internalEmails);
+  (internalLeadRows || []).forEach((r: any) => r.visitor_id && botIds.add(r.visitor_id));
+  const isInternalEmail = (e?: string | null) => !!e && internalEmails.includes(e.trim().toLowerCase());
   const notBot = (x: { visitor_id?: string | null }) => !x.visitor_id || !botIds.has(x.visitor_id);
 
   const allPageviews = (pageviewsData || []).filter((p) => !p.pathname?.startsWith("/admin") && !p.pathname?.startsWith("/api") && notBot(p));
@@ -455,6 +472,7 @@ export async function getFullAnalyticsData(
   const allLeads = (() => {
     const seen = new Map<string, any>();
     for (const l of leadsData || []) {
+      if (isInternalEmail(l.email) || (l.visitor_id && botIds.has(l.visitor_id))) continue;
       const who = (l.email || "").trim().toLowerCase() || String(l.phone || "").replace(/\D/g, "") || l.visitor_id || l.id;
       const key = `${who}|${l.meeting_date || ""}`;
       const prev = seen.get(key);
@@ -854,14 +872,14 @@ export async function getFullAnalyticsData(
       totalPageviews,
       avgDurationSeconds,
       avgScrollDepth,
-      activeLiveVisitors: (liveData || []).filter((v) => !isBotIp(v.ip_address)).length,
+      activeLiveVisitors: (liveData || []).filter((v) => !isBotIp(v.ip_address) && !botIds.has(v.visitor_id) && !isInternalEmail(v.email)).length,
       totalLeads,
       totalBookings,
       conversionRate,
       vturbPlays,
     },
     pagesPerformance,
-    liveVisitors: (liveData || []).filter((v) => !isBotIp(v.ip_address)).map((v) => ({
+    liveVisitors: (liveData || []).filter((v) => !isBotIp(v.ip_address) && !botIds.has(v.visitor_id) && !isInternalEmail(v.email)).map((v) => ({
       ...v,
       city: safeDecode(v.city),
       country: v.country ? resolveCountry(v.country).name : v.country,
