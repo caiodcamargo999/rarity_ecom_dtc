@@ -238,42 +238,50 @@ export async function getFullAnalyticsData(
   customStart?: string,
   customEnd?: string
 ) {
-  const now = new Date();
+  // The server runs in UTC (Vercel) but the business day is Brazil time (UTC-3, no DST).
+  // Compute day boundaries in that zone, otherwise "Today" empties out at 21:00 local.
+  const TZ_OFFSET_H = 3;
+  const brNow = new Date(Date.now() - TZ_OFFSET_H * 3600_000);
+  const by = brNow.getUTCFullYear();
+  const bm = brNow.getUTCMonth();
+  const bd = brNow.getUTCDate();
+  const dayStart = (y: number, m: number, d: number) => new Date(Date.UTC(y, m, d, TZ_OFFSET_H, 0, 0, 0));
+  const dayEnd = (y: number, m: number, d: number) => new Date(Date.UTC(y, m, d + 1, TZ_OFFSET_H, 0, 0, 0) - 1);
   let startDate: Date | null = null;
   let endDate: Date | null = null;
 
   if (range === "today") {
-    startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
+    startDate = dayStart(by, bm, bd);
   } else if (range === "yesterday") {
-    startDate = new Date();
-    startDate.setDate(now.getDate() - 1);
-    startDate.setHours(0, 0, 0, 0);
-    endDate = new Date();
-    endDate.setDate(now.getDate() - 1);
-    endDate.setHours(23, 59, 59, 999);
+    startDate = dayStart(by, bm, bd - 1);
+    endDate = dayEnd(by, bm, bd - 1);
   } else if (range === "7d" || range === "7d_excl" || range === "last_7d" || range === "last_7d_excl") {
-    startDate = new Date();
-    startDate.setDate(now.getDate() - 6);
-    startDate.setHours(0, 0, 0, 0);
+    startDate = dayStart(by, bm, bd - 6);
     endDate = null; // Includes the current day
   } else if (range === "this_month") {
-    startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+    startDate = dayStart(by, bm, 1);
     endDate = null; // Includes the current day
   } else if (range === "last_month") {
-    startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0);
-    endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    startDate = dayStart(by, bm - 1, 1);
+    endDate = dayEnd(by, bm, 0);
   } else if (range === "3m" || range === "last_3m" || range === "90d") {
-    startDate = new Date();
-    startDate.setDate(now.getDate() - 90);
-    startDate.setHours(0, 0, 0, 0);
+    startDate = dayStart(by, bm, bd - 90);
     endDate = null;
   } else if (range === "custom" && customStart) {
-    startDate = new Date(customStart);
+    // Date-only values ("YYYY-MM-DD") are Brazil calendar days; full ISO timestamps are used as-is.
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
+    if (dateOnly.test(customStart)) {
+      const [y, m, d] = customStart.split("-").map(Number);
+      startDate = dayStart(y, m - 1, d);
+    } else {
+      startDate = new Date(customStart);
+    }
     if (customEnd) {
-      endDate = new Date(customEnd);
-      if (customEnd.length <= 10 || (endDate.getHours() === 0 && endDate.getMinutes() === 0 && endDate.getSeconds() === 0)) {
-        endDate.setHours(23, 59, 59, 999);
+      if (dateOnly.test(customEnd)) {
+        const [y, m, d] = customEnd.split("-").map(Number);
+        endDate = dayEnd(y, m - 1, d);
+      } else {
+        endDate = new Date(customEnd);
       }
     }
   } else if (range === "all") {
