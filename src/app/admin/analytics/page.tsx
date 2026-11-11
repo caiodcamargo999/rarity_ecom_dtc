@@ -64,6 +64,7 @@ import {
 interface OverviewStats {
   totalVisitors: number;
   uniqueVisitors: number;
+  filteredBounces?: number;
   totalPageviews: number;
   avgDurationSeconds: number;
   avgScrollDepth: number;
@@ -986,6 +987,14 @@ export default function AdminAnalyticsDashboard() {
               </div>
               <div className="text-[11px] text-zinc-400 mt-0.5">
                 {overview.totalPageviews.toLocaleString()} pageviews
+                {(overview.filteredBounces || 0) > 0 && (
+                  <span
+                    className="text-zinc-500"
+                    title="Visits that left in under 5 seconds with no click, scroll or play are not counted (Meta does not count them as landing page views either)."
+                  >
+                    {" "}· {overview.filteredBounces!.toLocaleString()} quick bounces hidden
+                  </span>
+                )}
               </div>
             </div>
           </div>

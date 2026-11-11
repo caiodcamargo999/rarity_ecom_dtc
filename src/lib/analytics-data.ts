@@ -465,8 +465,28 @@ export async function getFullAnalyticsData(
   const isInternalEmail = (e?: string | null) => !!e && internalEmails.includes(e.trim().toLowerCase());
   const notBot = (x: { visitor_id?: string | null }) => !x.visitor_id || !botIds.has(x.visitor_id);
 
-  const allPageviews = (pageviewsData || []).filter((p) => !p.pathname?.startsWith("/admin") && !p.pathname?.startsWith("/api") && notBot(p));
-  const allEvents = (eventsData || []).filter(notBot);
+  const humanPageviews = (pageviewsData || []).filter((p) => !p.pathname?.startsWith("/admin") && !p.pathname?.startsWith("/api") && notBot(p));
+  const humanEvents = (eventsData || []).filter(notBot);
+
+  // Quick bounces are not counted as visits. Ad clicks that leave before the page really loads
+  // (in-app browser closes, accidental taps, invalid traffic Meta later removes) showed up here as
+  // visitors but never as Meta "landing page views". A visitor counts once they stay at least
+  // MIN_ENGAGED_SECONDS or do something on the page (click, scroll, play, book).
+  const MIN_ENGAGED_SECONDS = 5;
+  const ENGAGED_EVENTS = new Set(["warm_click", "cta_click", "scroll_milestone", "vturb_milestone", "cal_booked", "lead_captured", "modal_open"]);
+  const engagedIds = new Set<string>();
+  humanPageviews.forEach((p) => {
+    if ((p.duration_seconds || 0) >= MIN_ENGAGED_SECONDS || (p.scroll_depth_max || 0) > 0) engagedIds.add(p.visitor_id);
+  });
+  humanEvents.forEach((e) => {
+    if (ENGAGED_EVENTS.has(e.event_type)) engagedIds.add(e.visitor_id);
+  });
+  (leadsData || []).forEach((l: any) => l.visitor_id && engagedIds.add(l.visitor_id));
+  const isEngaged = (x: { visitor_id?: string | null }) => !x.visitor_id || engagedIds.has(x.visitor_id);
+  const filteredBounces = new Set(humanPageviews.filter((p) => !isEngaged(p)).map((p) => p.visitor_id)).size;
+
+  const allPageviews = humanPageviews.filter(isEngaged);
+  const allEvents = humanEvents.filter(isEngaged);
   // One booking is written by the browser AND by the Cal.com webhook (phone differs by a leading
   // apostrophe), so collapse rows for the same person + meeting into a single lead.
   const allLeads = (() => {
@@ -480,8 +500,8 @@ export async function getFullAnalyticsData(
     }
     return Array.from(seen.values());
   })();
-  const allSessions = (sessionsData || []).filter(notBot);
-  const allVisitors = (visitorsList || []).filter(notBot);
+  const allSessions = (sessionsData || []).filter(notBot).filter(isEngaged);
+  const allVisitors = (visitorsList || []).filter(notBot).filter(isEngaged);
 
   const totalVisitors = new Set(allPageviews.map((p) => p.visitor_id)).size || allVisitors.length;
   const totalPageviews = allPageviews.length;
@@ -869,6 +889,7 @@ export async function getFullAnalyticsData(
     overview: {
       totalVisitors,
       uniqueVisitors: totalVisitors,
+      filteredBounces,
       totalPageviews,
       avgDurationSeconds,
       avgScrollDepth,
