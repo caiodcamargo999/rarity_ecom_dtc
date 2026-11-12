@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import VslPage from "@/components/VslPage";
 
 export const metadata: Metadata = {
-  title: "A Full Growth Team For Less Than One Media Buyer",
+  title: "A Media Buyer, Designer & Growth Strategist for Less Than One Hire",
   description:
     "Media, creative, and UGC team that runs your growth against MER and real profit — not platform ROAS. Built for DTC brands doing $1M–$10M/year who are done being burned by agencies.",
   openGraph: {
-    title: "A Full Growth Team For Less Than One Media Buyer | Rarity Agency",
+    title: "A Media Buyer, Designer & Growth Strategist for Less Than One Hire | Rarity Agency",
     description:
       "Media, creative, and UGC team that runs your growth against MER and real profit — not platform ROAS. Built for DTC brands doing $1M–$10M/year.",
     url: "https://growth.rarityagency.com",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
         url: "/images/LP-01-RARITY.jpg",
         width: 1200,
         height: 630,
-        alt: "Rarity Agency - A Full Growth Team For Less Than One Media Buyer",
+        alt: "Rarity Agency - A Media Buyer, Designer & Growth Strategist for Less Than One Hire",
       },
     ],
   },

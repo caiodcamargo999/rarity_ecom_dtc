@@ -48,13 +48,15 @@ export default function HeroSection({
           className="w-full"
         >
           {headlineVariant === "growth-team" ? (
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.08]">
-              <span className="block">A Full Growth Team For</span>
-              <span className="block mt-1">
-                Less Than One{" "}
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.1]">
+              <span className="block">A Media Buyer, A Conversion Designer</span>
+              <span className="block mt-1">And A Growth Strategist.</span>
+              <span className="block mt-2">
+                One Flat Fee. Less Than{" "}
                 <span className="font-serif italic font-normal text-brand-teal text-[1.08em] tracking-normal drop-shadow-[0_2px_15px_rgba(15,227,179,0.3)]">
-                  Media Buyer
+                  One Hire
                 </span>
+                .
               </span>
             </h1>
           ) : (

@@ -101,12 +101,13 @@ export default function HeroSectionV2({
             {isPt ? (
               <>
                 <span className="block">
-                  Um Time Completo de Growth Por
+                  Gestor de Tráfego, Designer de Conversão
                 </span>
+                <span className="block">e Estrategista de Growth.</span>
                 <span className="block mt-2 sm:mt-3 text-white">
-                  Menos Que Um Único{" "}
+                  Um Valor Fixo. Menos Que{" "}
                   <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-tealLight via-white to-brand-teal drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
-                    Gestor de Tráfego
+                    Uma Contratação
                   </span>
                   .
                 </span>
@@ -114,12 +115,13 @@ export default function HeroSectionV2({
             ) : (
               <>
                 <span className="block">
-                  A Full Growth Team For
+                  A Media Buyer, A Conversion Designer
                 </span>
+                <span className="block">And A Growth Strategist.</span>
                 <span className="block mt-2 sm:mt-3 text-white">
-                  Less Than One{" "}
+                  One Flat Fee. Less Than{" "}
                   <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-tealLight via-white to-brand-teal drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
-                    Media Buyer
+                    One Hire
                   </span>
                   .
                 </span>
