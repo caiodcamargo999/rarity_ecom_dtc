@@ -1629,7 +1629,11 @@ export default function AdminAnalyticsDashboard() {
             for (const m of metaAds) if (`${normKey(m.campaign)}|${normKey(m.adSet)}|${normKey(m.ad)}` === k) agg = addMeta(agg, m);
             return agg;
           };
-          const withMeta = adPerformance.map((a) => {
+          // Links whose {{ad.name}} was never replaced by Meta (ad previews, copied links, tests) can't be
+          // attributed to a creative, so they are kept out of the ranking and summarised in a note.
+          const unresolvedAds = adPerformance.filter((a) => isMacro(a.ad));
+          const unresolvedSessions = unresolvedAds.reduce((n, a) => n + a.sessions, 0);
+          const withMeta = adPerformance.filter((a) => !isMacro(a.ad)).map((a) => {
             const m = metaFor(a);
             return {
               ...a,
@@ -1699,7 +1703,7 @@ export default function AdminAnalyticsDashboard() {
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                  { label: "ADS TRACKED", value: adPerformance.length.toLocaleString(), sub: "with utm_content" },
+                  { label: "ADS TRACKED", value: scored.length.toLocaleString(), sub: "with utm_content" },
                   { label: "SESSIONS FROM ADS", value: totals.sessions.toLocaleString(), sub: "all creatives in the range" },
                   { label: "LEADS FROM ADS", value: totals.leads.toLocaleString(), sub: `${adLeadRate}% of ad sessions`, accent: true },
                   { label: "BOOKINGS FROM ADS", value: totals.bookings.toLocaleString(), sub: "calls booked on Cal.com", accent: true },
@@ -1738,6 +1742,14 @@ export default function AdminAnalyticsDashboard() {
                   />
                 </div>
               </div>
+
+              {unresolvedSessions > 0 && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-xs text-amber-200/90 leading-relaxed">
+                  <b className="text-amber-300">{unresolvedSessions} session{unresolvedSessions === 1 ? "" : "s"}</b> came from a link where Meta never filled in the ad name
+                  (the URL still said <span className="font-mono">{"{{ad.name}}"}</span>). That happens when someone opens an ad preview or a copied/test link instead of
+                  a delivered ad, so it can't be tied to a creative and is left out of the ranking below.
+                </div>
+              )}
 
               {visible.length === 0 ? (
                 <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl py-12 text-center text-zinc-400 text-xs font-mono px-4">

@@ -32,5 +32,7 @@ const key = (s: string) =>
 const INDEX = new Map(Object.entries(CREATIVES).map(([name, url]) => [key(name), url]));
 
 export function getAdCreative(adName: string): string | null {
-  return INDEX.get(key(adName)) ?? null;
+  const k = key(adName);
+  // Duplicated ads get a " - Copy" / " - Copy 2" suffix in Ads Manager but use the same artwork.
+  return INDEX.get(k) ?? INDEX.get(k.replace(/copy\d*$/, "")) ?? null;
 }
