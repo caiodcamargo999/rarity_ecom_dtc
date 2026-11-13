@@ -127,7 +127,7 @@ const jsonLdData = {
       "url": "https://rarityagency.com",
       "logo": "https://rarityagency.com/images/logo_rarity_branco_sem_fundo_zoom_in.png",
       "image": "https://rarityagency.com/images/LP-01-RARITY.jpg",
-      "description": "Rarity is a performance marketing and creative growth agency for 7- and 8-figure DTC ecommerce brands. Specializing in Meta Ads, Google Performance Max, 30+ monthly AI creative iterations, and contribution margin scaling.",
+      "description": "Rarity is a performance marketing and creative growth agency for DTC ecommerce brands. Specializing in Meta Ads, Google Performance Max, 30+ monthly AI creative iterations, and contribution margin scaling.",
       "priceRange": "$$$$",
       "currenciesAccepted": "USD",
       "paymentAccepted": "Credit Card, Wire Transfer, ACH",

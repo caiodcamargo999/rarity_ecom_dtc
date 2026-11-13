@@ -4,11 +4,11 @@ import TslPage from "@/components/TslPage";
 export const metadata: Metadata = {
   title: "Sem Gestor Júnior, Sem Métrica de Vaidade: O Fundador Escalando Pelo Lucro Real | Rarity Agency",
   description:
-    "Time sênior de mídia, criativos e UGC focado em MER e lucro real na sua conta bancária. Para marcas de e-commerce faturando alto que querem previsibilidade de escala.",
+    "Time sênior de mídia, criativos e UGC focado em MER e lucro real na sua conta bancária. Para marcas de e-commerce que querem previsibilidade de escala.",
   openGraph: {
     title: "Sem Gestor Júnior, Sem Métrica de Vaidade: O Fundador Escalando Pelo Lucro Real | Rarity Agency",
     description:
-      "Time sênior de mídia, criativos e UGC focado em MER e lucro real na sua conta bancária. Para marcas de e-commerce faturando alto que querem previsibilidade de escala.",
+      "Time sênior de mídia, criativos e UGC focado em MER e lucro real na sua conta bancária. Para marcas de e-commerce que querem previsibilidade de escala.",
     url: "https://ecom.rarityagency.io/free-audit-growth-team-br",
     siteName: "Rarity Agency",
     locale: "pt_BR",

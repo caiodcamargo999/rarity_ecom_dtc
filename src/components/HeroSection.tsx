@@ -98,7 +98,7 @@ export default function HeroSection({
           className="mt-8 sm:mt-10 max-w-2xl text-base sm:text-lg text-white/90 font-medium leading-relaxed"
         >
           Media, creative, and UGC team that runs your growth against MER and real profit — not platform
-          ROAS. Built for DTC brands doing $1M–$10M/year who are done being burned by agencies.
+          ROAS. Built for DTC brands who are done being burned by agencies.
         </motion.p>
 
         {/* Primary CTA Button (Visible from the beginning) */}

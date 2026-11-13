@@ -48,7 +48,7 @@ export default function TslLetterSectionV2({ onOpenAudit }: TslLetterSectionV2Pr
           </h2>
 
           <p className="mt-4 text-base sm:text-lg text-white/80 leading-relaxed font-medium">
-            If you are doing between $1M and $10M a year in DTC revenue, chances are you know the feeling all too well: one week you are crushing 4x ROAS, and the next week CPAs spike by 60%, ad creatives fatigue overnight, and your agency sends you a slide deck blaming the algorithm.
+            If you run a DTC brand on Meta, chances are you know the feeling all too well: one week you are crushing 4x ROAS, and the next week CPAs spike by 60%, ad creatives fatigue overnight, and your agency sends you a slide deck blaming the algorithm.
           </p>
 
           <div className="my-8 p-5 rounded-2xl bg-white/[0.04] border-l-4 border-[#D80064] text-white/90 text-sm sm:text-base leading-relaxed">
