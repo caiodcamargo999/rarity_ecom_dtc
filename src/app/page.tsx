@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import VslPage from "@/components/VslPage";
 
 export const metadata: Metadata = {
-  title: "Get Off The Meta Rollercoaster",
+  title: "Meta Says It's Working. Your Bank Account Disagrees. | Rarity Agency",
   description:
-    "Media, creative, and UGC team that runs your growth against MER and real profit — not platform ROAS. Built for DTC brands doing $1M–$10M/year.",
+    "Media, creative, and UGC team that runs your growth against MER and real profit — not platform ROAS. Built for DTC brands scaling on Meta.",
 };
 
 export default function Home() {

@@ -61,12 +61,13 @@ export default function HeroSection({
             </h1>
           ) : (
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.08]">
-              <span className="block">Get Off The</span>
+              <span className="block">Meta Says It&apos;s Working.</span>
               <span className="block mt-1">
-                Meta{" "}
+                Your{" "}
                 <span className="font-serif italic font-normal text-brand-teal text-[1.12em] tracking-normal drop-shadow-[0_2px_15px_rgba(15,227,179,0.3)]">
-                  Rollercoaster
-                </span>
+                  Bank Account
+                </span>{" "}
+                Disagrees.
               </span>
             </h1>
           )}
