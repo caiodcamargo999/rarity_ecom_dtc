@@ -138,18 +138,18 @@ export default function HeroSectionV2({
             {isPt ? (
               <>
                 <span className="block">
-                  Saia da Montanha-Russa de Performance de{" "}
+                  Chega de{" "}
                   <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-tealLight drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
-                    Anúncios
-                  </span>
-                  .
+                    “Fase de Aprendizado”
+                  </span>{" "}
+                  Enquanto o Seu Caixa Sangra.
                 </span>
                 <span className="block mt-2 sm:mt-3 text-white">
-                  Escale o Que Realmente Gera{" "}
+                  Seu{" "}
                   <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-tealLight via-white to-brand-teal drop-shadow-[0_0_25px_rgba(15,227,179,0.35)]">
-                    Lucro Líquido
-                  </span>
-                  .
+                    Teto de CAC
+                  </span>{" "}
+                  Calculado Ao Vivo, na Auditoria.
                 </span>
               </>
             ) : (
